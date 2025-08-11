@@ -166,28 +166,61 @@ function generateKeywordSpecificMockEvents(keyword, locationData, userProfile) {
 }
 
 function parseLocationForMeetup(location) {
-  // Enhanced location parsing for meetup API
+  console.log(`🔍 Parsing location: "${location}"`)
+  
+  // Handle complex addresses like "1830 N Bayshore Dr CP-1, Miami, FL 33132, United States"
   const locationParts = location.split(',').map(part => part.trim())
   
-  let city, state, country = "us" // Default to US
+  let city = "miami" // Default fallback
+  let state = "fl"   // Default fallback
+  let country = "us"
   
-  // Check for state abbreviations or full state names
-  const stateMatch = location.match(/\b[A-Z]{2}\b|\b(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\b/i)
+  // Find the city (usually the part without numbers and without state abbreviations)
+  for (const part of locationParts) {
+    const partLower = part.toLowerCase()
+    
+    // Skip parts with addresses (containing numbers or common address terms)
+    if (partLower.match(/\d+/) || 
+        partLower.includes('dr ') || 
+        partLower.includes('street') || 
+        partLower.includes('avenue') || 
+        partLower.includes('blvd') ||
+        partLower.includes('cp-')) {
+      continue
+    }
+    
+    // Skip state abbreviations and zip codes
+    if (partLower.match(/^[a-z]{2}$/) || partLower.match(/\d{5}/)) {
+      continue
+    }
+    
+    // Skip "United States"
+    if (partLower.includes('united states')) {
+      continue
+    }
+    
+    // This should be the city
+    if (part.length > 2 && !partLower.match(/^[a-z]{2}$/)) {
+      city = partLower
+      break
+    }
+  }
+  
+  // Find state abbreviation
+  const stateMatch = location.match(/\b[A-Z]{2}\b/)
   if (stateMatch) {
-    state = stateMatch[0].length === 2 ? stateMatch[0].toLowerCase() : getStateAbbreviation(stateMatch[0])
+    state = stateMatch[0].toLowerCase()
   }
   
-  // Extract city (usually the first part)
-  if (locationParts.length > 0) {
-    city = locationParts[0].replace(/\d{5}(?:-\d{4})?/, '').trim().toLowerCase()
-  }
-  
-  return {
-    city: city || "new york",
-    state: state || "ny",
+  const result = {
+    city: city,
+    state: state,
     country: country,
     original: location
   }
+  
+  console.log(`✅ Parsed location:`, result)
+  return result
 }
 
 function generatePersonalizedMeetupKeywords({ networkingKeyword, industry, businessName, customGoal }) {

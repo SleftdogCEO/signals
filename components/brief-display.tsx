@@ -76,6 +76,12 @@ interface NewsArticle {
   sentiment: string
   keyInsights: string[]
   isRssLink?: boolean
+  serperData?: {
+    position: number
+  }
+  personalizedTags?: string[]
+  personalizedFor?: string
+  searchType: string
 }
 
 interface MeetupEvent {
@@ -915,22 +921,27 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                           <Newspaper className="w-8 h-8 text-blue-500" />
                         </div>
                         <div>
-                          <CardTitle className="text-3xl font-bold text-white">Business Intelligence Feed</CardTitle>
+                          <CardTitle className="text-3xl font-bold text-white">Real-Time Business Intelligence</CardTitle>
                           <p className="text-gray-400 text-lg">Latest trends, insights, and market developments</p>
                           
-                          {/* ADD URL METRICS DISPLAY */}
-                          {brief.newsData.urlMetrics && (
-                            <div className="flex items-center gap-4 mt-2 text-sm">
-                              <span className="text-green-400">
-                                ✓ {brief.newsData.urlMetrics.directUrls} Direct Links
-                              </span>
-                              {brief.newsData.urlMetrics.rssUrls > 0 && (
-                                <span className="text-yellow-400">
-                                  ⚠ {brief.newsData.urlMetrics.rssUrls} RSS Links
-                                </span>
-                              )}
+                          {/* ENHANCED METRICS DISPLAY */}
+                          <div className="flex items-center gap-6 mt-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Google Serper API
+                              </Badge>
                             </div>
-                          )}
+                            <span className="text-green-400">
+                              ✓ {brief.newsData.articles.length} Direct Articles
+                            </span>
+                            <span className="text-blue-400">
+                              📊 {brief.newsData.totalFound} Total Found
+                            </span>
+                            <span className="text-purple-400">
+                              🎯 Real-time Results
+                            </span>
+                          </div>
                         </div>
                       </div>
                       {newsCategories.length > 1 && (
@@ -988,22 +999,22 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                     Score: {article.relevanceScore}
                                   </Badge>
                                   
-                                  {/* ADD URL TYPE INDICATOR */}
-                                  {article.isRssLink ? (
-                                    <Badge variant="outline" className="border-yellow-500/40 text-yellow-400 bg-yellow-500/10">
-                                      <ExternalLink className="w-3 h-3 mr-1" />
-                                      RSS Link
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="border-green-500/40 text-green-400 bg-green-500/10">
-                                      <ExternalLink className="w-3 h-3 mr-1" />
-                                      Direct Link
+                                  {/* ENHANCED SERPER INDICATORS */}
+                                  <Badge variant="outline" className="border-green-500/40 text-green-400 bg-green-500/10">
+                                    <Zap className="w-3 h-3 mr-1" />
+                                    Live Result
+                                  </Badge>
+                                  
+                                  {/* SHOW GOOGLE RANKING POSITION */}
+                                  {article.serperData?.position && (
+                                    <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                      #{article.serperData.position} Ranked
                                     </Badge>
                                   )}
                                 </div>
                               </div>
 
-                              {/* MAKE TITLE CLICKABLE */}
+                              {/* ENHANCED CLICKABLE TITLE */}
                               {article.url && article.url !== "#" ? (
                                 <a 
                                   href={article.url} 
@@ -1011,14 +1022,13 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                   rel="noopener noreferrer"
                                   onClick={() => {
                                     console.log(`User clicked article: ${article.title} - ${article.url}`)
-                                    // Track if it's RSS vs direct link
-                                    console.log(`Link type: ${article.isRssLink ? 'RSS' : 'Direct'}`)
+                                    console.log(`Source: ${article.source}, Position: ${article.serperData?.position}`)
                                   }}
                                   className="block"
                                 >
-                                  <h3 className="font-bold text-white text-xl mb-4 leading-tight group-hover:text-blue-400 transition-colors cursor-pointer">
+                                  <h3 className="font-bold text-white text-xl mb-4 leading-tight group-hover:text-blue-400 transition-colors cursor-pointer flex items-start gap-2">
                                     {article.title}
-                                    <ExternalLink className="w-4 h-4 inline ml-2 opacity-60" />
+                                    <ExternalLink className="w-4 h-4 opacity-60 flex-shrink-0 mt-1" />
                                   </h3>
                                 </a>
                               ) : (
@@ -1029,6 +1039,7 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
 
                               <p className="text-gray-300 mb-4 leading-relaxed">{article.description}</p>
 
+                              {/* ENHANCED KEY INSIGHTS */}
                               {article.keyInsights.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-4">
                                   {article.keyInsights.map((insight, i) => (
@@ -1044,14 +1055,34 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                 </div>
                               )}
 
+                              {/* ENHANCED PERSONALIZATION TAGS */}
+                              {article.personalizedTags && article.personalizedTags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {article.personalizedTags.map((tag, i) => (
+                                    <Badge
+                                      key={i}
+                                      variant="outline"
+                                      className="border-cyan-500/40 text-cyan-400 bg-cyan-500/10 text-xs"
+                                    >
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4 text-sm text-gray-400">
-                                  <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-medium">
+                                  <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                                    <Newspaper className="w-3 h-3" />
                                     {article.source}
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
                                     {new Date(article.published).toLocaleDateString()}
+                                  </span>
+                                  {/* SHOW SEARCH TYPE */}
+                                  <span className="text-purple-400 text-xs">
+                                    {article.searchType.replace(/_/g, ' ').toUpperCase()}
                                   </span>
                                 </div>
                                 
@@ -1061,11 +1092,7 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                     asChild
                                     variant="outline"
                                     size="sm"
-                                    className={`${
-                                      article.isRssLink 
-                                        ? "border-yellow-600 text-yellow-300 hover:text-white bg-transparent" 
-                                        : "border-gray-600 text-gray-300 hover:text-white bg-transparent"
-                                    }`}
+                                    className="border-blue-600 text-blue-300 hover:text-white hover:bg-blue-600/20 bg-transparent"
                                   >
                                     <a 
                                       href={article.url} 
@@ -1073,13 +1100,13 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                       rel="noopener noreferrer"
                                       onClick={() => {
                                         console.log(`User clicked read article: ${article.title}`)
-                                        console.log(`Article URL: ${article.url}`)
-                                        console.log(`Link type: ${article.isRssLink ? 'RSS (may redirect)' : 'Direct article'}`)
+                                        console.log(`Direct URL: ${article.url}`)
+                                        console.log(`Google position: ${article.serperData?.position}`)
                                       }}
-                                    >
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      {article.isRssLink ? "Read Article (via RSS)" : "Read Full Article"}
-                                    </a>
+                                  >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Read Full Article
+                                  </a>
                                   </Button>
                                 ) : (
                                   <Button
@@ -1094,31 +1121,58 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                 )}
                               </div>
 
-                              {/* ADD SOURCE WEBSITE LINK */}
+                              {/* ENHANCED SOURCE LINK */}
                               {article.sourceUrl && article.sourceUrl !== article.url && (
-                                <div className="mt-3 pt-3 border-t border-gray-700">
-                                  <Button
-                                    asChild
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-gray-300 p-0 h-auto"
-                                  >
-                                    <a 
-                                      href={article.sourceUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 text-xs"
+                                <div className="mt-4 pt-4 border-t border-gray-700">
+                                  <div className="flex items-center justify-between">
+                                    <Button
+                                      asChild
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-gray-500 hover:text-gray-300 p-0 h-auto"
                                     >
-                                      <Newspaper className="w-3 h-3" />
-                                      Visit {article.source}
-                                    </a>
-                                  </Button>
+                                      <a 
+                                        href={article.sourceUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-xs"
+                                      >
+                                        <Newspaper className="w-3 h-3" />
+                                        Visit {article.source}
+                                      </a>
+                                    </Button>
+                                    
+                                    {/* SHOW PERSONALIZATION SCORE */}
+                                    {article.personalizedFor && (
+                                      <div className="text-xs text-gray-500">
+                                        Personalized for: {article.personalizedFor}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
                           </div>
                         </motion.div>
                       ))}
+                    </div>
+
+                    {/* ENHANCED API STATUS FOOTER */}
+                    <div className="mt-8 p-6 bg-gradient-to-r from-blue-500/10 to-green-500/10 rounded-2xl border border-blue-500/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="w-6 h-6 text-green-500" />
+                          <div>
+                            <h4 className="text-white font-semibold">Powered by Google Serper API</h4>
+                            <p className="text-gray-400 text-sm">
+                              Real-time news data with direct article links • Updated: {new Date(brief.newsData.lastUpdated).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                          Live Data
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1167,40 +1221,13 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Search Summary */}
-                    <div className="mb-8 p-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl border border-purple-500/20">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Lightbulb className="w-6 h-6 text-purple-500" />
-                        <h3 className="text-xl font-bold text-white">Search Insights</h3>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Keywords:</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {brief.meetupData.searchSummary.keywords.map((keyword, i) => (
-                              <Badge key={i} variant="outline" className="border-purple-500/40 text-purple-400 bg-purple-500/10">
-                                {keyword}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Location:</span>
-                          <p className="text-white font-medium">{brief.meetupData.searchSummary.location}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Total Found:</span>
-                          <p className="text-white font-medium">{brief.meetupData.totalFound} events</p>
-                        </div>
-                      </div>
-                    </div>
-
                     <div className="space-y-8">
                       {filteredEvents.map((event, index) => {
                         const eventDateTime = formatEventDate(event.date)
+                        
                         return (
                           <motion.div
-                            key={event.id}
+                            key={index}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: index * 0.1 }}

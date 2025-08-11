@@ -4,6 +4,7 @@ require('dotenv').config()
 console.log('🔍 Environment Check:')
 console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Found' : '❌ Missing')
 console.log('APIFY_API_KEY:', process.env.APIFY_API_KEY ? '✅ Found' : '❌ Missing')
+console.log('SERPER_API_KEY:', process.env.SERPER_API_KEY ? '✅ Found' : '❌ Missing') // ADD THIS
 console.log('PORT:', process.env.PORT || 3001)
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development')
 
@@ -12,7 +13,7 @@ const cors = require("cors")
 const { generateBrief } = require("./services/briefService")
 const { scrapeBusinessData } = require("./services/scraperService")
 const { getNewsData } = require("./services/newsService")
-const { getMeetupEvents } = require("./services/meetupService") // ADD THIS
+const { getMeetupEvents } = require("./services/meetupService")
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -20,14 +21,23 @@ const PORT = process.env.PORT || 3001
 // Middleware
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL, "https://sleft-signals-mvp.vercel.app"]
-        : "http://localhost:3000",
+    origin: process.env.NODE_ENV === "production"
+      ? [process.env.FRONTEND_URL, "https://sleft-signals-mvp.vercel.app"]
+      : ["http://localhost:3000", "http://127.0.0.1:3000"], // ADD 127.0.0.1
     credentials: true,
   }),
 )
-app.use(express.json())
+app.use(express.json({ limit: '10mb' })) // Increase limit for large payloads
+
+// Add detailed request logging
+app.use((req, res, next) => {
+  console.log(`📝 ${req.method} ${req.path} - ${new Date().toISOString()}`)
+  console.log('Headers:', req.headers)
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Body:', JSON.stringify(req.body, null, 2))
+  }
+  next()
+})
 
 // Health check
 app.get("/", (req, res) => {
@@ -35,7 +45,16 @@ app.get("/", (req, res) => {
     status: "Sleft Signals API is running!",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    features: ["AI Strategy Briefs", "Lead Generation", "Market Analysis", "Industry Intelligence", "Networking Events"], // UPDATED
+    features: ["AI Strategy Briefs", "Lead Generation", "Market Analysis", "Industry Intelligence", "Networking Events"],
+    availableEndpoints: [
+      "GET /",
+      "GET /health", 
+      "POST /api/generate",
+      "GET /api/briefs/:id",
+      "POST /api/leads",
+      "POST /api/networking-events",
+      "GET /api/intelligence/:industry",
+    ]
   })
 })
 
@@ -43,54 +62,71 @@ app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() })
 })
 
-// Main generation endpoint - UPDATED TO INCLUDE MEETUP EVENTS
+// MAIN GENERATION ENDPOINT - ADD DETAILED LOGGING
 app.post("/api/generate", async (req, res) => {
+  console.log("🚀 /api/generate endpoint hit!")
+  console.log("Request body:", req.body)
+  
   try {
-    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword } = req.body // ADD networkingKeyword
+    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword } = req.body
 
     // Validate required fields
     if (!businessName || !websiteUrl || !industry || !location) {
+      console.log("❌ Missing required fields:", { businessName: !!businessName, websiteUrl: !!websiteUrl, industry: !!industry, location: !!location })
       return res.status(400).json({
         error: "Missing required fields",
         required: ["businessName", "websiteUrl", "industry", "location"],
+        received: { businessName: !!businessName, websiteUrl: !!websiteUrl, industry: !!industry, location: !!location }
       })
     }
 
     console.log(`🚀 Generating comprehensive brief for: ${businessName}`)
     console.log(`🎯 Networking keyword: ${networkingKeyword || 'Not specified'}`)
 
-    // PARALLEL EXECUTION OF ALL SERVICES
+    // PARALLEL EXECUTION WITH BETTER ERROR HANDLING
     console.log("📊 Phase 1: Parallel Data Collection")
+    
+    const businessDataPromise = scrapeBusinessData({
+      businessName,
+      websiteUrl,
+      industry,
+      location,
+      customGoal,
+      competitorAnalysis: true,
+    }).catch(error => {
+      console.warn("⚠️ ScraperService error:", error.message)
+      return { competitors: [], leads: [], marketAnalysis: {} }
+    })
+    
+    const newsDataPromise = getNewsData(industry, location, businessName, customGoal, networkingKeyword).catch(error => {
+      console.warn("⚠️ NewsService error:", error.message)
+      return { articles: [], categorized: {} }
+    })
+    
+    const meetupDataPromise = getMeetupEvents({
+      networkingKeyword,
+      location,
+      industry,
+      businessName,
+      customGoal
+    }).catch(error => {
+      console.warn("⚠️ MeetupService error:", error.message)
+      return { events: [] }
+    })
+
     const [businessData, newsData, meetupData] = await Promise.all([
-      // Phase 1: Market Intelligence & Lead Generation
-      scrapeBusinessData({
-        businessName,
-        websiteUrl,
-        industry,
-        location,
-        customGoal,
-        competitorAnalysis: true,
-      }),
-      
-      // Phase 2: Industry Intelligence Gathering
-      getNewsData(industry, location, businessName, customGoal),
-      
-      // Phase 3: Networking Events Collection - NEW!
-      getMeetupEvents({
-        networkingKeyword,
-        location,
-        industry,
-        businessName,
-        customGoal
-      })
+      businessDataPromise,
+      newsDataPromise, 
+      meetupDataPromise
     ])
 
     console.log("📊 Data Collection Results:")
+    console.log(`  • Competitors: ${businessData.competitors?.length || 0}`)
     console.log(`  • Leads Generated: ${businessData.leads?.length || 0}`)
     console.log(`  • News Articles: ${newsData.articles?.length || 0}`)
-    console.log(`  • Networking Events: ${meetupData.events?.length || 0}`) // NEW LOG
+    console.log(`  • Networking Events: ${meetupData.events?.length || 0}`)
 
-    // Step 4: Generate AI-powered strategic brief with ALL data
+    // Generate AI brief even with limited data
     console.log("🧠 Phase 4: AI Strategy Brief Generation")
     const brief = await generateBrief({
       businessName,
@@ -98,84 +134,46 @@ app.post("/api/generate", async (req, res) => {
       industry,
       location,
       customGoal,
+      networkingKeyword,
       businessData,
       newsData,
-      meetupData // ADD THIS TO BRIEF GENERATION
+      meetupData
     })
 
-    // Step 5: Generate unique ID and store enhanced data
+    // Generate unique ID and store enhanced data
     const briefId = require("nanoid").nanoid(10)
 
-    // Enhanced data structure for storage - UPDATED TO INCLUDE MEETUP DATA
-    const enhancedBriefData = {
+    // Store brief data
+    global.briefsStorage = global.briefsStorage || new Map()
+    global.briefsStorage.set(briefId, {
       id: briefId,
       businessName,
       content: brief,
-      businessData: {
-        ...businessData,
-        dataQuality: {
-          competitorsFound: businessData.competitors?.length || 0,
-          leadsGenerated: businessData.leads?.length || 0,
-          marketCoverage: businessData.totalPlaces || 0,
-          analysisDepth: "comprehensive",
-        },
-      },
-      newsData: {
-        ...newsData,
-        analysisMetrics: {
-          totalArticles: newsData.articles?.length || 0,
-          categoriesFound: Object.keys(newsData.categorized || {}).length,
-          averageRelevance: newsData.articles?.length
-            ? Math.round(
-                newsData.articles.reduce((sum, article) => sum + article.relevanceScore, 0) / newsData.articles.length,
-              )
-            : 0,
-        },
-      },
-      meetupData: { // ADD THIS NEW SECTION
-        ...meetupData,
-        networkingMetrics: {
-          totalEvents: meetupData.events?.length || 0,
-          upcomingEvents: meetupData.events?.filter(event => new Date(event.date) > new Date()).length || 0,
-          averageNetworkingValue: meetupData.events?.length
-            ? Math.round(
-                meetupData.events.reduce((sum, event) => sum + (event.networkingValue || 0), 0) / meetupData.events.length
-              )
-            : 0,
-          keywordUsed: networkingKeyword || 'industry-based',
-        },
-      },
+      businessData,
+      newsData,
+      meetupData,
       createdAt: new Date().toISOString(),
       metadata: {
         industry,
         location,
         websiteUrl,
         customGoal,
-        networkingKeyword, // ADD THIS
-        processingTime: Date.now(),
-        version: "2.1", // UPDATED VERSION
-        features: ["market-analysis", "lead-generation", "industry-intelligence", "ai-insights", "networking-events"], // UPDATED
-      },
-    }
-
-    // Store in enhanced format
-    global.briefsStorage = global.briefsStorage || new Map()
-    global.briefsStorage.set(briefId, enhancedBriefData)
+        networkingKeyword,
+        version: "2.2"
+      }
+    })
 
     console.log(`✅ Comprehensive brief generated successfully for: ${businessName}`)
-    console.log(`📈 Generated ${businessData.leads?.length || 0} high-quality leads`)
-    console.log(`📰 Analyzed ${newsData.articles?.length || 0} industry articles`)
-    console.log(`🤝 Found ${meetupData.events?.length || 0} networking opportunities`) // NEW LOG
 
     res.json({
       success: true,
       briefId,
-      message: "Comprehensive strategic brief with networking events generated successfully",
+      message: "Strategic brief generated successfully",
       summary: {
         competitorsAnalyzed: businessData.competitors?.length || 0,
         leadsGenerated: businessData.leads?.length || 0,
         newsArticles: newsData.articles?.length || 0,
-        networkingEvents: meetupData.events?.length || 0, // ADD THIS
+        networkingEvents: meetupData.events?.length || 0,
         marketSaturation: businessData.marketAnalysis?.saturation || "Unknown",
       },
     })
@@ -354,8 +352,9 @@ app.use((err, req, res, next) => {
   })
 })
 
-// 404 handler - FIXED: Remove the problematic wildcard route
+// 404 handler
 app.use((req, res) => {
+  console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`)
   res.status(404).json({
     error: "Route not found",
     message: `The route ${req.originalUrl} does not exist`,
@@ -365,7 +364,7 @@ app.use((req, res) => {
       "POST /api/generate",
       "GET /api/briefs/:id",
       "POST /api/leads",
-      "POST /api/networking-events", // NEW ENDPOINT
+      "POST /api/networking-events",
       "GET /api/intelligence/:industry",
     ],
   })
@@ -376,6 +375,7 @@ app.listen(PORT, () => {
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`)
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || "http://localhost:3000"}`)
   console.log(`✨ Features: AI Strategy Briefs | Lead Generation | Market Analysis | Industry Intelligence | Networking Events`)
+  console.log(`🔗 Available at: http://localhost:${PORT}`)
 })
 
 module.exports = app
