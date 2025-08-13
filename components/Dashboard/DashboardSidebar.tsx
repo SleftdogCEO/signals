@@ -81,7 +81,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
     { 
       name: 'Strategy Briefs', 
       icon: Briefcase, 
-      path: '/dashboard/briefs',
+      path: '/dashboard/my-briefs',
       description: 'AI-powered business insights',
       badge: 'New'
     },
