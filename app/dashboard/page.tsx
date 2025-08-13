@@ -1,83 +1,76 @@
 "use client"
 
 import DashboardLayout from "@/components/Dashboard/DashboardLayout"
-import { useAuth } from "@/context/AuthContext"
-import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion } from 'framer-motion'
-import { 
-  Plus,
-  Building2,
-  Calendar,
-  ArrowRight,
-  Sparkles,
-  TrendingUp,
-  Users,
-  Target,
-  Newspaper,
-  Star,
-  Clock
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import DashboardStats from "@/components/Dashboard/DashboardStats"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { motion } from 'framer-motion'
+import { ArrowRight, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { useState, useEffect } from "react"
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const [briefs, setBriefs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const [briefsCount, setBriefsCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
+  // Fetch user briefs count
   useEffect(() => {
-    const fetchBriefs = async () => {
-      if (user) {
-        const { data: userBriefs } = await supabase
-          .from('user_briefs')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(6)
-        
-        setBriefs(userBriefs || [])
+    const fetchBriefsCount = async () => {
+      if (!user?.id) {
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      try {
+        const response = await fetch(`/api/user-briefs/${user.id}?limit=1`)
+        const data = await response.json()
+        
+        if (data.success) {
+          setBriefsCount(data.pagination?.total || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching briefs count:", error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    fetchBriefs()
+    fetchBriefsCount()
   }, [user])
 
   const handleGenerateBrief = () => {
-    router.push('/generate')
+    router.push('/dashboard/generate')
   }
 
   const quickActions = [
     {
       title: "Generate Strategy Brief",
       description: "Create a comprehensive business analysis",
-      icon: <Target className="w-6 h-6" />,
+      icon: <Sparkles className="w-6 h-6" />,
       color: "from-yellow-500 to-yellow-600",
       action: () => router.push('/generate')
     },
     {
       title: "Market Research",
       description: "Analyze your competitive landscape",
-      icon: <TrendingUp className="w-6 h-6" />,
+      icon: <Sparkles className="w-6 h-6" />,
       color: "from-blue-500 to-blue-600",
       action: () => router.push('/market-research')
     },
     {
       title: "Network Builder",
       description: "Find strategic business connections",
-      icon: <Users className="w-6 h-6" />,
+      icon: <Sparkles className="w-6 h-6" />,
       color: "from-green-500 to-green-600",
       action: () => router.push('/network')
     },
     {
       title: "Industry News",
       description: "Stay updated with latest trends",
-      icon: <Newspaper className="w-6 h-6" />,
+      icon: <Sparkles className="w-6 h-6" />,
       color: "from-purple-500 to-purple-600",
       action: () => router.push('/news')
     }
@@ -104,26 +97,57 @@ export default function DashboardPage() {
             <p className="text-gray-300 text-lg mb-6">
               Your AI-powered business intelligence platform is ready to help you dominate your market.
             </p>
-            <Button 
-              onClick={handleGenerateBrief}
-              className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold px-8 py-4 text-lg"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="flex justify-center"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Generate New Brief
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+              <Link href="/dashboard/generate" passHref>
+                <Button
+                  className="relative flex items-center gap-4 px-10 py-5 text-lg font-bold rounded-full bg-black border-2 border-yellow-500 shadow-lg hover:border-yellow-400 hover:shadow-yellow-500/40 transition-all duration-300 group"
+                  style={{
+                    boxShadow: "0 0 40px 0 rgba(251,191,36,0.15), 0 2px 8px 0 rgba(0,0,0,0.15)"
+                  }}
+                >
+                  <span className="absolute -inset-1 rounded-full bg-yellow-500/10 blur-2xl opacity-40 group-hover:opacity-60 pointer-events-none"></span>
+                  <span className="relative flex items-center gap-2">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 ">
+                      <Sparkles className="w-6 h-6 text-white animate-pulse" />
+                    </span>
+                    <span className="bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500 bg-clip-text text-transparent font-extrabold text-xl ">
+                      Generate My Strategy Brief
+                    </span>
+                    <ArrowRight className="w-6 h-6 text-yellow-400 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Button>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <DashboardStats briefsCount={briefs.length} />
+      {/* Dashboard Stats */}
+      {!loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-8"
+        >
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-yellow-500" />
+            Your Analytics Overview
+          </h2>
+          <DashboardStats briefsCount={briefsCount} />
+        </motion.div>
+      )}
 
       {/* Quick Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
         className="mb-8"
       >
         <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
@@ -136,142 +160,36 @@ export default function DashboardPage() {
               key={action.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
+              transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
             >
-              <Card 
-                className="bg-gray-900/50 border-gray-800 hover:border-yellow-500/30 transition-all duration-300 cursor-pointer group"
+              <div 
+                className="bg-gray-900/50 border border-gray-800 hover:border-yellow-500/30 transition-all duration-300 cursor-pointer group rounded-2xl"
                 onClick={action.action}
               >
-                <CardContent className="p-6">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white`}>
-                    {action.icon}
-                  </div>
+                <div className={`w-full h-32 bg-gradient-to-r ${action.color} rounded-t-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
+                  {action.icon}
+                </div>
+                <div className="p-4">
                   <h3 className="font-semibold text-white mb-2">{action.title}</h3>
                   <p className="text-gray-400 text-sm">{action.description}</p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
       </motion.div>
 
-      {/* Recent Briefs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-      >
-        <Card className="bg-gray-900/50 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-white flex items-center gap-3">
-              <Building2 className="w-6 h-6 text-yellow-500" />
-              Recent Strategy Briefs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-2 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin" />
-              </div>
-            ) : briefs.length > 0 ? (
-              <div className="grid gap-6">
-                {briefs.map((brief, index) => (
-                  <motion.div
-                    key={brief.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="border border-gray-700 rounded-2xl p-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:border-yellow-500/30 transition-all duration-300 cursor-pointer group"
-                    onClick={() => router.push(`/briefs/${brief.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-white text-xl mb-2 group-hover:text-yellow-400 transition-colors">
-                          {brief.business_name}
-                        </h3>
-                        <div className="flex items-center gap-4 mb-3">
-                          {brief.metadata?.industry && (
-                            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm border border-blue-500/30">
-                              {brief.metadata.industry}
-                            </span>
-                          )}
-                          {brief.metadata?.location && (
-                            <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm border border-green-500/30">
-                              {brief.metadata.location}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-400 text-sm line-clamp-2">
-                          {brief.content?.slice(0, 150)}...
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-400 ml-4">
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm">
-                          {new Date(brief.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                      <div className="flex items-center gap-4">
-                        {brief.business_data?.leads && (
-                          <div className="flex items-center gap-1 text-green-400">
-                            <Users className="w-4 h-4" />
-                            <span className="text-sm">{brief.business_data.leads.length} leads</span>
-                          </div>
-                        )}
-                        {brief.business_data?.competitors && (
-                          <div className="flex items-center gap-1 text-blue-400">
-                            <Building2 className="w-4 h-4" />
-                            <span className="text-sm">{brief.business_data.competitors.length} competitors</span>
-                          </div>
-                        )}
-                        {brief.news_data?.articles && (
-                          <div className="flex items-center gap-1 text-purple-400">
-                            <Newspaper className="w-4 h-4" />
-                            <span className="text-sm">{brief.news_data.articles.length} articles</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10"
-                        >
-                          View Brief
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Building2 className="w-10 h-10 text-gray-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">No briefs yet</h3>
-                <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                  Generate your first strategy brief to unlock powerful business insights and growth opportunities.
-                </p>
-                <Button 
-                  onClick={handleGenerateBrief}
-                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold px-8 py-4"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Generate First Brief
-                  <Sparkles className="w-5 h-5 ml-2" />
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* Loading State */}
+      {loading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center py-12"
+        >
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+          <span className="ml-3 text-gray-400">Loading your analytics...</span>
+        </motion.div>
+      )}
     </DashboardLayout>
   )
 }

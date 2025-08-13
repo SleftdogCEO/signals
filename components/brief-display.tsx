@@ -166,7 +166,7 @@ interface BriefDisplayProps {
 export default function BriefDisplay({ brief }: BriefDisplayProps) {
   const router = useRouter()
   const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState<"brief" | "leads" | "competitors" | "news" | "events">("brief")
+  const [activeTab, setActiveTab] = useState<"brief" | "leads" | "network" | "news" | "events" | "competitors">("brief")
   const [selectedLeadType, setSelectedLeadType] = useState<string>("all")
   const [selectedNewsCategory, setSelectedNewsCategory] = useState<string>("all")
   const [selectedEventCategory, setSelectedEventCategory] = useState<string>("all")
@@ -345,6 +345,16 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Enhanced Header */}
+        <div className="flex justify-start mb-8">
+          <Button
+            variant="outline"
+            className="border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 px-6 py-3 rounded-full flex items-center gap-2 font-semibold bg-black/60 backdrop-blur-sm shadow-lg transition-all"
+            onClick={() => router.push("/dashboard")}
+          >
+            <ArrowRight className="w-5 h-5 rotate-180 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -443,7 +453,21 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                   <Badge className="bg-green-500 text-white text-xs">{brief.businessData.leads.length}</Badge>
                 </button>
               )}
-              {brief.businessData && (
+              {brief.meetupData && brief.meetupData.events.length > 0 && (
+                <button
+                  onClick={() => setActiveTab("network")} // Changed from "competitors" to "network"
+                  className={`px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 flex items-center gap-3 ${
+                    activeTab === "network" // Changed from "competitors" to "network"
+                      ? "bg-gradient-to-r from-yellow-500 to-yellow-600 text-black shadow-lg"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                  }`}
+                >
+                  <Users2 className="w-5 h-5" /> {/* Changed icon from BarChart3 to Users2 */}
+                  Network Opportunities
+                  <Badge className="bg-purple-500 text-white text-xs">{brief.meetupData.events.length}</Badge>
+                </button>
+              )}
+              {brief.businessData && brief.businessData.competitors.length > 0 && (
                 <button
                   onClick={() => setActiveTab("competitors")}
                   className={`px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 flex items-center gap-3 ${
@@ -453,7 +477,8 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                   }`}
                 >
                   <BarChart3 className="w-5 h-5" />
-                  Local Network Opportunities
+                  Market Analysis
+                  <Badge className="bg-orange-500 text-white text-xs">{brief.businessData.competitors.length}</Badge>
                 </button>
               )}
               {brief.newsData && brief.newsData.articles.length > 0 && (
@@ -470,7 +495,7 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                   <Badge className="bg-blue-500 text-white text-xs">{brief.newsData.articles.length}</Badge>
                 </button>
               )}
-              {brief.meetupData && brief.meetupData.events.length > 0 && (
+              {/* {brief.meetupData && brief.meetupData.events.length > 0 && (
                 <button
                   onClick={() => setActiveTab("events")}
                   className={`px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 flex items-center gap-3 ${
@@ -483,7 +508,7 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                   Networking Events
                   <Badge className="bg-purple-500 text-white text-xs">{brief.meetupData.events.length}</Badge>
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </motion.div>
@@ -707,6 +732,271 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                           )}
                         </motion.div>
                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {activeTab === "network" && brief.meetupData && brief.meetupData.events.length > 0 && (
+              <motion.div
+                key="network"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border-gray-700 backdrop-blur-sm shadow-2xl">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                        <Users2 className="w-8 h-8 text-purple-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-3xl font-bold text-white">Strategic Network Opportunities</CardTitle>
+                        <p className="text-gray-400 text-lg">
+                          High-value networking events powered by Meetup data to grow your business connections
+                        </p>
+                        
+                        {/* Enhanced metrics display */}
+                        <div className="flex items-center gap-6 mt-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              Meetup.com Data
+                            </Badge>
+                          </div>
+                          <span className="text-green-400">
+                            ✓ {brief.meetupData.events.length} Events Found
+                          </span>
+                          <span className="text-blue-400">
+                            📍 {brief.meetupData.searchSummary?.location}
+                          </span>
+                          <span className="text-purple-400">
+                            🎯 {brief.meetupData.searchSummary?.keywords?.join(', ')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Network Opportunities Summary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                      <div className="text-center p-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl border border-purple-500/30">
+                        <div className="text-5xl font-bold text-purple-500 mb-3">
+                          {brief.meetupData.events.length}
+                        </div>
+                        <div className="text-gray-300 font-medium">Available Events</div>
+                      </div>
+
+                      <div className="text-center p-8 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-3xl border border-blue-500/30">
+                        <div className="text-5xl font-bold text-blue-500 mb-3">
+                          {brief.meetupData.events.filter(e => e.type === "PHYSICAL").length}
+                        </div>
+                        <div className="text-gray-300 font-medium">In-Person Events</div>
+                      </div>
+
+                      <div className="text-center p-8 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-3xl border border-green-500/30">
+                        <div className="text-5xl font-bold text-green-500 mb-3">
+                          {brief.meetupData.events.filter(e => e.type === "ONLINE").length}
+                        </div>
+                        <div className="text-gray-300 font-medium">Online Events</div>
+                      </div>
+
+                      <div className="text-center p-8 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-3xl border border-yellow-500/30">
+                        <div className="text-5xl font-bold text-yellow-500 mb-3">
+                          {Math.round(brief.meetupData.events.reduce((sum, e) => sum + e.relevanceScore, 0) / brief.meetupData.events.length)}%
+                        </div>
+                        <div className="text-gray-300 font-medium">Avg Relevance</div>
+                      </div>
+                    </div>
+
+                    <h3 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+                      <Users2 className="w-8 h-8 text-purple-500" />
+                      Top Networking Opportunities for {brief.businessName}
+                    </h3>
+
+                    <div className="space-y-8">
+                      {brief.meetupData.events.slice(0, 6).map((event, index) => {
+                        const eventDateTime = formatEventDate(event.date)
+                        
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: index * 0.1 }}
+                            className="border border-gray-700 rounded-3xl p-8 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:border-purple-500/30 transition-all duration-300 group"
+                          >
+                            <div className="flex justify-between items-start mb-6">
+                              <div className="flex-1">
+                                <h4 className="font-bold text-white text-2xl mb-3 group-hover:text-purple-400 transition-colors">
+                                  {event.title}
+                                </h4>
+                                <div className="flex items-center gap-4 mb-4">
+                                  <Badge variant="outline" className="border-purple-500/40 text-purple-400 bg-purple-500/10">
+                                    {event.category}
+                                  </Badge>
+                                  <Badge variant="outline" className={getEventTypeColor(event.type)}>
+                                    {getEventTypeIcon(event.type)}
+                                    <span className="ml-1">{event.type === "PHYSICAL" ? "In-Person" : "Online"}</span>
+                                  </Badge>
+                                  <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                    {event.relevanceScore}% Match
+                                  </Badge>
+                                </div>
+                                <p className="text-gray-300 mb-6 leading-relaxed">{event.description}</p>
+                              </div>
+                            </div>
+
+                            {/* Event Details Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                                  <Calendar className="w-5 h-5 text-blue-500" />
+                                </div>
+                                <div>
+                                  <p className="text-white font-medium">{eventDateTime.dayOfWeek}</p>
+                                  <p className="text-gray-400 text-sm">{eventDateTime.date}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                                  <Clock className="w-5 h-5 text-green-500" />
+                                </div>
+                                <div>
+                                  <p className="text-white font-medium">{eventDateTime.time}</p>
+                                  <p className="text-gray-400 text-sm">Local Time</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+                                  <Users className="w-5 h-5 text-orange-500" />
+                                </div>
+                                <div>
+                                  <p className="text-white font-medium">{event.actualAttendees}/{event.maxAttendees}</p>
+                                  <p className="text-gray-400 text-sm">Attendees</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Location and Organizer */}
+                            <div className="flex items-start gap-3 mb-6">
+                              <MapPin className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
+                              <div>
+                                <p className="text-white font-medium">{event.organizer}</p>
+                                <p className="text-gray-400 text-sm">{event.address}</p>
+                              </div>
+                            </div>
+
+                            {/* Personalized Reason */}
+                            {event.personalizedReason && (
+                              <div className="bg-gray-800/50 rounded-2xl p-6 mb-6">
+                                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                                  <Target className="w-4 h-4 text-purple-500" />
+                                  Why This Event is Perfect for {brief.businessName}
+                                </h4>
+                                <p className="text-gray-300 leading-relaxed">{event.personalizedReason}</p>
+                              </div>
+                            )}
+
+                            {/* Action Steps */}
+                            {event.actionableSteps && event.actionableSteps.length > 0 && (
+                              <div className="bg-purple-500/10 rounded-2xl p-6 mb-6 border border-purple-500/20">
+                                <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                                  <Rocket className="w-4 h-4 text-purple-500" />
+                                  Strategic Action Steps
+                                </h4>
+                                <div className="space-y-2">
+                                  {event.actionableSteps.map((step, i) => (
+                                    <div key={i} className="flex items-start gap-3">
+                                      <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span className="text-purple-400 text-sm font-bold">{i + 1}</span>
+                                      </div>
+                                      <p className="text-gray-300">{step}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <Separator className="my-6 bg-gray-700" />
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-between items-center">
+                              <div className="flex gap-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
+                                >
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Add to Calendar
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
+                                >
+                                  <Users className="w-4 h-4 mr-2" />
+                                  View Details
+                                </Button>
+                              </div>
+                              {event.url && event.url !== "#" ? (
+                                <Button
+                                  asChild
+                                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+                                >
+                                  <a 
+                                    href={event.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    onClick={() => {
+                                      console.log(`User clicked network event: ${event.title} from meetupService`)
+                                    }}
+                                  >
+                                    <Ticket className="w-4 h-4 mr-2" />
+                                    Join Event
+                                    <ExternalLink className="w-4 h-4 ml-2" />
+                                  </a>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
+                                  onClick={() => {
+                                    window.open(`https://www.meetup.com/find/?keywords=${encodeURIComponent(event.title)}`, '_blank')
+                                  }}
+                                >
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  Find on Meetup
+                                </Button>
+                              )}
+                            </div>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Data Source Attribution */}
+                    <div className="mt-8 p-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl border border-purple-500/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Users2 className="w-6 h-6 text-purple-500" />
+                          <div>
+                            <h4 className="text-white font-semibold">Powered by Meetup Network Intelligence</h4>
+                            <p className="text-gray-400 text-sm">
+                              Live networking data from {brief.meetupData.searchSummary?.keywords?.length || 0} targeted searches • 
+                              Updated: {new Date(brief.meetupData.lastUpdated).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                          Meetup Data
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1357,10 +1647,6 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                                 <Button
                                   asChild
                                   className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
-                                  onClick={() => {
-                                    // Optional: Track click analytics
-                                    console.log(`User clicked event: ${event.title}`)
-                                  }}
                                 >
                                   <a 
                                     href={event.url} 

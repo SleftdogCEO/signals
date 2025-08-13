@@ -40,9 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
         setLoading(false)
-        
-        // Handle redirect after successful auth
-        if (user && pathname !== '/dashboard' && !pathname.startsWith('/dashboard/')) {
+
+        // Only redirect if NOT already on a dashboard page
+        if (user && !pathname.startsWith('/dashboard')) {
           const redirectPath = sessionStorage.getItem('redirectAfterAuth')
           if (redirectPath) {
             sessionStorage.removeItem('redirectAfterAuth')
@@ -62,14 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email)
-        
+
         setUser(session?.user ?? null)
         setLoading(false)
-        
-        // Handle successful sign in
-        if (event === 'SIGNED_IN' && session?.user) {
+
+        // Only redirect if NOT already on a dashboard page
+        if (event === 'SIGNED_IN' && session?.user && !pathname.startsWith('/dashboard')) {
           console.log('User signed in, redirecting to dashboard')
-          
           const redirectPath = sessionStorage.getItem('redirectAfterAuth')
           if (redirectPath) {
             sessionStorage.removeItem('redirectAfterAuth')
@@ -78,8 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             router.push('/dashboard')
           }
         }
-        
-        // Handle sign out
+
         if (event === 'SIGNED_OUT') {
           console.log('User signed out, redirecting to home')
           router.push('/')

@@ -9,7 +9,7 @@ const client = new ApifyClient({
 let dailyUsage = 0
 const DAILY_LIMIT = 100 // Increased for Serper API
 const MAX_LEADS_PER_REQUEST = 5 // Top 5 potential partners
-const MAX_COMPETITORS_PER_REQUEST = 5 // Top 5 local network opportunities
+const MAX_COMPETITORS_PER_REQUEST = 0 // No competitors needed - we only show partners
 
 async function scrapeBusinessData({ businessName, websiteUrl, industry, location, customGoal }) {
   try {
@@ -361,7 +361,7 @@ function processPersonalizedData(allResults, userProfile) {
   
   const processedData = {
     totalPlaces: uniqueResults.length,
-    competitors: [],
+    competitors: [], // Empty array - we don't need competitors
     leads: [],
     marketAnalysis: {
       averageRating: 0,
@@ -383,36 +383,10 @@ function processPersonalizedData(allResults, userProfile) {
     }
   }
 
-  // Process competitors (Local Network Opportunities)
-  processedData.competitors = uniqueResults
-    .filter(item => 
-      item.title && 
-      item.searchStrategy === 'direct_competitors' &&
-      !isOwnBusiness(item.title, businessName)
-    )
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    .slice(0, MAX_COMPETITORS_PER_REQUEST)
-    .map(item => ({
-      title: item.title,
-      address: item.address || "Address not available",
-      rating: item.rating || 0,
-      reviewsCount: item.reviewsCount || 0,
-      category: item.category || industry,
-      website: item.website || null,
-      phone: item.phone || null,
-      location: item.location || null,
-      priceLevel: determinePriceLevel(item),
-      openingHours: item.openingHours || null,
-      imageUrl: item.imageUrl || null,
-      placeId: item.placeId || null,
-      googleMapsUrl: item.googleMapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(item.title)}`,
-      competitorType: "Local Network Opportunity",
-      neighborhood: extractNeighborhood(item.address),
-      additionalInfo: null,
-      types: item.types || []
-    }))
+  // Skip competitors processing - we only need potential partners
+  processedData.competitors = []
 
-  // Generate leads (Potential Partners)
+  // Generate leads (Potential Partners) - Focus only on this
   const potentialLeads = uniqueResults
     .filter(item => 
       item.title && 
@@ -462,7 +436,7 @@ function processPersonalizedData(allResults, userProfile) {
 
   processedData.leads = potentialLeads
 
-  console.log(`✅ Generated ${processedData.competitors.length} local network opportunities and ${processedData.leads.length} potential partners`)
+  console.log(`✅ Generated ${processedData.leads.length} potential partners (no competitors needed)`)
 
   // Enhanced market analysis
   const validRatings = uniqueResults.filter(item => (item.rating) > 0)

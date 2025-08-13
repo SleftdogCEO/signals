@@ -1,7 +1,8 @@
 "use client"
 
+import { useAuth } from "@/context/AuthContext"
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,6 +54,15 @@ const steps = [
 ]
 
 export default function GeneratePage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth")
+    }
+  }, [user, loading, router])
+
   const [formData, setFormData] = useState({
     businessName: "",
     websiteUrl: "",
@@ -63,22 +73,33 @@ export default function GeneratePage() {
   })
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState("")
-  const router = useRouter()
+  const [isGenerating, setIsGenerating] = useState(false) // New state for generation
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    
+    if (!user?.id) {
+      setError("Please log in to generate a brief")
+      return
+    }
+
     setCurrentStep(2)
 
     try {
-      console.log("Submitting form data:", formData)
-      // Use the frontend API route which will proxy to backend
+      const formDataWithUser = {
+        ...formData,
+        userId: user.id // CRITICAL: Include user ID
+      }
+
+      console.log("Submitting with userId:", user.id)
+      
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formDataWithUser),
       })
 
       const data = await response.json()
@@ -87,15 +108,55 @@ export default function GeneratePage() {
         throw new Error(data.error || "Failed to generate brief")
       }
 
+      if (!data.briefId) {
+        throw new Error("Brief generation failed - no ID returned")
+      }
+
       setCurrentStep(3)
       
-      // Redirect to the correct route
-      router.push(`/briefs/${data.briefId}`)
+      setTimeout(() => {
+        router.push(`/dashboard/briefs/${data.briefId}`)
+      }, 2000)
       
     } catch (error) {
       console.error("Error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
       setCurrentStep(1)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!user?.id) {
+      console.error('User not authenticated')
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      const response = await fetch(`/api/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          userId: user.id // Include user ID
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success && data.briefId) {
+        // Redirect to the saved brief
+        router.push(`/dashboard/briefs/${data.briefId}`)
+      } else {
+        console.error('Generation failed:', data.error)
+      }
+      
+    } catch (error) {
+      console.error('Error generating brief:', error)
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -119,7 +180,7 @@ export default function GeneratePage() {
       <nav className="relative z-10 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
               <ArrowLeft className="w-5 h-5 text-yellow-500 group-hover:-translate-x-1 transition-transform" />
               <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-black" />
@@ -341,11 +402,11 @@ export default function GeneratePage() {
                           id="networkingKeyword"
                           value={formData.networkingKeyword}
                           onChange={(e) => handleInputChange("networkingKeyword", e.target.value)}
-                          placeholder="e.g., entrepreneurship, AI, marketing, networking..."
+                          placeholder="e.g., entrepreneurship, javascript, marketing, fitness..."
                           className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-400 focus:border-purple-500 transition-colors"
                         />
                         <p className="text-sm text-gray-500">
-                          Find relevant networking events and meetups in your area
+                          Find relevant networking events, meetups, and professional gatherings in your area
                         </p>
                       </div>
 

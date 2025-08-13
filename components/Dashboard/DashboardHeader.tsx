@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { Bell, Search, Settings as SettingsIcon, ChevronDown, Menu, Sparkles } from 'lucide-react';
+import { Bell, Search, Settings as SettingsIcon, ChevronDown, Menu, Sparkles, FileText } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +88,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10" />
+              
+              {/* ADD: My Briefs menu item */}
+              <DropdownMenuItem 
+                className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
+                onClick={() => router.push('/dashboard/my-briefs')}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                My Saved Briefs
+              </DropdownMenuItem>
+              
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
                 onClick={() => router.push('/dashboard/settings')}
@@ -219,6 +229,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10" />
+              
+              {/* ADD: My Briefs menu item */}
+              <DropdownMenuItem 
+                className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
+                onClick={() => router.push('/dashboard/my-briefs')}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                My Saved Briefs
+              </DropdownMenuItem>
+              
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
                 onClick={() => router.push('/dashboard/settings')}

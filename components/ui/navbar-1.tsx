@@ -60,6 +60,7 @@ export function Navbar1() {
         </nav>
 
         {/* Desktop CTA */}
+        <Link href="/auth" passHref>
         <motion.button
           onClick={() => scrollTo("generate")}
           className="hidden md:inline-flex items-center justify-center px-5 py-2 text-sm text-black bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full hover:from-yellow-600 hover:to-yellow-700 transition-all font-semibold"
@@ -70,6 +71,7 @@ export function Navbar1() {
         >
           Get Started
         </motion.button>
+        </Link>
 
         {/* Mobile menu button */}
         <motion.button className="md:hidden text-yellow-500" onClick={() => setOpen(true)} whileTap={{ scale: 0.9 }}>
@@ -110,6 +112,7 @@ export function Navbar1() {
                 </motion.button>
               ))}
 
+              <Link href="/auth" passHref>
               <motion.button
                 onClick={() => scrollTo("generate")}
                 initial={{ opacity: 0, y: 20 }}
@@ -120,6 +123,7 @@ export function Navbar1() {
               >
                 Get Started
               </motion.button>
+              </Link>
             </div>
           </motion.aside>
         )}

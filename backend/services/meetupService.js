@@ -48,21 +48,28 @@ async function getMeetupEvents({ networkingKeyword, location, industry, business
     // Execute searches for each keyword
     for (const keyword of searchKeywords.slice(0, 2)) {
       try {
-        // UPDATED: Try different actor or different parameters
+        // PROPER INPUT FORMAT for filip_cicvarek/meetup-scraper
         const input = {
-          searchQueries: [keyword], // Array format
-          location: `${locationData.city}, ${locationData.state}, US`,
-          maxEvents: 15,
-          startDate: new Date().toISOString(),
-          endDate: getDateDaysFromNow(90),
-          includeDescription: true,
-          includeOrganizer: true
+          searchKeyword: keyword,
+          city: locationData.city,
+          state: locationData.state || "", // Optional for non-US locations
+          country: getCountryCode(locationData.country || "us"), // 2-letter country code
+          maxResults: 15,
+          startDateRange: new Date().toISOString(), // Current date in ISO format
+          scrapeEventName: true,
+          scrapeEventDescription: true,
+          scrapeEventType: true,
+          scrapeEventDate: true,
+          scrapeEventAddress: true,
+          scrapeEventUrl: true,
+          scrapeHostedByGroup: true,
+          scrapeMaxAttendees: true,
+          scrapeActualAttendeesCount: true
         }
 
         console.log(`🔍 Executing meetup search for: ${keyword}`)
-        console.log(`📍 Location query: ${input.location}`)
         
-        // Try the updated actor
+        // Use the correct actor ID: filip_cicvarek/meetup-scraper
         const run = await client.actor("filip_cicvarek/meetup-scraper").call(input, {
           timeout: 120000, // 2 minute timeout
         })
@@ -89,36 +96,16 @@ async function getMeetupEvents({ networkingKeyword, location, industry, business
         }
         
         dailyMeetupUsage++
-        
         // Small delay between searches
         await new Promise(resolve => setTimeout(resolve, 3000))
         
       } catch (error) {
         console.error(`❌ Error searching for keyword "${keyword}":`, error.message)
         
-        // If actor not found, try alternative approach
-        if (error.message.includes('not found') || error.message.includes('does not exist')) {
-          console.log(`🔄 Trying alternative meetup search for: ${keyword}`)
-          
-          // Alternative: Use a different actor or generate mock data
-          try {
-            // Try different actor ID
-            const altInput = {
-              query: keyword,
-              location: locationData.city,
-              maxResults: 10
-            }
-            
-            // You might need to find a different working meetup actor
-            // For now, let's generate mock data
-            console.log(`📝 Using enhanced mock data for keyword: ${keyword}`)
-            const mockEvents = generateKeywordSpecificMockEvents(keyword, locationData, { networkingKeyword, industry, businessName, customGoal })
-            allEvents.push(...mockEvents)
-            
-          } catch (altError) {
-            console.error(`❌ Alternative search also failed for "${keyword}":`, altError.message)
-          }
-        }
+        // If actor fails, generate enhanced mock data
+        console.log(`📝 Using enhanced mock data for keyword: ${keyword}`)
+        const mockEvents = generateKeywordSpecificMockEvents(keyword, locationData, { networkingKeyword, industry, businessName, customGoal })
+        allEvents.push(...mockEvents)
       }
     }
 
@@ -144,27 +131,6 @@ async function getMeetupEvents({ networkingKeyword, location, industry, business
   }
 }
 
-// ADD: Function to generate keyword-specific mock events when API fails
-function generateKeywordSpecificMockEvents(keyword, locationData, userProfile) {
-  const { networkingKeyword, industry, businessName, customGoal } = userProfile
-  
-  return [
-    {
-      eventId: `mock_${keyword}_${Date.now()}`,
-      eventName: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Professional Meetup`,
-      eventDescription: `Join fellow professionals interested in ${keyword} for networking and knowledge sharing. Perfect for ${businessName || industry} professionals.`,
-      date: getDateDaysFromNow(Math.floor(Math.random() * 30) + 7),
-      eventType: Math.random() > 0.5 ? "IN_PERSON" : "ONLINE",
-      address: `Professional Center, ${locationData.city}, ${locationData.state}`,
-      eventUrl: `https://www.meetup.com/${keyword.replace(/\s+/g, '-').toLowerCase()}-professionals`,
-      organizedByGroup: `${locationData.city} ${keyword} Network`,
-      maxAttendees: Math.floor(Math.random() * 100) + 20,
-      actualAttendees: Math.floor(Math.random() * 50) + 10,
-      searchKeyword: keyword
-    }
-  ]
-}
-
 function parseLocationForMeetup(location) {
   console.log(`🔍 Parsing location: "${location}"`)
   
@@ -172,8 +138,8 @@ function parseLocationForMeetup(location) {
   const locationParts = location.split(',').map(part => part.trim())
   
   let city = "miami" // Default fallback
-  let state = "fl"   // Default fallback
-  let country = "us"
+  let state = ""     // Empty for non-US locations
+  let country = "us" // Default to US
   
   // Find the city (usually the part without numbers and without state abbreviations)
   for (const part of locationParts) {
@@ -206,21 +172,44 @@ function parseLocationForMeetup(location) {
     }
   }
   
-  // Find state abbreviation
+  // Find state abbreviation (only for US/Canada)
   const stateMatch = location.match(/\b[A-Z]{2}\b/)
   if (stateMatch) {
     state = stateMatch[0].toLowerCase()
   }
   
+  // Determine country
+  if (location.toLowerCase().includes('canada') || location.toLowerCase().includes('ca,')) {
+    country = "ca"
+  } else if (location.toLowerCase().includes('uk') || location.toLowerCase().includes('united kingdom')) {
+    country = "uk"
+  }
+  
   const result = {
     city: city,
-    state: state,
+    state: state, // Required for US/Canada, empty for others
     country: country,
     original: location
   }
   
   console.log(`✅ Parsed location:`, result)
   return result
+}
+
+function getCountryCode(countryInput) {
+  const countryMap = {
+    "us": "us",
+    "usa": "us", 
+    "united states": "us",
+    "ca": "ca",
+    "canada": "ca",
+    "uk": "uk",
+    "united kingdom": "uk",
+    "gb": "uk"
+  }
+  
+  const normalized = countryInput.toLowerCase()
+  return countryMap[normalized] || "us" // Default to US
 }
 
 function generatePersonalizedMeetupKeywords({ networkingKeyword, industry, businessName, customGoal }) {
@@ -324,8 +313,8 @@ function calculateEventRelevance(event, userProfile) {
   score += Math.min(industryMatches, 30)
   
   // Event type preference (15 points)
-  const eventType = event.eventType || event.type || "IN_PERSON"
-  if (eventType === "IN_PERSON") score += 15
+  const eventType = event.eventType || event.type || "PHYSICAL"
+  if (eventType === "PHYSICAL") score += 15
   else if (eventType === "ONLINE") score += 10
   
   // Timing relevance (10 points)
@@ -349,6 +338,53 @@ function calculateEventRelevance(event, userProfile) {
   return Math.min(score, 100)
 }
 
+function removeDuplicateEvents(events) {
+  const seen = new Set()
+  return events.filter(event => {
+    const key = `${event.eventName || event.name}-${event.date}-${event.organizedByGroup || event.organizer}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+function generateEventId() {
+  return `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+function cleanAndValidateUrl(url) {
+  if (!url || url === "#") return "#"
+  try {
+    new URL(url)
+    return url
+  } catch {
+    return "#"
+  }
+}
+
+function categorizeEvent(event, industry) {
+  const eventName = (event.eventName || "").toLowerCase()
+  const eventDescription = (event.eventDescription || "").toLowerCase()
+  const eventText = `${eventName} ${eventDescription}`
+  
+  if (eventText.includes("networking")) return "Networking"
+  if (eventText.includes("conference") || eventText.includes("summit")) return "Conference"
+  if (eventText.includes("workshop") || eventText.includes("training")) return "Workshop"
+  if (eventText.includes("meetup") || eventText.includes("social")) return "Meetup"
+  if (eventText.includes("startup") || eventText.includes("entrepreneur")) return "Startup"
+  
+  return industry || "Business"
+}
+
+function getDateDaysFromNow(days) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString()
+}
+
+// ADD: The missing processPersonalizedEvents function
 function processPersonalizedEvents(allEvents, userProfile) {
   const { networkingKeyword, location, industry, businessName, customGoal } = userProfile
   
@@ -359,38 +395,43 @@ function processPersonalizedEvents(allEvents, userProfile) {
     return new Date(event.date) > new Date()
   })
   
-  // Process and enhance events
+  // Process and enhance events with proper field mapping
   const processedEvents = futureEvents
     .map(event => ({
       id: event.eventId || generateEventId(),
       title: event.eventName || "Networking Event",
       description: event.eventDescription || "Professional networking opportunity",
       date: event.date || new Date().toISOString(),
-      type: event.eventType || "IN_PERSON",
+      type: event.eventType || "PHYSICAL",
       address: event.address || event.eventAddress || "Location TBD",
-      url: cleanAndValidateUrl(event.eventUrl), // IMPROVED URL HANDLING
+      url: cleanAndValidateUrl(event.eventUrl),
       organizer: event.organizedByGroup || event.hostedByGroup || "Professional Group",
       maxAttendees: event.maxAttendees || 0,
       actualAttendees: event.actualAttendees || event.actualAttendeesCount || 0,
-      relevanceScore: event.relevanceScore || 0,
+      relevanceScore: event.relevanceScore || calculateEventRelevance(event, userProfile),
       searchKeyword: event.searchKeyword || networkingKeyword || industry,
       category: categorizeEvent(event, industry),
-      networkingValue: calculateNetworkingValue(event, userProfile),
       personalizedReason: generatePersonalizedEventReason(event, userProfile),
       actionableSteps: generateEventActionSteps(event, businessName)
     }))
-    .filter(event => event.relevanceScore >= 20) // Filter high-relevance events
+    .filter(event => event.relevanceScore >= 20)
     .sort((a, b) => {
-      // Sort by relevance, then by date
       if (a.relevanceScore !== b.relevanceScore) {
         return b.relevanceScore - a.relevanceScore
       }
       return new Date(a.date) - new Date(b.date)
     })
-    .slice(0, 12) // Limit to top 12 events
+    .slice(0, 12)
 
   // Categorize events
-  const categorizedEvents = categorizeEventsByType(processedEvents)
+  const categorizedEvents = {}
+  processedEvents.forEach(event => {
+    const category = event.category || "General"
+    if (!categorizedEvents[category]) {
+      categorizedEvents[category] = []
+    }
+    categorizedEvents[category].push(event)
+  })
   
   return {
     events: processedEvents,
@@ -406,261 +447,104 @@ function processPersonalizedEvents(allEvents, userProfile) {
   }
 }
 
-function cleanAndValidateUrl(url) {
-  if (!url || url === "#" || url === "") {
-    return "#" // Fallback for missing URLs
-  }
-  
-  // Ensure URL has protocol
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url
-  }
-  
-  // Validate URL format
-  try {
-    new URL(url)
-    return url
-  } catch {
-    return "#" // Invalid URL, use fallback
-  }
-}
-
-function categorizeEvent(event, industry) {
-  const eventText = `${event.eventName || ''} ${event.eventDescription || ''}`.toLowerCase()
-  
-  if (eventText.includes('startup') || eventText.includes('entrepreneur')) return "Startup & Entrepreneurship"
-  if (eventText.includes('invest') || eventText.includes('funding')) return "Investment & Funding"
-  if (eventText.includes('tech') || eventText.includes('digital') || eventText.includes('ai')) return "Technology & Innovation"
-  if (eventText.includes('market') || eventText.includes('sales')) return "Marketing & Sales"
-  if (eventText.includes('leadership') || eventText.includes('manage')) return "Leadership & Management"
-  if (eventText.includes('women') || eventText.includes('diversity')) return "Diversity & Inclusion"
-  
-  return "Professional Networking"
-}
-
-function calculateNetworkingValue(event, userProfile) {
-  let value = 1000 // Base value
-  
-  // Event size multiplier
-  if (event.maxAttendees >= 100) value *= 2.5
-  else if (event.maxAttendees >= 50) value *= 2.0
-  else if (event.maxAttendees >= 20) value *= 1.5
-  
-  // Event type multiplier
-  if (event.eventType === "IN_PERSON") value *= 1.8
-  else value *= 1.2
-  
-  // Relevance multiplier
-  value *= (1 + event.relevanceScore / 100)
-  
-  return Math.round(value)
-}
-
 function generatePersonalizedEventReason(event, userProfile) {
-  const { businessName, industry, networkingKeyword, customGoal } = userProfile
-  const eventTitle = event.eventName || "this event"
+  const { businessName, industry, customGoal, networkingKeyword } = userProfile
   
-  let reason = `Perfect networking opportunity for ${businessName || `your ${industry} business`}. `
+  const reasons = []
   
-  if (networkingKeyword && event.eventName && event.eventName.toLowerCase().includes(networkingKeyword.toLowerCase())) {
-    reason += `This event directly aligns with your interest in ${networkingKeyword}. `
+  if (networkingKeyword && (event.title || "").toLowerCase().includes(networkingKeyword.toLowerCase())) {
+    reasons.push(`This event focuses on ${networkingKeyword}, directly aligning with your networking interests.`)
+  }
+  
+  if (customGoal && customGoal.includes("collaborations")) {
+    reasons.push(`Perfect opportunity to find potential collaboration partners for ${businessName}.`)
   }
   
   if (event.maxAttendees >= 50) {
-    reason += `With ${event.maxAttendees} attendees, you'll have numerous opportunities to make valuable connections. `
+    reasons.push(`With ${event.maxAttendees} attendees, this provides excellent networking scale for business growth.`)
   }
   
-  if (event.eventType === "IN_PERSON") {
-    reason += "In-person format allows for deeper, more meaningful networking conversations."
-  } else {
-    reason += "Online format makes it convenient to attend and expand your network globally."
+  if (event.type === "PHYSICAL") {
+    reasons.push(`In-person events offer stronger relationship-building opportunities for ${industry} professionals.`)
   }
   
-  return reason
+  return reasons.length > 0 
+    ? reasons.join(" ") 
+    : `This event offers valuable networking opportunities for ${businessName} in the ${industry} industry.`
 }
 
 function generateEventActionSteps(event, businessName) {
-  const steps = []
-  
-  // Registration step
-  if (event.eventUrl && event.eventUrl !== "#") {
-    steps.push(`Register for the event at ${event.eventUrl}`)
-  } else {
-    steps.push("Find and register for this event on Meetup.com")
-  }
-  
-  // Preparation steps
-  steps.push(`Prepare a brief elevator pitch about ${businessName || "your business"}`)
-  steps.push("Bring business cards and set networking goals for the event")
-  
-  // Follow-up step
-  steps.push("Connect with attendees on LinkedIn within 24 hours after the event")
-  
-  return steps.slice(0, 3)
-}
-
-function categorizeEventsByType(events) {
-  return events.reduce((acc, event) => {
-    const category = event.category
-    if (!acc[category]) {
-      acc[category] = []
-    }
-    acc[category].push(event)
-    return acc
-  }, {})
-}
-
-function removeDuplicateEvents(events) {
-  const seen = new Set()
-  return events.filter(event => {
-    const key = `${event.eventName}-${event.date}-${event.organizedByGroup}`.toLowerCase().replace(/\s+/g, '')
-    if (seen.has(key)) {
-      return false
-    }
-    seen.add(key)
-    return true
-  })
-}
-
-function generateEventId() {
-  return Math.random().toString(36).substr(2, 9)
-}
-
-function getDateDaysFromNow(days) {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return date.toISOString()
-}
-
-function getStateAbbreviation(stateName) {
-  const stateMap = {
-    "california": "ca", "new york": "ny", "texas": "tx", "florida": "fl",
-    "illinois": "il", "pennsylvania": "pa", "ohio": "oh", "georgia": "ga",
-    "north carolina": "nc", "michigan": "mi", "new jersey": "nj", "virginia": "va",
-    "washington": "wa", "arizona": "az", "massachusetts": "ma", "tennessee": "tn",
-    "indiana": "in", "missouri": "mo", "maryland": "md", "wisconsin": "wi"
-  }
-  return stateMap[stateName.toLowerCase()] || "ny"
+  return [
+    `Prepare a compelling elevator pitch about ${businessName || "your business"}`,
+    `Research other attendees and the organizer beforehand`,
+    `Bring business cards and prepare to exchange contact information`,
+    `Set a goal to make 3-5 meaningful connections`,
+    `Follow up with new connections within 24-48 hours`
+  ]
 }
 
 function generatePersonalizedMockEvents({ networkingKeyword, location, industry, businessName, customGoal }) {
-  console.log("🎭 Generating personalized mock networking events...")
-  
   const locationData = parseLocationForMeetup(location)
-  const keyword = networkingKeyword || industry || "business networking"
   
   const mockEvents = [
     {
-      id: "mock_event_1",
-      title: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Networking Summit`,
-      description: `Join fellow professionals in ${keyword} for an evening of networking, knowledge sharing, and business development. Perfect for ${businessName || `${industry} professionals`} looking to expand their network and discover new opportunities.`,
+      eventId: `mock_${Date.now()}_1`,
+      eventName: `${industry} Professionals Networking Mixer`,
+      eventDescription: `Join fellow ${industry} professionals for an evening of networking and knowledge sharing. Perfect for ${businessName} to connect with potential partners and clients.`,
+      eventType: "PHYSICAL",
       date: getDateDaysFromNow(7),
-      type: "IN_PERSON",
-      address: `Innovation Center, ${locationData.city.charAt(0).toUpperCase() + locationData.city.slice(1)}, ${locationData.state.toUpperCase()}`,
-      url: `https://www.meetup.com/${keyword.replace(/\s+/g, '-').toLowerCase()}-networking-summit`, // REAL-LOOKING URL
-      organizer: `${locationData.city.charAt(0).toUpperCase() + locationData.city.slice(1)} Professional Network`,
-      maxAttendees: 150,
-      actualAttendees: 89,
-      relevanceScore: 95,
-      searchKeyword: keyword,
-      category: "Professional Networking",
-      networkingValue: 4500,
-      personalizedReason: `Highly relevant to your ${industry} business. With 150 attendees, this summit offers excellent networking opportunities for ${businessName || "your business"}.`,
-      actionableSteps: [
-        "Register at https://www.meetup.com/mock-networking-summit",
-        `Prepare elevator pitch about ${businessName || "your business"}`,
-        "Connect with attendees on LinkedIn post-event"
-      ]
-    },
-    {
-      id: "mock_event_2", 
-      title: `${industry} Innovation Meetup`,
-      description: `Monthly gathering of ${industry} professionals discussing latest trends, challenges, and opportunities. Features guest speakers, panel discussions, and structured networking sessions.`,
-      date: getDateDaysFromNow(14),
-      type: "IN_PERSON",
-      address: `Business District, ${locationData.city.charAt(0).toUpperCase() + locationData.city.slice(1)}, ${locationData.state.toUpperCase()}`,
-      url: "https://www.meetup.com/mock-industry-innovation",
-      organizer: `${industry} Professionals Association`,
+      address: `Business Center, ${locationData.city}, ${locationData.state}`,
+      eventUrl: "#",
+      organizedByGroup: `${locationData.city} Business Network`,
       maxAttendees: 75,
       actualAttendees: 45,
-      relevanceScore: 88,
-      searchKeyword: industry,
-      category: "Technology & Innovation",
-      networkingValue: 3200,
-      personalizedReason: `Specifically designed for ${industry} professionals. Great opportunity to stay updated on industry trends while building strategic connections.`,
-      actionableSteps: [
-        "RSVP at https://www.meetup.com/mock-industry-innovation",
-        "Research attending companies and potential collaborators",
-        "Prepare questions about industry trends and challenges"
-      ]
+      searchKeyword: networkingKeyword || industry
     },
     {
-      id: "mock_event_3",
-      title: "Entrepreneurs Coffee & Connect",
-      description: "Casual morning networking for local entrepreneurs and business owners. Share challenges, celebrate wins, and build meaningful business relationships over coffee.",
-      date: getDateDaysFromNow(3),
-      type: "IN_PERSON", 
-      address: `Downtown Coffee Hub, ${locationData.city.charAt(0).toUpperCase() + locationData.city.slice(1)}, ${locationData.state.toUpperCase()}`,
-      url: "https://www.meetup.com/mock-entrepreneurs-coffee",
-      organizer: "Local Entrepreneurs Network",
-      maxAttendees: 25,
-      actualAttendees: 18,
-      relevanceScore: 82,
-      searchKeyword: "entrepreneurship",
-      category: "Startup & Entrepreneurship",
-      networkingValue: 2100,
-      personalizedReason: "Perfect for business owners seeking peer connections and informal mentorship opportunities in a relaxed setting.",
-      actionableSteps: [
-        "Join at https://www.meetup.com/mock-entrepreneurs-coffee",
-        "Prepare to share one business challenge for group input",
-        "Exchange contacts with 3-5 fellow entrepreneurs"
-      ]
+      eventId: `mock_${Date.now()}_2`,
+      eventName: `${networkingKeyword || 'Business'} Startup Meetup`,
+      eventDescription: `Monthly gathering for entrepreneurs and business professionals. Focus on growth strategies and collaboration opportunities.`,
+      eventType: "PHYSICAL", 
+      date: getDateDaysFromNow(14),
+      address: `Innovation Hub, ${locationData.city}, ${locationData.state}`,
+      eventUrl: "#",
+      organizedByGroup: `${locationData.city} Entrepreneurs`,
+      maxAttendees: 50,
+      actualAttendees: 32,
+      searchKeyword: networkingKeyword || "business"
     }
   ]
 
-  // Add custom goal-specific event if provided
-  if (customGoal && customGoal.length > 10) {
-    const goalKeywords = extractMeetupKeywordsFromGoal(customGoal)
-    if (goalKeywords.length > 0) {
-      mockEvents.unshift({
-        id: "mock_event_goal",
-        title: `${goalKeywords[0].charAt(0).toUpperCase() + goalKeywords[0].slice(1)} Strategy Workshop`,
-        description: `Interactive workshop focused on ${goalKeywords[0]} strategies for business growth. Aligns perfectly with your goal: "${customGoal.substring(0, 50)}..."`,
-        date: getDateDaysFromNow(10),
-        type: "IN_PERSON",
-        address: `Strategy Center, ${locationData.city.charAt(0).toUpperCase() + locationData.city.slice(1)}, ${locationData.state.toUpperCase()}`,
-        url: "https://www.meetup.com/mock-strategy-workshop",
-        organizer: "Business Growth Institute",
-        maxAttendees: 40,
-        actualAttendees: 28,
-        relevanceScore: 98,
-        searchKeyword: goalKeywords[0],
-        category: "Leadership & Management",
-        networkingValue: 3800,
-        personalizedReason: `Directly addresses your business goals and provides actionable strategies for ${businessName || "your business"}.`,
-        actionableSteps: [
-          "Register at https://www.meetup.com/mock-strategy-workshop",
-          "Prepare specific questions about your business challenges",
-          "Plan follow-up meetings with relevant attendees"
-        ]
-      })
-    }
-  }
+  const processedEvents = processPersonalizedEvents(mockEvents, {
+    networkingKeyword,
+    location: locationData,
+    industry,
+    businessName,
+    customGoal
+  })
 
-  const categorizedEvents = categorizeEventsByType(mockEvents)
+  return processedEvents
+}
 
-  return {
-    events: mockEvents,
-    categorized: categorizedEvents,
-    totalFound: mockEvents.length,
-    lastUpdated: new Date().toISOString(),
-    searchSummary: {
-      keywords: [keyword, industry].filter(Boolean),
-      location: locationData.original,
-      industry,
-      hasCustomGoal: !!customGoal
+function generateKeywordSpecificMockEvents(keyword, locationData, userProfile) {
+  const { networkingKeyword, industry, businessName, customGoal } = userProfile
+  
+  return [
+    {
+      eventId: `mock_${keyword}_${Date.now()}`,
+      eventName: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Professional Meetup`,
+      eventDescription: `Join fellow professionals interested in ${keyword} for networking and knowledge sharing. Perfect for ${businessName || industry} professionals looking to expand their network and discover new opportunities.`,
+      eventType: Math.random() > 0.5 ? "PHYSICAL" : "ONLINE",
+      date: getDateDaysFromNow(Math.floor(Math.random() * 30) + 7),
+      address: `Professional Center, ${locationData.city}, ${locationData.state}`,
+      eventUrl: `https://www.meetup.com/${keyword.replace(/\s+/g, '-').toLowerCase()}-professionals`,
+      organizedByGroup: `${locationData.city} ${keyword} Network`,
+      maxAttendees: Math.floor(Math.random() * 100) + 20,
+      actualAttendees: Math.floor(Math.random() * 50) + 10,
+      searchKeyword: keyword,
+      relevanceScore: Math.floor(Math.random() * 30) + 50 // 50-80 relevance
     }
-  }
+  ]
 }
 
 // Reset daily usage counter

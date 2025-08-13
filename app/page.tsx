@@ -16,6 +16,7 @@ import { Pricing } from "@/components/ui/pricing"
 import { Navbar1 } from "@/components/ui/navbar-1"
 import { StarBorder } from "@/components/ui/star-border"
 import { Sparkles as SparklesComponent } from "@/components/ui/sparkles"
+import Link from "next/link"
 
 export default function HomePage() {
   const router = useRouter()
@@ -110,9 +111,9 @@ export default function HomePage() {
             transition={{ duration: 1, delay: 1 }}
             className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20"
           >
+            <Link href="/auth" passHref>
             <StarBorder
               as="button"
-              onClick={handleGenerateBrief}
               className="cursor-pointer hover:scale-105 transition-transform duration-200"
               color="#fbbf24"
               speed="4s"
@@ -122,6 +123,7 @@ export default function HomePage() {
                 Generate My Strategy Brief
               </div>
             </StarBorder>
+            </Link>
 
             <Button
               onClick={handleWatchDemo}
