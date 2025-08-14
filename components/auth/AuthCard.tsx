@@ -21,19 +21,46 @@ export function AuthCard() {
   });
 
   const getRedirectURL = () => {
-    // Use production URL in production, localhost in development
     const baseURL = process.env.NODE_ENV === 'production' 
-      ? 'https://sleft-signal.vercel.app' 
+      ? 'https://sleft-signals.vercel.app'  // Replace with your actual domain
       : 'http://localhost:3000';
     
-    return `${baseURL}/auth/callback`;
+    return `${baseURL}/auth/callback`;  // This points to the route handler
+  };
+
+  // Function to send user data to Airtable
+  const sendToAirtable = async (userData: any) => {
+    try {
+      console.log('📧 Sending user data to Airtable:', userData.email);
+      
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ User data sent to Airtable successfully');
+        toast.success('Welcome! You\'ve been added to our system.');
+      } else {
+        console.warn('⚠️ Airtable integration failed:', result.warning || result.error);
+        // Don't show error to user as registration was successful
+      }
+    } catch (error) {
+      console.error('❌ Failed to send to Airtable:', error);
+      // Don't show error to user as registration was successful
+    }
   };
 
   const handleGoogleAuth = async () => {
     try {
       setLoading(true);
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: getRedirectURL(),
@@ -46,7 +73,9 @@ export function AuthCard() {
 
       if (error) throw error;
       
-      // Don't show loading toast for OAuth as user will be redirected
+      // For Google OAuth, we'll handle Airtable in the callback
+      // since we get user data after redirect
+      
     } catch (error: any) {
       console.error('Google auth error:', error);
       toast.error(error.message || 'Failed to sign in with Google');
@@ -59,7 +88,8 @@ export function AuthCard() {
       setLoading(true);
 
       if (type === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        // First, create the Supabase user
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -72,17 +102,48 @@ export function AuthCard() {
 
         if (error) throw error;
 
+        // If signup is successful, send data to Airtable
+        if (data.user) {
+          // Send to Airtable (non-blocking)
+          sendToAirtable({
+            email: formData.email,
+            fullName: formData.fullName,
+            userId: data.user.id,
+            authProvider: 'email',
+            signupDate: new Date().toISOString()
+          });
+        }
+
         toast.success('Check your email for the confirmation link!');
+        
+        // Clear form
+        setFormData({
+          email: '',
+          password: '',
+          fullName: ''
+        });
+
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        // Login flow
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
         if (error) throw error;
 
+        // Update last login in Airtable (non-blocking)
+        if (data.user) {
+          sendToAirtable({
+            email: formData.email,
+            userId: data.user.id,
+            authProvider: 'email',
+            lastLogin: new Date().toISOString(),
+            action: 'login'
+          });
+        }
+
         toast.success('Welcome back!');
-        // Redirect will be handled by AuthContext
       }
     } catch (error: any) {
       console.error('Auth error:', error);
