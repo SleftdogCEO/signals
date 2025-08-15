@@ -22,16 +22,16 @@ export function AuthCard() {
 
   const getRedirectURL = () => {
     const baseURL = process.env.NODE_ENV === 'production' 
-      ? 'https://sleft-signals.vercel.app'  // Replace with your actual domain
+      ? 'https://sleft-signal.vercel.app'  // Replace with your actual domain
       : 'http://localhost:3000';
     
     return `${baseURL}/auth/callback`;  // This points to the route handler
   };
 
-  // Function to send user data to Airtable
+  // Function to send user data to Airtable (ONLY FOR NEW SIGNUPS)
   const sendToAirtable = async (userData: any) => {
     try {
-      console.log('📧 Sending user data to Airtable:', userData.email);
+      console.log('📧 Sending NEW USER data to Airtable:', userData.email);
       
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -44,7 +44,7 @@ export function AuthCard() {
       const result = await response.json();
       
       if (result.success) {
-        console.log('✅ User data sent to Airtable successfully');
+        console.log('✅ New user data sent to Airtable successfully');
         toast.success('Welcome! You\'ve been added to our system.');
       } else {
         console.warn('⚠️ Airtable integration failed:', result.warning || result.error);
@@ -73,8 +73,8 @@ export function AuthCard() {
 
       if (error) throw error;
       
-      // For Google OAuth, we'll handle Airtable in the callback
-      // since we get user data after redirect
+      // For Google OAuth, we handle new user detection in the callback
+      // Callback route will check if it's a new user and send to Airtable only then
       
     } catch (error: any) {
       console.error('Google auth error:', error);
@@ -88,7 +88,9 @@ export function AuthCard() {
       setLoading(true);
 
       if (type === 'signup') {
-        // First, create the Supabase user
+        // ✅ SIGNUP FLOW - Send to Airtable
+        console.log('🆕 Processing NEW USER signup');
+        
         const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -102,9 +104,9 @@ export function AuthCard() {
 
         if (error) throw error;
 
-        // If signup is successful, send data to Airtable
+        // ✅ ONLY send to Airtable for NEW signups
         if (data.user) {
-          // Send to Airtable (non-blocking)
+          console.log('📤 Sending new signup to Airtable');
           sendToAirtable({
             email: formData.email,
             fullName: formData.fullName,
@@ -124,7 +126,9 @@ export function AuthCard() {
         });
 
       } else {
-        // Login flow
+        // ✅ LOGIN FLOW - DO NOT send to Airtable
+        console.log('🔄 Processing EXISTING USER login');
+        
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
@@ -132,16 +136,8 @@ export function AuthCard() {
 
         if (error) throw error;
 
-        // Update last login in Airtable (non-blocking)
-        if (data.user) {
-          sendToAirtable({
-            email: formData.email,
-            userId: data.user.id,
-            authProvider: 'email',
-            lastLogin: new Date().toISOString(),
-            action: 'login'
-          });
-        }
+        // ❌ REMOVED: Do NOT send login data to Airtable
+        console.log('✅ User logged in successfully - NOT sending to Airtable');
 
         toast.success('Welcome back!');
       }

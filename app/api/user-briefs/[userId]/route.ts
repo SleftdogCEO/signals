@@ -12,17 +12,18 @@ const BACKEND_URL = getBackendUrl()
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> } // Make params a Promise
 ) {
   try {
+    const { userId } = await params 
     const { searchParams } = new URL(request.url)
     const page = searchParams.get('page') || '1'
     const limit = searchParams.get('limit') || '10'
     
-    console.log(`Frontend API: Fetching briefs for user ${params.userId}`)
+    console.log(`Frontend API: Fetching briefs for user ${userId}`)
     
     const response = await fetch(
-      `${BACKEND_URL}/api/user-briefs/${params.userId}?page=${page}&limit=${limit}`,
+      `${BACKEND_URL}/api/user-briefs/${userId}?page=${page}&limit=${limit}`,
       {
         method: "GET",
         headers: {

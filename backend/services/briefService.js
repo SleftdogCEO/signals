@@ -72,6 +72,7 @@ EXPECTED OUTPUT: Three strategic sections with specific, data-driven recommendat
     // Return enhanced fallback brief on error
     return generateEnhancedMockBrief({ businessName, websiteUrl, industry, location, customGoal, networkingKeyword, businessData, newsData, meetupData })
   }
+
 }
 
 function createEnhancedSystemPrompt(businessName, industry, location, customGoal, businessData, newsData, meetupData) {

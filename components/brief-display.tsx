@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react" // ADD useEffect
 import Image from "next/image"
+import LeafletMap from '@/components/ui/leaflet-map'
 
 interface Lead {
   businessName: string
@@ -544,194 +545,89 @@ export default function BriefDisplay({ brief }: BriefDisplayProps) {
                           <Users className="w-8 h-8 text-green-500" />
                         </div>
                         <div>
-                          <CardTitle className="text-3xl font-bold text-white">High-Quality Business Leads</CardTitle>
+                          <CardTitle className="text-3xl font-bold text-white">Strategic Partner Network</CardTitle>
                           <p className="text-gray-400 text-lg">
-                            Potential partners, customers, and strategic connections
+                            Interactive map showing high-value connections and partnership opportunities
                           </p>
+                          
+                          {/* Enhanced metrics display */}
+                          <div className="flex items-center gap-6 mt-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                Live Location Data
+                              </Badge>
+                            </div>
+                            <span className="text-green-400">
+                              ✓ {brief.businessData.leads.length} Partners Found
+                            </span>
+                            <span className="text-blue-400">
+                              📊 {brief.businessData.leads.filter(l => l.leadScore >= 75).length} High Priority
+                            </span>
+                            <span className="text-purple-400">
+                              🎯 Geographic Intelligence
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      {leadTypes.length > 1 && (
-                        <div className="flex items-center gap-2">
-                          <Filter className="w-4 h-4 text-gray-400" />
-                          <select
-                            value={selectedLeadType}
-                            onChange={(e) => setSelectedLeadType(e.target.value)}
-                            className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          >
-                            <option value="all">All Types</option>
-                            {leadTypes.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-8">
-                      {filteredLeads.map((lead, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: index * 0.1 }}
-                          className="border border-gray-700 rounded-3xl p-8 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:border-green-500/30 transition-all duration-300 group"
-                        >
-                          {/* UPDATED LAYOUT WITHOUT POTENTIAL VALUE */}
-                          <div className="flex items-start gap-6 mb-6">
-                            {lead.imageUrl && (
-                              <div className="w-20 h-20 rounded-2xl overflow-hidden border border-gray-600">
-                                <Image
-                                  src={lead.imageUrl || "/placeholder.svg"}
-                                  alt={lead.businessName}
-                                  width={80}
-                                  height={80}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-bold text-white text-2xl">{lead.businessName}</h4>
-                                <Badge
-                                  className={`px-3 py-1 text-sm font-semibold border ${getLeadScoreColor(lead.leadScore)}`}
-                                >
-                                  {lead.leadScore}/100
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-4 mb-3">
-                                <Badge variant="outline" className="border-blue-500/40 text-blue-400 bg-blue-500/10">
-                                  {lead.leadType}
-                                </Badge>
-                                <Badge
-                                  variant="outline"
-                                  className="border-purple-500/40 text-purple-400 bg-purple-500/10"
-                                >
-                                  {lead.category}
-                                </Badge>
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                  <span className="text-yellow-500 font-bold">{lead.rating}</span>
-                                  <span className="text-gray-400 text-sm">({lead.reviewsCount} reviews)</span>
-                                </div>
-                              </div>
-                              <p className="text-gray-400 text-sm mb-4 flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                {lead.address}
-                              </p>
-                              <p className="text-gray-300 leading-relaxed mb-4">{lead.contactReason}</p>
-                            </div>
+                    {/* Interactive Map */}
+                    <LeafletMap 
+                      leads={brief.businessData.leads}
+                      businessName={brief.businessName}
+                      centerLocation={brief.businessData.leads[0]?.location}
+                    />
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+                      <div className="text-center p-6 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-2xl border border-green-500/30">
+                        <div className="text-3xl font-bold text-green-500 mb-2">
+                          {brief.businessData.leads.length}
+                        </div>
+                        <div className="text-gray-300 font-medium">Total Partners</div>
+                      </div>
+
+                      <div className="text-center p-6 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-2xl border border-orange-500/30">
+                        <div className="text-3xl font-bold text-orange-500 mb-2">
+                          {brief.businessData.leads.filter(l => l.leadScore >= 75).length}
+                        </div>
+                        <div className="text-gray-300 font-medium">High Priority</div>
+                      </div>
+
+                      <div className="text-center p-6 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl border border-blue-500/30">
+                        <div className="text-3xl font-bold text-blue-500 mb-2">
+                          {Math.round(brief.businessData.leads.reduce((sum, l) => sum + l.leadScore, 0) / brief.businessData.leads.length)}%
+                        </div>
+                        <div className="text-gray-300 font-medium">Avg Score</div>
+                      </div>
+
+                      <div className="text-center p-6 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl border border-purple-500/30">
+                        <div className="text-3xl font-bold text-purple-500 mb-2">
+                          {new Set(brief.businessData.leads.map(l => l.category)).size}
+                        </div>
+                        <div className="text-gray-300 font-medium">Industries</div>
+                      </div>
+                    </div>
+
+                    {/* Data Source Attribution */}
+                    <div className="mt-8 p-6 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-2xl border border-green-500/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <MapPin className="w-6 h-6 text-green-500" />
+                          <div>
+                            <h4 className="text-white font-semibold">Powered by Geographic Intelligence</h4>
+                            <p className="text-gray-400 text-sm">
+                              Real-time location data with interactive mapping • 
+                              {brief.businessData.leads.filter(l => l.location).length} of {brief.businessData.leads.length} partners geo-located
+                            </p>
                           </div>
-
-                          <Separator className="my-6 bg-gray-700" />
-
-                          <div className="flex justify-between items-center">
-                            <div className="flex gap-4">
-                              {lead.phone && (
-                                <Button
-                                  asChild
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
-                                >
-                                  <a href={`tel:${lead.phone}`}>
-                                    <Phone className="w-4 h-4 mr-2" />
-                                    {lead.phone}
-                                  </a>
-                                </Button>
-                              )}
-                              {lead.email && (
-                                <Button
-                                  asChild
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
-                                >
-                                  <a href={`mailto:${lead.email}`}>
-                                    <Mail className="w-4 h-4 mr-2" />
-                                    Contact
-                                  </a>
-                                </Button>
-                              )}
-                              {lead.website && (
-                                <Button
-                                  asChild
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-gray-600 text-gray-300 hover:text-white bg-transparent"
-                                >
-                                  <a 
-                                    href={lead.website} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    onClick={() => {
-                                      console.log(`User visited website: ${lead.businessName} - ${lead.website}`)
-                                    }}
-                                  >
-                                    <ExternalLink className="w-4 h-4 mr-2" />
-                                    Website
-                                  </a>
-                                </Button>
-                              )}
-                              {lead.googleMapsUrl && (
-                                <Button
-                                  asChild
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-blue-600 text-blue-300 hover:text-white bg-transparent"
-                                >
-                                  <a 
-                                    href={lead.googleMapsUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    onClick={() => {
-                                      console.log(`User viewed Google Maps: ${lead.businessName}`)
-                                    }}
-                                  >
-                                    <MapPin className="w-4 h-4 mr-2" />
-                                    View on Maps
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-                              Connect Now
-                              <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </div>
-
-                          {/* Additional info section remains the same */}
-                          {(lead.priceLevel || lead.openingHours || lead.neighborhood) && (
-                            <>
-                              <Separator className="my-6 bg-gray-700" />
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {lead.priceLevel && (
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="border-green-500/40 text-green-400 bg-green-500/10">
-                                      {lead.priceLevel}
-                                    </Badge>
-                                    <span className="text-gray-400 text-sm">Price Range</span>
-                                  </div>
-                                )}
-                                {lead.neighborhood && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-300">{lead.neighborhood}</span>
-                                  </div>
-                                )}
-                                {lead.openingHours && lead.openingHours.length > 0 && (
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-300">Hours Available</span>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </motion.div>
-                      ))}
+                        </div>
+                        <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                          Map Data
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
