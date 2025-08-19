@@ -1,9 +1,11 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { User } from '@supabase/supabase-js'
-import { useRouter, usePathname } from 'next/navigation'
+import type React from "react"
+
+import { createContext, useContext, useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import type { User } from "@supabase/supabase-js"
+import { useRouter, usePathname } from "next/navigation"
 
 interface AuthContextType {
   user: User | null
@@ -16,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
 }
@@ -30,60 +32,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Skip auth setup if environment variables are missing
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.warn('Supabase environment variables are missing')
+      console.warn("Supabase environment variables are missing")
       setLoading(false)
       return
     }
 
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
         setUser(user)
         setLoading(false)
 
         // Only redirect if NOT already on a dashboard page
-        if (user && !pathname.startsWith('/dashboard')) {
-          const redirectPath = sessionStorage.getItem('redirectAfterAuth')
+        if (user && !pathname.startsWith("/dashboard")) {
+          const redirectPath = sessionStorage.getItem("redirectAfterAuth")
           if (redirectPath) {
-            sessionStorage.removeItem('redirectAfterAuth')
+            sessionStorage.removeItem("redirectAfterAuth")
             router.push(redirectPath)
           } else {
-            router.push('/dashboard')
+            router.push("/dashboard")
           }
         }
       } catch (error) {
-        console.error('Auth error:', error)
+        console.error("Auth error:", error)
         setLoading(false)
       }
     }
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session?.user?.email)
 
-        setUser(session?.user ?? null)
-        setLoading(false)
+      setUser(session?.user ?? null)
+      setLoading(false)
 
-        // Only redirect if NOT already on a dashboard page
-        if (event === 'SIGNED_IN' && session?.user && !pathname.startsWith('/dashboard')) {
-          console.log('User signed in, redirecting to dashboard')
-          const redirectPath = sessionStorage.getItem('redirectAfterAuth')
-          if (redirectPath) {
-            sessionStorage.removeItem('redirectAfterAuth')
-            router.push(redirectPath)
-          } else {
-            router.push('/dashboard')
-          }
-        }
-
-        if (event === 'SIGNED_OUT') {
-          console.log('User signed out, redirecting to home')
-          router.push('/')
+      // Only redirect if NOT already on a dashboard page
+      if (event === "SIGNED_IN" && session?.user && !pathname.startsWith("/dashboard")) {
+        console.log("User signed in, redirecting to dashboard")
+        const redirectPath = sessionStorage.getItem("redirectAfterAuth")
+        if (redirectPath) {
+          sessionStorage.removeItem("redirectAfterAuth")
+          router.push(redirectPath)
+        } else {
+          router.push("/dashboard")
         }
       }
-    )
+
+      if (event === "SIGNED_OUT") {
+        console.log("User signed out, redirecting to home")
+        router.push("/")
+      }
+    })
 
     return () => subscription.unsubscribe()
   }, [router, pathname])
@@ -91,15 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut()
-      sessionStorage.removeItem('redirectAfterAuth')
+      sessionStorage.removeItem("redirectAfterAuth")
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error("Sign out error:", error)
     }
   }
 
-  return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ user, loading, signOut }}>{children}</AuthContext.Provider>
 }

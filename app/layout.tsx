@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
 import "./globals.css"
+import { EnhancedChatWidget } from "@/components/chat/ChatWidget"
 
 
 const inter = Inter({ subsets: ["latin"] })
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
+          <EnhancedChatWidget />
         </AuthProvider>
       </body>
     </html>
