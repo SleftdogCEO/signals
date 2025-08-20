@@ -1,5 +1,6 @@
 "use client"
 import type React from "react"
+import { useState, useRef, useEffect } from "react"
 
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
@@ -8,7 +9,7 @@ import { BentoGrid } from "@/components/ui/bento-grid"
 import { Footer7 } from "@/components/ui/footer-7"
 import { Connect } from "@/components/connect-section"
 import DatabaseWithRestApi from "@/components/ui/database-with-rest-api"
-import { Sparkles, TrendingUp, Users, Zap, Box, Lock, Search, Settings } from "lucide-react"
+import { Sparkles, TrendingUp, Users, Zap, Box, Lock, Search, Settings, Play, Pause, Volume2, VolumeX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
@@ -17,6 +18,122 @@ import { Navbar1 } from "@/components/ui/navbar-1"
 import { StarBorder } from "@/components/ui/star-border"
 import { Sparkles as SparklesComponent } from "@/components/ui/sparkles"
 import Link from "next/link"
+
+const VideoPlayer = () => {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
+    }
+  }
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted
+      setIsMuted(!isMuted)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.6 }}
+      className="relative w-full max-w-2xl mx-auto mb-12 group"
+    >
+      <div className="relative rounded-2xl overflow-hidden border border-yellow-500/20 shadow-2xl bg-black/50 backdrop-blur-sm">
+        {/* Video Preview Overlay */}
+        {!isPlaying && (
+          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/30 via-transparent to-black/60">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-center mb-4"
+              >
+                <h3 className="text-xl sm:text-2xl font-bold mb-2 text-yellow-500">
+                  Watch Our AI in Action
+                </h3>
+                <p className="text-sm sm:text-base text-gray-200 max-w-md mx-auto">
+                  See how Sleft Signals transforms your business strategy with AI-powered insights
+                </p>
+              </motion.div>
+              <motion.button
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                onClick={togglePlay}
+                className="w-16 h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-all duration-200 hover:scale-110 shadow-lg"
+              >
+                <Play className="w-8 h-8 ml-1" />
+              </motion.button>
+            </div>
+          </div>
+        )}
+
+        {/* Video Element */}
+        <video
+          ref={videoRef}
+          className="w-full aspect-video object-cover"
+          poster="/avatars/ai-avatar.png"
+          playsInline
+          onLoadedData={() => setIsLoaded(true)}
+        >
+          <source src="/avatars/Quick Avatar Video.mp4" type="video/mp4" />
+        </video>
+
+        {/* Gradient Overlay - Only show when playing */}
+        {isPlaying && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        )}
+
+        {/* Controls - Only show when playing */}
+        {isPlaying && (
+          <>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button
+                onClick={togglePlay}
+                className="w-16 h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-transform duration-200 hover:scale-110"
+              >
+                <Pause className="w-8 h-8" />
+              </button>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/70 to-transparent">
+              <button
+                onClick={toggleMute}
+                className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors duration-200"
+              >
+                {isMuted ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Loading State */}
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
+          <div className="w-8 h-8 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" />
+        </div>
+      )}
+    </motion.div>
+  )
+}
 
 export default function HomePage() {
   const router = useRouter()
@@ -104,35 +221,40 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* CTA Buttons */}
+          {/* CTA Section */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20"
+            className="flex flex-col items-center"
           >
-            <Link href="/auth" passHref>
-            <StarBorder
-              as="button"
-              className="cursor-pointer hover:scale-105 transition-transform duration-200"
-              color="#fbbf24"
-              speed="4s"
-            >
-              <div className="flex items-center gap-3 font-semibold text-lg text-yellow-500">
-                <Sparkles className="w-5 h-5" />
-                Generate My Strategy Brief
-              </div>
-            </StarBorder>
-            </Link>
+            {/* Add VideoPlayer here */}
+            <VideoPlayer />
 
-            <Button
-              onClick={handleWatchDemo}
-              variant="outline"
-              size="lg"
-              className="border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 bg-transparent px-8 py-4 text-lg h-auto cursor-pointer"
-            >
-              Watch Demo
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20">
+              <Link href="/auth" passHref>
+              <StarBorder
+                as="button"
+                className="cursor-pointer hover:scale-105 transition-transform duration-200"
+                color="#fbbf24"
+                speed="4s"
+              >
+                <div className="flex items-center gap-3 font-semibold text-lg text-yellow-500">
+                  <Sparkles className="w-5 h-5" />
+                  Generate My Strategy Brief
+                </div>
+              </StarBorder>
+              </Link>
+
+              <Button
+                onClick={handleWatchDemo}
+                variant="outline"
+                size="lg"
+                className="border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 bg-transparent px-8 py-4 text-lg h-auto cursor-pointer"
+              >
+                Watch Demo
+              </Button>
+            </div>
           </motion.div>
         </div>
 
@@ -285,8 +407,10 @@ export default function HomePage() {
       <TestimonialsSection />
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20">
-        <PricingSection />
+      <section id="pricing" className="py-20 bg-black">
+        <div className="container mx-auto">
+          <PricingSection />
+        </div>
       </section>
 
       {/* Connect Section */}
