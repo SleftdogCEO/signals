@@ -19,28 +19,146 @@ import { StarBorder } from "@/components/ui/star-border"
 import { Sparkles as SparklesComponent } from "@/components/ui/sparkles"
 import Link from "next/link"
 
+const checkVideoFile = async () => {
+  try {
+    const response = await fetch('/avatars/Quick-Avatar-Video.mp4', { method: 'HEAD' })
+    console.log('Video file status:', response.status)
+    if (!response.ok) {
+      console.error('Video file not found or inaccessible')
+    }
+  } catch (error) {
+    console.error('Error checking video file:', error)
+  }
+}
+
 const VideoPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [canAutoplay, setCanAutoplay] = useState(false)
+  const [userInteracted, setUserInteracted] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
+  // Check autoplay capability - Fixed dependency array
+  useEffect(() => {
+    const checkAutoplay = async () => {
+      try {
+        if (videoRef.current) {
+          videoRef.current.muted = true
+          videoRef.current.volume = 0
+          const playPromise = videoRef.current.play()
+          if (playPromise) {
+            await playPromise
+            videoRef.current.pause()
+            videoRef.current.currentTime = 0
+            setCanAutoplay(true)
+          }
+        }
+      } catch (error) {
+        console.log("Autoplay not allowed:", error)
+        setCanAutoplay(false)
       }
-      setIsPlaying(!isPlaying)
+    }
+
+    const timer = setTimeout(checkAutoplay, 100)
+    return () => clearTimeout(timer)
+  }, []) // Fixed: Keep this empty
+
+  // Check video file on mount - Separate useEffect
+  useEffect(() => {
+    checkVideoFile()
+  }, [])
+
+  // User interaction handler - Fixed dependency array
+  useEffect(() => {
+    if (userInteracted) return // Don't add listener if already interacted
+
+    const handleUserClick = () => {
+      setUserInteracted(true)
+      if (videoRef.current && isMuted && isPlaying) {
+        videoRef.current.muted = false
+        videoRef.current.volume = 0.7
+        setIsMuted(false)
+      }
+    }
+
+    document.addEventListener('click', handleUserClick, { once: true })
+    return () => document.removeEventListener('click', handleUserClick)
+  }, [isMuted, isPlaying, userInteracted]) // Fixed: Consistent dependencies
+
+  const playVideo = async () => {
+    if (!videoRef.current) return
+
+    try {
+      setHasError(false)
+      
+      // Set volume before playing
+      videoRef.current.volume = isMuted ? 0 : 0.7
+
+      const playPromise = videoRef.current.play()
+      if (playPromise !== undefined) {
+        await playPromise
+        setIsPlaying(true)
+      }
+    } catch (error) {
+      console.error("Video play error:", error)
+      
+      // Try playing muted if unmuted failed
+      try {
+        if (videoRef.current) {
+          videoRef.current.muted = true
+          videoRef.current.volume = 0
+          setIsMuted(true)
+          await videoRef.current.play()
+          setIsPlaying(true)
+        }
+      } catch (mutedError) {
+        console.error("Muted play error:", mutedError)
+        setHasError(true)
+      }
     }
   }
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
+  const togglePlay = async () => {
+    if (!videoRef.current) return
+
+    if (isPlaying) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    } else {
+      await playVideo()
     }
+  }
+
+  const toggleMute = async () => {
+    if (!videoRef.current) return
+    
+    try {
+      const newMutedState = !isMuted
+      videoRef.current.muted = newMutedState
+      videoRef.current.volume = newMutedState ? 0 : 0.7
+      setIsMuted(newMutedState)
+    } catch (error) {
+      console.error("Toggle mute error:", error)
+    }
+  }
+
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error("Video error:", e)
+    setHasError(true)
+    setIsLoaded(false)
+  }
+
+  const handleLoadedData = () => {
+    console.log("Video loaded successfully")
+    setIsLoaded(true)
+    setHasError(false)
+  }
+
+  const handleCanPlay = () => {
+    console.log("Video can play")
+    setIsLoaded(true)
   }
 
   return (
@@ -48,35 +166,39 @@ const VideoPlayer = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: 0.6 }}
-      className="relative w-full max-w-2xl mx-auto mb-12 group"
+      className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 mb-12 group"
     >
-      <div className="relative rounded-2xl overflow-hidden border border-yellow-500/20 shadow-2xl bg-black/50 backdrop-blur-sm">
+      <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-yellow-500/20 shadow-2xl bg-black/50 backdrop-blur-sm">
         {/* Video Preview Overlay */}
-        {!isPlaying && (
+        {(!isPlaying || hasError) && (
           <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/30 via-transparent to-black/60">
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 sm:p-6">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="text-center mb-4"
               >
-                <h3 className="text-xl sm:text-2xl font-bold mb-2 text-yellow-500">
-                  Watch Our AI in Action
+                <h3 className="text-lg sm:text-2xl font-bold mb-2 text-yellow-500">
+                  {hasError ? "Video Error" : "Watch Our AI in Action"}
                 </h3>
-                <p className="text-sm sm:text-base text-gray-200 max-w-md mx-auto">
-                  See how Sleft Signals transforms your business strategy with AI-powered insights
+                <p className="text-xs sm:text-base text-gray-200 max-w-md mx-auto">
+                  {hasError 
+                    ? "Unable to load video. Please check your connection." 
+                    : "See how Sleft Signals transforms your business strategy"}
                 </p>
               </motion.div>
-              <motion.button
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                onClick={togglePlay}
-                className="w-16 h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                <Play className="w-8 h-8 ml-1" />
-              </motion.button>
+              {!hasError && (
+                <motion.button
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  onClick={togglePlay}
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-all duration-200 hover:scale-110 shadow-lg"
+                >
+                  <Play className="w-6 h-6 sm:w-8 sm:h-8 ml-1" />
+                </motion.button>
+              )}
             </div>
           </div>
         )}
@@ -87,50 +209,103 @@ const VideoPlayer = () => {
           className="w-full aspect-video object-cover"
           poster="/avatars/ai-avatar.png"
           playsInline
-          onLoadedData={() => setIsLoaded(true)}
+          preload="metadata"
+          muted={isMuted}
+          onLoadedData={handleLoadedData}
+          onCanPlay={handleCanPlay}
+          onError={handleVideoError}
+          onEnded={() => setIsPlaying(false)}
+          controls={false}
+          disablePictureInPicture
+          controlsList="nodownload"
         >
-          <source src="/avatars/Quick Avatar Video.mp4" type="video/mp4" />
+          <source 
+            src="/avatars/Quick-Avatar-Video.mp4" 
+            type="video/mp4"
+          />
+          <p>Your browser does not support the video tag.</p>
         </video>
 
-        {/* Gradient Overlay - Only show when playing */}
-        {isPlaying && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        {/* Mobile Touch Area */}
+        <button
+          className="absolute inset-0 w-full h-full z-20 opacity-0"
+          onClick={togglePlay}
+          aria-label={isPlaying ? "Pause" : "Play"}
+        />
+
+        {/* Unmute Notification */}
+        {isPlaying && isMuted && (
+          <div className="absolute top-4 right-4 z-30">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={toggleMute}
+              className="bg-yellow-500 text-black px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-yellow-400 transition-colors shadow-lg"
+            >
+              <Volume2 className="w-3 h-3" />
+              Tap to unmute
+            </motion.button>
+          </div>
         )}
 
-        {/* Controls - Only show when playing */}
-        {isPlaying && (
+        {/* Controls when playing */}
+        {isPlaying && !hasError && (
           <>
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {/* Center Play/Pause Button */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 z-25">
               <button
                 onClick={togglePlay}
-                className="w-16 h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-transform duration-200 hover:scale-110"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-transform duration-200 hover:scale-110 shadow-lg"
               >
-                <Pause className="w-8 h-8" />
+                <Pause className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/70 to-transparent">
+            {/* Bottom Controls */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent">
               <button
                 onClick={toggleMute}
                 className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors duration-200"
               >
                 {isMuted ? (
-                  <VolumeX className="w-5 h-5" />
+                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
                 ) : (
-                  <Volume2 className="w-5 h-5" />
+                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
                 )}
               </button>
+
+              {/* Video Progress Indicator */}
+              <div className="text-xs text-white/70">
+                {isPlaying ? "Playing" : "Paused"}
+              </div>
             </div>
           </>
         )}
       </div>
 
       {/* Loading State */}
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-          <div className="w-8 h-8 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" />
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl sm:rounded-2xl z-30">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" />
+            <p className="text-xs text-gray-400">Loading video...</p>
+          </div>
         </div>
       )}
+
+      {/* Status Message */}
+      <div className="mt-2 text-center">
+        <p className="text-xs sm:text-sm text-gray-400">
+          {hasError 
+            ? "Video failed to load - please refresh" 
+            : !isLoaded 
+            ? "Loading..." 
+            : isPlaying 
+            ? "Playing" 
+            : "Click to play"
+          }
+        </p>
+      </div>
     </motion.div>
   )
 }
@@ -155,24 +330,24 @@ export default function HomePage() {
       </div>
 
       {/* Hero Section */}
-      <section id="home" className="relative overflow-hidden pt-24 min-h-screen flex items-center">
+      <section id="home" className="relative overflow-hidden pt-16 sm:pt-24 min-h-[calc(100vh-4rem)] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent" />
 
-        <div className="container mx-auto px-4 py-16 relative z-10">
+        <div className="container mx-auto px-4 py-8 sm:py-16 relative z-10">
           {/* Hero Content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-2 mb-8">
-              <Sparkles className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm text-yellow-500 font-medium">AI-Powered Business Intelligence</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mb-6 sm:mb-8">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
+              <span className="text-xs sm:text-sm text-yellow-500 font-medium">AI-Powered Business Intelligence</span>
             </div>
 
             <motion.h1
-              className="text-5xl lg:text-7xl font-bold mb-8 leading-tight max-w-5xl mx-auto"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 sm:mb-8 leading-tight max-w-5xl mx-auto"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
@@ -184,7 +359,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p
-              className="text-xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
+              className="text-base sm:text-lg lg:text-xl text-gray-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4 sm:px-6"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
@@ -199,25 +374,25 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="flex flex-wrap justify-center gap-12 mb-16"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 max-w-4xl mx-auto mb-12 sm:mb-16 px-4"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-yellow-500" />
+            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
               </div>
-              <span className="text-gray-300 text-lg font-medium">Your Edge</span>
+              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Edge</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Zap className="w-6 h-6 text-yellow-500" />
+            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
               </div>
-              <span className="text-gray-300 text-lg font-medium">Your Leverage</span>
+              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Leverage</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-yellow-500" />
+            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
               </div>
-              <span className="text-gray-300 text-lg font-medium">Your Connections</span>
+              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Connections</span>
             </div>
           </motion.div>
 

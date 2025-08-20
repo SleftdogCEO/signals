@@ -1,5 +1,10 @@
+"use client"
+
 import type React from "react"
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa"
+import { Sparkles } from "lucide-react"
+import { motion } from "framer-motion"
+import Link from "next/link"
 
 interface Footer7Props {
   logo?: {
@@ -68,12 +73,6 @@ const defaultLegalLinks = [
 ]
 
 export const Footer7 = ({
-  logo = {
-    url: "#",
-    src: "/placeholder.svg?height=32&width=32&text=S",
-    alt: "Sleft Signals logo",
-    title: "Sleft Signals",
-  },
   sections = defaultSections,
   description = "AI-powered business strategy briefs that reveal your competitive edge, growth opportunities, and valuable connections.",
   socialLinks = defaultSocialLinks,
@@ -81,54 +80,109 @@ export const Footer7 = ({
   legalLinks = defaultLegalLinks,
 }: Footer7Props) => {
   return (
-    <section className="py-32 bg-black border-t border-yellow-500/20">
-      <div className="container mx-auto">
+    <motion.footer 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      viewport={{ once: true }}
+      className="py-16 sm:py-20 lg:py-32 bg-black border-t border-yellow-500/20"
+    >
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex w-full flex-col justify-between gap-10 lg:flex-row lg:items-start lg:text-left">
           <div className="flex w-full flex-col justify-between gap-6 lg:items-start">
-            {/* Logo */}
-            <div className="flex items-center gap-2 lg:justify-start">
-              <a href={logo.url}>
-                <img src={logo.src || "/placeholder.svg"} alt={logo.alt} title={logo.title} className="h-8" />
-              </a>
-              <h2 className="text-xl font-semibold text-yellow-500">{logo.title}</h2>
-            </div>
-            <p className="max-w-[70%] text-sm text-gray-400">{description}</p>
-            <ul className="flex items-center space-x-6 text-gray-400">
+            {/* Logo - Updated to match navbar styling */}
+            <Link href="/" className="inline-flex">
+              <motion.div
+                className="flex items-center gap-2 cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg grid place-items-center">
+                  <Sparkles className="w-5 h-5 text-black" />
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-white to-yellow-500 bg-clip-text text-transparent">
+                  Sleft Signals
+                </span>
+              </motion.div>
+            </Link>
+
+            {/* Description - More responsive */}
+            <p className="text-sm sm:text-base text-gray-400 max-w-[90%] sm:max-w-[70%]">
+              {description}
+            </p>
+
+            {/* Social Links - Better spacing on mobile */}
+            <ul className="flex items-center gap-4 sm:gap-6 text-gray-400">
               {socialLinks.map((social, idx) => (
-                <li key={idx} className="font-medium hover:text-yellow-500 transition-colors">
-                  <a href={social.href} aria-label={social.label}>
+                <motion.li 
+                  key={idx}
+                  whileHover={{ scale: 1.1 }}
+                  className="font-medium hover:text-yellow-500 transition-colors"
+                >
+                  <a 
+                    href={social.href} 
+                    aria-label={social.label}
+                    className="block p-2"
+                  >
                     {social.icon}
                   </a>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>
-          <div className="grid w-full gap-6 md:grid-cols-3 lg:gap-20">
+
+          {/* Navigation Grid - Improved responsive layout */}
+          <div className="grid w-full grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-12 lg:gap-20 mt-8 lg:mt-0">
             {sections.map((section, sectionIdx) => (
-              <div key={sectionIdx}>
-                <h3 className="mb-4 font-bold text-white">{section.title}</h3>
-                <ul className="space-y-3 text-sm text-gray-400">
+              <div key={sectionIdx} className="flex flex-col">
+                <h3 className="text-sm sm:text-base font-bold text-white mb-4">
+                  {section.title}
+                </h3>
+                <ul className="space-y-3">
                   {section.links.map((link, linkIdx) => (
-                    <li key={linkIdx} className="font-medium hover:text-yellow-500 transition-colors">
-                      <a href={link.href}>{link.name}</a>
-                    </li>
+                    <motion.li 
+                      key={linkIdx}
+                      whileHover={{ x: 2 }}
+                      className="font-medium"
+                    >
+                      <Link 
+                        href={link.href}
+                        className="text-sm text-gray-400 hover:text-yellow-500 transition-colors inline-block"
+                      >
+                        {link.name}
+                      </Link>
+                    </motion.li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
         </div>
-        <div className="mt-8 flex flex-col justify-between gap-4 border-t border-yellow-500/20 py-8 text-xs font-medium text-gray-400 md:flex-row md:items-center md:text-left">
-          <p className="order-2 lg:order-1">{copyright}</p>
-          <ul className="order-1 flex flex-col gap-2 md:order-2 md:flex-row">
-            {legalLinks.map((link, idx) => (
-              <li key={idx} className="hover:text-yellow-500 transition-colors">
-                <a href={link.href}> {link.name}</a>
-              </li>
-            ))}
-          </ul>
+
+        {/* Bottom Section - Better mobile layout */}
+        <div className="mt-12 sm:mt-16 pt-8 border-t border-yellow-500/20">
+          <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+            <p className="text-xs sm:text-sm text-gray-400">
+              {copyright}
+            </p>
+            <ul className="flex flex-wrap justify-center gap-4 sm:gap-8">
+              {legalLinks.map((link, idx) => (
+                <motion.li 
+                  key={idx}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Link 
+                    href={link.href}
+                    className="text-xs sm:text-sm text-gray-400 hover:text-yellow-500 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
-    </section>
+    </motion.footer>
   )
 }
