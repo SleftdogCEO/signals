@@ -12,7 +12,33 @@ const initializeOpenAI = () => {
   return openai
 }
 
-async function generateBrief({ businessName, websiteUrl, industry, location, customGoal, networkingKeyword, businessData, newsData, meetupData }) {
+function buildConversationContext(conversationData, businessData, newsData, meetupData) {
+  const sections = []
+
+  sections.push(`═══════════════════════════════════════════════════════════════════
+🗣️ CONVERSATION INSIGHTS
+═══════════════════════════════════════════════════════════════════`)
+
+  if (conversationData.business_name) {
+    sections.push(`Business Focus: ${conversationData.business_name} specializes in ${conversationData.industry || 'various services'}`)
+  }
+
+  if (conversationData.growth_objectives) {
+    sections.push(`Growth Vision: "${conversationData.growth_objectives}"`)
+  }
+
+  if (conversationData.partnership_goals) {
+    sections.push(`Partnership Strategy: "${conversationData.partnership_goals}"`)
+  }
+
+  if (conversationData.custom_goal) {
+    sections.push(`Custom Objectives: "${conversationData.custom_goal}"`)
+  }
+
+  return sections.join('\n')
+}
+
+async function generateBrief({ businessName, websiteUrl, industry, location, customGoal, networkingKeyword, businessData, newsData, meetupData, conversationData }) {
   try {
     // Initialize OpenAI when needed (after env vars are loaded)
     const client = initializeOpenAI()
@@ -25,6 +51,9 @@ async function generateBrief({ businessName, websiteUrl, industry, location, cus
     // Create HYPER-PERSONALIZED system prompt based on actual business data
     const systemPrompt = createEnhancedSystemPrompt(businessName, industry, location, customGoal, businessData, newsData, meetupData)
     
+    // Add conversation context to the comprehensive context
+    const conversationContext = conversationData ? buildConversationContext(conversationData, businessData, newsData, meetupData) : ''
+    
     // Build comprehensive context from ALL scraped data
     const comprehensiveContext = buildComprehensiveDataContext({
       businessName,
@@ -36,7 +65,7 @@ async function generateBrief({ businessName, websiteUrl, industry, location, cus
       businessData,
       newsData,
       meetupData
-    })
+    }) + '\n\n' + conversationContext
 
     const userPrompt = `STRATEGIC INTELLIGENCE BRIEF REQUEST FOR: ${businessName}
 

@@ -108,7 +108,7 @@ app.get("/health", (req, res) => {
 // MAIN GENERATION ENDPOINT - FIXED USER ID HANDLING
 app.post("/api/generate", async (req, res) => {
   try {
-    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword, userId } = req.body
+    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword, partnershipGoals, conversationData, userId } = req.body
 
     console.log("🚀 Starting comprehensive business intelligence generation...")
     console.log(`📊 Request: ${businessName} in ${industry} at ${location}`)
@@ -123,6 +123,12 @@ app.post("/api/generate", async (req, res) => {
         details: "Missing or invalid user ID"
       })
     }
+
+    console.log('Backend: Generating brief with conversation data:', {
+      businessName,
+      hasConversationData: !!conversationData,
+      userId
+    });
 
     // Generate all data in parallel
     const [businessData, newsData, meetupData] = await Promise.all([
@@ -141,7 +147,8 @@ app.post("/api/generate", async (req, res) => {
       networkingKeyword,
       businessData,
       newsData,
-      meetupData
+      meetupData,
+      conversationData // ✅ ADD THIS LINE - Pass conversation data to brief service
     })
 
     // Create comprehensive brief object

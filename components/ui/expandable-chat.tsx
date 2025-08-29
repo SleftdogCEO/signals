@@ -41,85 +41,75 @@ const chatConfig = {
 const ExpandableChat: React.FC<ExpandableChatProps> = ({
   className,
   position = "bottom-right",
-  size = "md",
+  size = "md", 
   icon,
   open: controlledOpen,
   onOpenChange,
   children,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
+
+  // Check mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Use controlled or internal state
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen
-  
+
   const toggleChat = () => {
     const newState = !isOpen
     if (controlledOpen !== undefined && onOpenChange) {
-      onOpenChange(newState) // ✅ Call parent handler
+      onOpenChange(newState)
     } else {
-      setInternalOpen(newState) // ✅ Update internal state
+      setInternalOpen(newState)
     }
   }
 
-  // ✅ Close chat when clicking outside on mobile
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (chatRef.current && !chatRef.current.contains(event.target as Node)) {
-        // Only close on mobile when clicking outside
-        if (window.innerWidth < 768) {
-          toggleChat()
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen])
-
   return (
-    <div className={cn(`fixed ${chatConfig.positions[position]} z-[9999]`, className)}>
-      {/* ✅ Mobile Backdrop */}
-      {isOpen && (
+    <div className={cn(
+      "fixed z-[9999]",
+      position === "bottom-right" ? "bottom-4 right-4" : "bottom-4 left-4",
+      className
+    )}>
+      {/* Mobile backdrop */}
+      {isOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
           onClick={toggleChat}
         />
       )}
 
-      {/* ✅ Chat Container with proper mobile positioning */}
-      <div
-        ref={chatRef}
-        className={cn(
-          // Base styles
-          "flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800/50 shadow-2xl overflow-hidden transition-all duration-300 ease-out backdrop-blur-xl",
-          
-          // ✅ Mobile: Full screen modal with proper z-index
-          "fixed inset-0 w-full h-full rounded-none z-[9999]",
-          "md:absolute md:inset-auto md:rounded-2xl",
-          
-          // ✅ Tablet and desktop: Fixed size at bottom-right
-          "md:w-[400px] md:h-[600px] md:max-w-[90vw] md:max-h-[80vh]",
-          "lg:w-[450px] lg:h-[650px]",
-          
-          // Position relative to toggle button on larger screens
-          `md:${chatConfig.chatPositions[position].split(' ').join(' md:')}`,
-          
-          // Size overrides
-          size === "full" && "md:w-[90vw] md:h-[80vh] lg:w-[500px] lg:h-[700px]",
-          size === "lg" && "md:w-[420px] md:h-[620px] lg:w-[450px] lg:h-[670px]",
-          
-          // ✅ State - visible when open
-          isOpen ? chatConfig.states.open : chatConfig.states.closed,
-        )}
-      >
-        {children}
-      </div>
+      {/* Chat window */}
+      {isOpen && (
+        <div
+          ref={chatRef}
+          className={cn(
+            "flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800/50 shadow-2xl overflow-hidden backdrop-blur-xl",
+            // Mobile: full screen
+            isMobile ? "fixed inset-0 w-full h-full rounded-none z-[9999]" : 
+            // Desktop: positioned window
+            "absolute bottom-16 right-0 w-[400px] h-[600px] rounded-2xl z-[9999]"
+          )}
+        >
+          {children}
+        </div>
+      )}
 
-      {/* ✅ Toggle Button - only show when closed */}
-      {!isOpen && <ExpandableChatToggle icon={icon} toggleChat={toggleChat} />}
+      {/* Toggle button */}
+      <ExpandableChatToggle 
+        icon={icon} 
+        toggleChat={toggleChat}
+        className={cn(
+          "w-14 h-14 rounded-full shadow-lg",
+          isOpen && isMobile && "z-[10000]" // Ensure button is above mobile modal
+        )}
+      />
     </div>
   )
 }

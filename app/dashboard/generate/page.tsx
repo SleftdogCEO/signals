@@ -1,61 +1,39 @@
 "use client"
 
 import { useAuth } from "@/context/AuthContext"
-import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Loader2,
   Sparkles,
-  TrendingUp,
-  Users,
-  Zap,
+  MessageSquare,
   ArrowLeft,
   CheckCircle,
-  AlertCircle,
-  Globe,
-  Building2,
-  Target,
   Brain,
-  Rocket,
+  Target,
+  AlertCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { LLMOnboardingChat } from "@/components/chat/LLMOnboardingChat"
 
-const industries = [
-  "Restaurant & Food Service",
-  "Retail & E-commerce",
-  "Professional Services",
-  "Healthcare & Medical",
-  "Fitness & Wellness",
-  "Beauty & Personal Care",
-  "Real Estate",
-  "Technology & Software",
-  "Manufacturing",
-  "Automotive",
-  "Education & Training",
-  "Financial Services",
-  "Legal Services",
-  "Marketing & Advertising",
-  "Construction",
-  "Other",
-]
-
-const steps = [
-  { id: 1, title: "Business Info", icon: Building2 },
-  { id: 2, title: "AI Analysis", icon: Brain },
-  { id: 3, title: "Strategy Brief", icon: Target },
-]
+interface OnboardingData {
+  business_name: string
+  website_url: string
+  industry: string
+  location: string
+  partnership_goals: string
+  growth_objectives: string
+  custom_goal: string
+  networking_keyword: string
+}
 
 export default function GeneratePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!loading && !user) {
@@ -63,424 +41,175 @@ export default function GeneratePage() {
     }
   }, [user, loading, router])
 
-  const [formData, setFormData] = useState({
-    businessName: "",
-    websiteUrl: "",
-    industry: "",
-    location: "",
-    customGoal: "",
-    networkingKeyword: "", // New field for meetup events
-  })
-  const [currentStep, setCurrentStep] = useState(1)
-  const [error, setError] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false) // New state for generation
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    
-    if (!user?.id) {
-      setError("Please log in to generate a brief")
-      return
-    }
-
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    console.log("Onboarding complete:", data)
     setCurrentStep(2)
+    setError("")
 
     try {
-      const formDataWithUser = {
-        ...formData,
-        userId: user.id // CRITICAL: Include user ID
+      if (!user?.id) {
+        throw new Error("Please log in again")
       }
 
-      console.log("Submitting with userId:", user.id)
-      
+      const formData = {
+        businessName: data.business_name,
+        websiteUrl: data.website_url === 'none' ? '' : data.website_url,
+        industry: data.industry,
+        location: data.location,
+        customGoal: data.custom_goal || `${data.growth_objectives || ''} ${data.partnership_goals || ''}`.trim(),
+        networkingKeyword: data.networking_keyword || data.industry,
+        partnershipGoals: data.partnership_goals,
+        conversationData: data,
+        userId: user.id
+      }
+
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formDataWithUser),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
+      const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate brief")
+        throw new Error(result.error || `Server error ${response.status}`)
       }
 
-      if (!data.briefId) {
-        throw new Error("Brief generation failed - no ID returned")
+      if (!result.briefId) {
+        throw new Error("Brief generation failed")
       }
 
       setCurrentStep(3)
       
       setTimeout(() => {
-        router.push(`/dashboard/briefs/${data.briefId}`)
+        router.push(`/dashboard/briefs/${result.briefId}`)
       }, 2000)
       
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Brief generation error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
       setCurrentStep(1)
     }
   }
 
-  const handleGenerate = async () => {
-    if (!user?.id) {
-      console.error('User not authenticated')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const response = await fetch(`/api/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          userId: user.id // Include user ID
-        }),
-      })
-
-      const data = await response.json()
-      
-      if (data.success && data.briefId) {
-        // Redirect to the saved brief
-        router.push(`/dashboard/briefs/${data.briefId}`)
-      } else {
-        console.error('Generation failed:', data.error)
-      }
-      
-    } catch (error) {
-      console.error('Error generating brief:', error)
-    } finally {
-      setIsGenerating(false)
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
+      </div>
+    )
   }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    setError("")
-  }
-
-  const isFormValid = formData.businessName && formData.websiteUrl && formData.industry && formData.location
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Mobile-Optimized Navigation */}
+      <nav className="border-b border-gray-800 bg-black">
+        <div className="mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80">
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-black" />
+            </div>
+            <span className="text-base sm:text-xl font-bold text-white">Sleft Signals</span>
+          </Link>
 
-      {/* Navigation */}
-      <nav className="relative z-10 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <ArrowLeft className="w-5 h-5 text-yellow-500 group-hover:-translate-x-1 transition-transform" />
-              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-black" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-yellow-500 bg-clip-text text-transparent">
-                Sleft Signals
-              </span>
-            </Link>
-
-            {/* Progress Steps */}
-            <div className="hidden md:flex items-center gap-4">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center gap-2">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      currentStep >= step.id ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
-                    }`}
-                  >
-                    {currentStep > step.id ? <CheckCircle className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${currentStep >= step.id ? "text-yellow-500" : "text-gray-400"}`}
-                  >
-                    {step.title}
-                  </span>
-                  {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 ${currentStep > step.id ? "bg-yellow-500" : "bg-gray-800"}`} />
-                  )}
-                </div>
-              ))}
+          {/* Mobile-Optimized Progress Steps */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
+              currentStep >= 1 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
+            }`}>
+              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
+              currentStep >= 2 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
+            }`}>
+              <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
+              currentStep >= 3 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
+            }`}>
+              <Target className="w-3 h-3 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
+      <div className="mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
             <motion.div
-              key="form"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6 }}
+              key="chat"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              {/* Hero Section */}
-              <div className="text-center mb-16">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-2 mb-6"
-                >
-                  <Sparkles className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm text-yellow-500 font-medium">AI-Powered Business Intelligence</span>
-                </motion.div>
-
-                <motion.h1
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="text-4xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-yellow-100 to-yellow-500 bg-clip-text text-transparent"
-                >
-                  Generate Your Strategy Brief
-                </motion.h1>
-
-                <motion.p
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                  className="text-xl lg:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto"
-                >
-                  Get personalized business strategy briefs that reveal your competitive edge, growth opportunities, and
-                  valuable connections.
-                </motion.p>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.5 }}
-                  className="flex flex-wrap justify-center gap-8 mb-12"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-yellow-500" />
-                    </div>
-                    <span className="text-gray-300">Your Edge</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-yellow-500" />
-                    </div>
-                    <span className="text-gray-300">Your Leverage</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-yellow-500" />
-                    </div>
-                    <span className="text-gray-300">Your Connections</span>
-                  </div>
-                </motion.div>
+              {/* Mobile-Optimized Hero */}
+              <div className="text-center mb-4 sm:mb-6 md:mb-8">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-white to-yellow-500 bg-clip-text text-transparent px-2">
+                  Let's Build Your Strategy Brief
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto px-4">
+                  Tell me about your business and I'll create a personalized strategy brief with competitive insights.
+                </p>
               </div>
 
-              {/* Form Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                className="max-w-2xl mx-auto"
-              >
-                <Card className="bg-gray-900/50 border-yellow-500/20 backdrop-blur-sm shadow-2xl">
-                  <CardContent className="p-8">
-                    {error && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2"
-                      >
-                        <AlertCircle className="w-5 h-5 text-red-500" />
-                        <span className="text-red-400">{error}</span>
-                      </motion.div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="businessName" className="text-white flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-yellow-500" />
-                            Business Name *
-                          </Label>
-                          <Input
-                            id="businessName"
-                            value={formData.businessName}
-                            onChange={(e) => handleInputChange("businessName", e.target.value)}
-                            placeholder="Enter your business name"
-                            required
-                            className="bg-black/50 border-yellow-500/30 text-white placeholder:text-gray-400 focus:border-yellow-500 transition-colors"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="websiteUrl" className="text-white flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-yellow-500" />
-                            Website URL *
-                          </Label>
-                          <Input
-                            id="websiteUrl"
-                            type="url"
-                            value={formData.websiteUrl}
-                            onChange={(e) => handleInputChange("websiteUrl", e.target.value)}
-                            placeholder="https://yourbusiness.com"
-                            required
-                            className="bg-black/50 border-yellow-500/30 text-white placeholder:text-gray-400 focus:border-yellow-500 transition-colors"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="industry" className="text-white flex items-center gap-2">
-                            <Target className="w-4 h-4 text-yellow-500" />
-                            Industry / Business Type *
-                          </Label>
-                          <Select
-                            value={formData.industry}
-                            onValueChange={(value) => handleInputChange("industry", value)}
-                          >
-                            <SelectTrigger className="bg-black/50 border-yellow-500/30 text-white focus:border-yellow-500">
-                              <SelectValue placeholder="Select your industry" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-gray-900 border-yellow-500/30 max-h-60">
-                              {industries.map((industry) => (
-                                <SelectItem key={industry} value={industry} className="text-white hover:bg-gray-800">
-                                  {industry}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="location" className="text-white flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-yellow-500" />
-                            Location *
-                          </Label>
-                          <Input
-                            id="location"
-                            value={formData.location}
-                            onChange={(e) => handleInputChange("location", e.target.value)}
-                            placeholder="City, State or ZIP code"
-                            required
-                            className="bg-black/50 border-yellow-500/30 text-white placeholder:text-gray-400 focus:border-yellow-500 transition-colors"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="customGoal" className="text-white flex items-center gap-2">
-                          <Rocket className="w-4 h-4 text-yellow-500" />
-                          Custom Goal or Comment 
-                        </Label>
-                        <Textarea
-                          id="customGoal"
-                          value={formData.customGoal}
-                          onChange={(e) => handleInputChange("customGoal", e.target.value)}
-                          placeholder="Tell us about your specific goals or challenges..."
-                          rows={3}
-                          className="bg-black/50 border-yellow-500/30 text-white placeholder:text-gray-400 focus:border-yellow-500 resize-none transition-colors"
-                        />
-                      </div>
-
-                      {/* New Networking Keyword Field */}
-                      <div className="space-y-2">
-                        <Label htmlFor="networkingKeyword" className="text-white flex items-center gap-2">
-                          <Users className="w-4 h-4 text-purple-500" />
-                          Networking Interest 
-                        </Label>
-                        <Input
-                          id="networkingKeyword"
-                          value={formData.networkingKeyword}
-                          onChange={(e) => handleInputChange("networkingKeyword", e.target.value)}
-                          placeholder="e.g., entrepreneurship, javascript, marketing, fitness..."
-                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-400 focus:border-purple-500 transition-colors"
-                        />
-                        <p className="text-sm text-gray-500">
-                          Find relevant networking events, meetups, and professional gatherings in your area
-                        </p>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={!isFormValid}
-                        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-4 text-lg h-auto transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Generate My Strategy Brief
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Trust Indicators */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                className="text-center mt-12"
-              >
-                <p className="text-gray-400 text-sm mb-4">Trusted by businesses worldwide</p>
-                <div className="flex justify-center items-center gap-8 opacity-50">
-                  <div className="text-gray-500 font-semibold">AI-Powered</div>
-                  <div className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                  <div className="text-gray-500 font-semibold">Data-Driven</div>
-                  <div className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                  <div className="text-gray-500 font-semibold">Actionable</div>
+              {/* Mobile-Optimized Error Display */}
+              {error && (
+                <div className="mx-auto mb-4 sm:mb-6 p-3 sm:p-4 bg-red-900/50 border border-red-500/50 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+                  <span className="text-red-200 text-xs sm:text-sm flex-1">{error}</span>
+                  <Button
+                    onClick={() => setError("")}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/50 text-red-300 hover:bg-red-500/10 text-xs"
+                  >
+                    Try Again
+                  </Button>
                 </div>
-              </motion.div>
+              )}
+
+              {/* Mobile-Optimized Chat Interface */}
+              <div className="w-full h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)] md:h-[70vh] max-w-5xl mx-auto">
+                <div className="bg-gray-900 border border-gray-800 rounded-lg shadow-2xl h-full overflow-hidden">
+                  {user && (
+                    <LLMOnboardingChat
+                      onComplete={handleOnboardingComplete}
+                      userId={user.id}
+                    />
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
           {currentStep === 2 && (
             <motion.div
               key="loading"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center max-w-2xl mx-auto px-4"
             >
-              <div className="max-w-2xl mx-auto">
-                <div className="mb-8">
-                  <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Brain className="w-12 h-12 text-yellow-500 animate-pulse" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-white mb-4">Analyzing Your Business</h2>
-                  <p className="text-gray-300 mb-8">
-                    Our AI is analyzing your business, competitors, and market trends to create your personalized
-                    strategy brief.
-                  </p>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500 animate-pulse" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Creating Your Strategy Brief</h2>
+              <p className="text-sm sm:text-base text-gray-300 mb-6 sm:mb-8">
+                Analyzing your business, competitors, and market opportunities...
+              </p>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
+                  <span className="text-sm sm:text-base">Processing business data...</span>
                 </div>
-
-                <Card className="bg-gray-900/50 border-yellow-500/20 backdrop-blur-sm">
-                  <CardContent className="p-8">
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <Loader2 className="w-6 h-6 text-yellow-500 animate-spin" />
-                        <span className="text-white">Scraping competitor data...</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Loader2 className="w-6 h-6 text-yellow-500 animate-spin" />
-                        <span className="text-white">Analyzing industry trends...</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Loader2 className="w-6 h-6 text-yellow-500 animate-spin" />
-                        <span className="text-white">Generating AI insights...</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
+                  <span className="text-sm sm:text-base">Finding competitors...</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
+                  <span className="text-sm sm:text-base">Generating recommendations...</span>
+                </div>
               </div>
             </motion.div>
           )}
@@ -488,21 +217,18 @@ export default function GeneratePage() {
           {currentStep === 3 && (
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
+              className="text-center max-w-2xl mx-auto px-4"
             >
-              <div className="max-w-2xl mx-auto">
-                <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="w-12 h-12 text-green-500" />
-                </div>
-                <h2 className="text-3xl font-bold text-white mb-4">Brief Generated Successfully!</h2>
-                <p className="text-gray-300 mb-8">Your personalized strategy brief is ready. Redirecting you now...</p>
-                <div className="flex justify-center">
-                  <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
-                </div>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
               </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Brief Ready!</h2>
+              <p className="text-sm sm:text-base text-gray-300 mb-6 sm:mb-8">
+                Your strategy brief is complete. Redirecting you now...
+              </p>
+              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 animate-spin mx-auto" />
             </motion.div>
           )}
         </AnimatePresence>
