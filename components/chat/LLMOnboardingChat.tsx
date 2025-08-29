@@ -254,29 +254,35 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
   }
 
   const generateBrief = async (data: Partial<OnboardingData>) => {
+    // Check if we have user consent for brief generation
+    const hasUserConsent = window.confirm(
+      `Would you like me to create a comprehensive strategy brief for your business?\n\n` +
+      `This will include:\n` +
+      `• Competitive analysis and market opportunities\n` +
+      `• Strategic partnership recommendations\n` +
+      `• Growth strategies and action plans\n\n` +
+      `Processing time: 2-4 minutes`
+    )
+
+    if (!hasUserConsent) {
+      const declineMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "No problem! I'm here to help with any questions you have about business strategy, partnerships, or growth. What would you like to discuss?",
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, declineMessage])
+      return
+    }
+
     setIsGeneratingBrief(true)
     
     try {
-      // Check if we have minimal viable data
-      const hasMinimalData = data.business_name || data.industry
-      const hasLocation = data.location && data.location !== "NOT YET ANSWERED"
-      
-      let generatingMessage: Message
-      
-      if (hasMinimalData && hasLocation) {
-        generatingMessage = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "🚀 Perfect! I have enough information to create your comprehensive strategy brief. Our AI is analyzing your business context and market opportunities...\n\n⏱️ This may take 2-4 minutes as we gather competitive intelligence and partnership opportunities.",
-          timestamp: new Date(),
-        }
-      } else {
-        generatingMessage = {
-          id: Date.now().toString(),
-          role: "assistant", 
-          content: "🧠 I'll work with the information we've discussed to create a valuable strategy brief for you. Our AI specializes in intelligent gap-filling using industry best practices...\n\n⏱️ Processing your brief now (2-3 minutes).",
-          timestamp: new Date(),
-        }
+      const generatingMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant", 
+        content: "🚀 Excellent! Creating your comprehensive strategy brief now. I'll analyze your business context, competitive landscape, and identify growth opportunities...\n\n⏱️ This will take 2-4 minutes for thorough analysis.",
+        timestamp: new Date(),
       }
       
       setMessages(prev => [...prev, generatingMessage])
@@ -291,7 +297,8 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
         networkingKeyword: data.networking_keyword || data.industry || 'business networking',
         partnershipGoals: data.partnership_goals || 'Build strategic partnerships for growth',
         conversationData: data,
-        userId: userId
+        userId: userId,
+        userConsent: true // Include consent flag
       }
 
       console.log('🧠 Generating brief with intelligent data enhancement:', formData)
@@ -353,6 +360,9 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
     "I need partners"
   ]
 
+  // Update to show the Generate Brief button more intelligently
+  const shouldShowGenerateButton = canGenerateBrief && !isGeneratingBrief && progressPercentage >= 40
+
   return (
     <div className="flex flex-col h-full w-full bg-gray-900">
       {/* Mobile-Optimized Header */}
@@ -368,14 +378,14 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
             </div>
           </div>
           
-          {canGenerateBrief && !isGeneratingBrief && (
+          {shouldShowGenerateButton && (
             <Button
               onClick={() => generateBrief(conversationData)}
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 w-full sm:w-auto"
               size="sm"
             >
               <Target className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Generate Brief
+              Generate Strategy Brief
             </Button>
           )}
         </div>
