@@ -188,7 +188,7 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
         }),
       })
 
-      const data: LLMResponse = await response.json()
+      const data = await response.json()
 
       // Remove typing indicator
       setMessages(prev => prev.filter(m => !m.typing))
@@ -203,27 +203,36 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
 
         setMessages(prev => [...prev, assistantMessage])
 
-        // Update conversation data
-        const updatedData = { ...conversationData }
-        Object.keys(data.data_collected).forEach(key => {
-          const value = data.data_collected[key as keyof typeof data.data_collected]
-          if (value && value !== "NOT YET ANSWERED") {
-            updatedData[key as keyof OnboardingData] = value as string
-          }
-        })
-        
-        setConversationData(updatedData)
-        
-        // Calculate proper progress
-        const newProgress = calculateProgress(updatedData)
-        const canGenerate = canGenerateCheck(updatedData)
-        
-        setProgressPercentage(newProgress)
-        setCanGenerateBrief(canGenerate)
+        // CRITICAL: Only update progress when business data is actually collected
+        if (data.is_business_data_collection) {
+          console.log('✅ Business data collected - updating progress')
+          
+          // Update conversation data ONLY when business info is provided
+          const updatedData = { ...conversationData }
+          Object.keys(data.data_collected || {}).forEach(key => {
+            const value = data.data_collected[key]
+            if (value && value !== null) {
+              updatedData[key as keyof OnboardingData] = value as string
+              console.log(`📊 Updated ${key}: ${value}`)
+            }
+          })
+          
+          setConversationData(updatedData)
+          
+          // Calculate and update progress
+          const newProgress = data.progress_percentage || 0
+          setProgressPercentage(newProgress)
+          setCanGenerateBrief(data.can_generate_brief || false)
+          
+          console.log(`📈 Progress updated to: ${newProgress}%`)
+        } else {
+          console.log('💭 General conversation - progress unchanged')
+          // Don't update progress for general questions
+        }
 
-        // Auto-generate brief if triggered and progress is 70%+
-        if (data.brief_generation_trigger && canGenerate) {
-          setTimeout(() => generateBrief(updatedData), 1000)
+        // Auto-generate brief if triggered and we have sufficient data
+        if (data.brief_generation_trigger && data.can_generate_brief && data.progress_percentage >= 70) {
+          setTimeout(() => generateBrief(conversationData), 1000)
         }
       }
     } catch (error) {
@@ -254,6 +263,22 @@ export function LLMOnboardingChat({ onComplete, userId }: LLMOnboardingChatProps
   }
 
   const generateBrief = async (data: Partial<OnboardingData>) => {
+    // Validate we have actual business data
+    const hasBusinessData = (data.business_name && data.business_name.length > 2) ||
+                         (data.industry && data.industry.length > 2) ||
+                         (data.location && data.location.length > 2)
+
+    if (!hasBusinessData) {
+      const needMoreInfoMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "I need to learn more about your business first. Could you tell me:\n\n• Your business name\n• What industry you're in\n• Your business location\n\nOnce I have this information, I can create a comprehensive strategy brief for you!",
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, needMoreInfoMessage])
+      return
+    }
+
     // Check if we have user consent for brief generation
     const hasUserConsent = window.confirm(
       `Would you like me to create a comprehensive strategy brief for your business?\n\n` +
