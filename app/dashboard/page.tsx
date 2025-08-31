@@ -51,28 +51,28 @@ export default function DashboardPage() {
       description: "Create a comprehensive business analysis",
       icon: <Sparkles className="w-6 h-6" />,
       color: "from-yellow-500 to-yellow-600",
-      action: () => router.push('/generate')
+      action: () => router.push('/dashboard/generate')
     },
     {
       title: "Market Research",
       description: "Analyze your competitive landscape",
       icon: <Sparkles className="w-6 h-6" />,
       color: "from-blue-500 to-blue-600",
-      action: () => router.push('/market-research')
+      action: () => router.push('#')
     },
     {
       title: "Network Builder",
       description: "Find strategic business connections",
       icon: <Sparkles className="w-6 h-6" />,
       color: "from-green-500 to-green-600",
-      action: () => router.push('/network')
+      action: () => router.push('#')
     },
     {
       title: "Industry News",
       description: "Stay updated with latest trends",
       icon: <Sparkles className="w-6 h-6" />,
       color: "from-purple-500 to-purple-600",
-      action: () => router.push('/news')
+      action: () => router.push('#')
     }
   ];
 

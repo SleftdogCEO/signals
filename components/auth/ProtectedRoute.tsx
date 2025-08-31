@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   // Protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/generate', '/briefs', '/settings', '/profile']
+  const protectedRoutes = ['/dashboard', '/dashboard/generate', '/briefs', '/settings', '/profile']
 
   useEffect(() => {
     const isProtectedRoute = protectedRoutes.some(route => 

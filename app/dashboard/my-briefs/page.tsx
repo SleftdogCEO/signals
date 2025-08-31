@@ -188,7 +188,7 @@ export default function MyBriefsPage() {
               Manage your generated business intelligence reports
             </p>
           </div>
-          <Link href="/generate">
+          <Link href="/dashboard/generate">
             <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold">
               <Plus className="w-4 h-4 mr-2" />
               Generate New Brief

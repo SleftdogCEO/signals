@@ -100,13 +100,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
               
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
-                onClick={() => router.push('/dashboard/settings')}
+                onClick={() => router.push('#')}
               >
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
-                onClick={() => router.push('/dashboard/billing')}
+                onClick={() => router.push('#')}
               >
                 Billing & Usage
               </DropdownMenuItem>
@@ -187,7 +187,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
             size="sm" 
             className="text-white/70 hover:text-white hover:bg-white/10 transition-colors" 
             aria-label="Settings"
-            onClick={() => router.push('/dashboard/settings')}
+            onClick={() => router.push('#')}
           >
             <SettingsIcon className="w-5 h-5" />
           </Button>
@@ -241,19 +241,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
               
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
-                onClick={() => router.push('/dashboard/settings')}
+                onClick={() => router.push('#')}
               >
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
-                onClick={() => router.push('/dashboard/billing')}
+                onClick={() => router.push('#')}
               >
                 Billing & Usage
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer px-4 py-2"
-                onClick={() => router.push('/dashboard/api-keys')}
+                onClick={() => router.push('#')}
               >
                 API Keys
               </DropdownMenuItem>

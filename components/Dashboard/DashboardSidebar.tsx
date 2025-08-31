@@ -39,6 +39,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+import UpgradeModal from '@/components/ui/upgrade-modal'; // Add this import
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -67,6 +68,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false); // Add this state
   
   // Determine if we're on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -372,7 +374,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
                 <p className="text-white/60 text-xs mb-3">Unlock advanced business intelligence and premium networking features</p>
                 <button 
                   className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black text-sm font-bold py-2 px-3 rounded-lg transition-all"
-                  onClick={() => router.push('/pricing')}
+                  onClick={() => setIsUpgradeModalOpen(true)} // Update this
                 >
                   <Plus className="w-3 h-3 inline mr-1" />
                   Upgrade Now
@@ -437,6 +439,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
           )}
         </div>
       </div>
+
+      {/* Add the Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={isUpgradeModalOpen} 
+        onClose={() => setIsUpgradeModalOpen(false)} 
+      />
     </>
   );
 };
