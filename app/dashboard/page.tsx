@@ -1,195 +1,259 @@
 "use client"
 
-import DashboardLayout from "@/components/Dashboard/DashboardLayout"
-import DashboardStats from "@/components/Dashboard/DashboardStats"
 import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
+import { ArrowRight, FileText, Loader2, Sparkles, Zap, Building2, MapPin, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+
+interface Brief {
+  id: string
+  businessName: string
+  createdAt: string
+  metadata?: {
+    industry?: string
+    location?: string
+  }
+}
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [briefsCount, setBriefsCount] = useState(0)
+  const [briefs, setBriefs] = useState<Brief[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch user briefs count
   useEffect(() => {
-    const fetchBriefsCount = async () => {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
+    if (!authLoading && !user) {
+      router.push("/auth")
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
+    const fetchBriefs = async () => {
+      if (!user?.id) return
 
       try {
-        const response = await fetch(`/api/user-briefs/${user.id}?limit=1`)
+        const response = await fetch(`/api/user-briefs/${user.id}?limit=10`)
         const data = await response.json()
-        
-        if (data.success) {
-          setBriefsCount(data.pagination?.total || 0)
+
+        if (data.success && data.briefs) {
+          setBriefs(data.briefs)
         }
       } catch (error) {
-        console.error("Error fetching briefs count:", error)
+        console.error("Error fetching briefs:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchBriefsCount()
+    if (user) {
+      fetchBriefs()
+    }
   }, [user])
 
-  const handleGenerateBrief = () => {
-    router.push('/dashboard/generate')
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        {/* Vibrant background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-rose-400/50 via-pink-400/40 to-orange-300/30 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -bottom-20 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/50 via-teal-400/40 to-emerald-300/30 rounded-full blur-3xl"
+          />
+        </div>
+        <div className="relative flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+          <p className="text-gray-500 text-sm">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  const quickActions = [
-    {
-      title: "Generate Strategy Brief",
-      description: "Create a comprehensive business analysis",
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "from-yellow-500 to-yellow-600",
-      action: () => router.push('/dashboard/generate')
-    },
-    {
-      title: "Market Research",
-      description: "Analyze your competitive landscape",
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "from-blue-500 to-blue-600",
-      action: () => router.push('#')
-    },
-    {
-      title: "Network Builder",
-      description: "Find strategic business connections",
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "from-green-500 to-green-600",
-      action: () => router.push('#')
-    },
-    {
-      title: "Industry News",
-      description: "Stay updated with latest trends",
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "from-purple-500 to-purple-600",
-      action: () => router.push('#')
-    }
-  ];
-
   return (
-    <DashboardLayout>
-      {/* Welcome Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="mb-8"
-      >
-        <div className="bg-gradient-to-r from-yellow-500/10 via-yellow-600/10 to-orange-500/10 border border-yellow-500/20 rounded-3xl p-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.1),transparent_70%)]" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-8 h-8 text-yellow-500" />
-              <h1 className="text-3xl font-bold text-white">
-                Welcome to Your Command Center
-              </h1>
-            </div>
-            <p className="text-gray-300 text-lg mb-6">
-              Your AI-powered business intelligence platform is ready to help you dominate your market.
-            </p>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="flex justify-center"
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Vibrant background with colorful gradient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            x: [0, 80, 40, 0],
+            y: [0, 40, 80, 0],
+            scale: [1, 1.2, 1.1, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-rose-400/40 via-pink-400/30 to-orange-300/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, -60, -30, 0],
+            y: [0, 60, 30, 0],
+            scale: [1, 1.15, 1.2, 1],
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/40 via-teal-400/30 to-emerald-300/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, 50, -50, 0],
+            y: [0, -30, 30, 0],
+            scale: [1, 1.1, 1.2, 1],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-violet-400/30 via-purple-400/20 to-indigo-300/10 rounded-full blur-3xl"
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-to-r from-amber-200/15 via-transparent to-sky-200/15 rounded-full blur-3xl" />
+      </div>
+
+      {/* Header */}
+      <header className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">Sleft</span>
+            </Link>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/dashboard/generate")}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white text-sm font-medium rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25"
             >
-              <Link href="/dashboard/generate" passHref>
-                <Button
-                  className="relative flex items-center gap-4 px-10 py-5 text-lg font-bold rounded-full bg-black border-2 border-yellow-500 shadow-lg hover:border-yellow-400 hover:shadow-yellow-500/40 transition-all duration-300 group"
-                  style={{
-                    boxShadow: "0 0 40px 0 rgba(251,191,36,0.15), 0 2px 8px 0 rgba(0,0,0,0.15)"
-                  }}
-                >
-                  <span className="absolute -inset-1 rounded-full bg-yellow-500/10 blur-2xl opacity-40 group-hover:opacity-60 pointer-events-none"></span>
-                  <span className="relative flex items-center gap-2">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 ">
-                      <Sparkles className="w-6 h-6 text-white animate-pulse" />
-                    </span>
-                    <span className="bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500 bg-clip-text text-transparent font-extrabold text-xl ">
-                      Generate My Strategy Brief
-                    </span>
-                    <ArrowRight className="w-6 h-6 text-yellow-400 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </Button>
-              </Link>
-            </motion.div>
+              <Zap className="w-4 h-4" />
+              New Scan
+            </motion.button>
           </div>
         </div>
-      </motion.div>
+      </header>
 
-      {/* Dashboard Stats */}
-      {!loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-8"
-        >
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-yellow-500" />
-            Your Analytics Overview
-          </h2>
-          <DashboardStats briefsCount={briefsCount} />
-        </motion.div>
-      )}
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-12">
+        {briefs.length === 0 ? (
+          // Empty state - direct to generate
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-violet-500/30">
+              <Zap className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="text-gray-900">Ready to find </span>
+              <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">your edge?</span>
+            </h1>
+            <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
+              In 60 seconds, we&apos;ll scan your local market for leads, news, and networking events.
+            </p>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-        className="mb-8"
-      >
-        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-yellow-500" />
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action, index) => (
-            <motion.div
-              key={action.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
-            >
-              <div 
-                className="bg-gray-900/50 border border-gray-800 hover:border-yellow-500/30 transition-all duration-300 cursor-pointer group rounded-2xl"
-                onClick={action.action}
-              >
-                <div className={`w-full h-32 bg-gradient-to-r ${action.color} rounded-t-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
-                  {action.icon}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-white mb-2">{action.title}</h3>
-                  <p className="text-gray-400 text-sm">{action.description}</p>
-                </div>
+            {/* Feature highlights */}
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm text-emerald-700 font-medium">Local Leads</span>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-2 rounded-full">
+                <FileText className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-blue-700 font-medium">Industry News</span>
+              </div>
+              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full">
+                <Calendar className="w-4 h-4 text-orange-600" />
+                <span className="text-sm text-orange-700 font-medium">Networking Events</span>
+              </div>
+            </div>
 
-      {/* Loading State */}
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center justify-center py-12"
-        >
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
-          <span className="ml-3 text-gray-400">Loading your analytics...</span>
-        </motion.div>
-      )}
-    </DashboardLayout>
+            <Link href="/dashboard/generate">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold text-lg px-10 py-5 rounded-2xl overflow-hidden shadow-2xl shadow-fuchsia-500/30"
+              >
+                <span className="relative z-10">Start Your First Scan</span>
+                <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-fuchsia-600 via-rose-500 to-orange-500"
+                  initial={{ x: "100%" }}
+                  whileHover={{ x: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
+            </Link>
+          </motion.div>
+        ) : (
+          // Briefs list
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">Your Briefs</h1>
+                <p className="text-gray-500">View your market intelligence reports</p>
+              </div>
+              <span className="px-4 py-2 bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-700 rounded-full text-sm font-medium border border-violet-200">
+                {briefs.length} total
+              </span>
+            </div>
+
+            <div className="grid gap-4">
+              {briefs.map((brief, i) => (
+                <motion.div
+                  key={brief.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Link href={`/dashboard/briefs/${brief.id}`}>
+                    <div className="flex items-center justify-between p-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 hover:border-violet-300 hover:shadow-xl hover:shadow-violet-500/10 transition-all cursor-pointer group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-fuchsia-100 rounded-xl flex items-center justify-center group-hover:from-violet-200 group-hover:to-fuchsia-200 transition-colors">
+                          <FileText className="w-6 h-6 text-violet-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-800 group-hover:text-violet-700 transition-colors">
+                            {brief.businessName}
+                          </h3>
+                          <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                            {brief.metadata?.industry && (
+                              <span className="flex items-center gap-1">
+                                <Building2 className="w-3.5 h-3.5" />
+                                {brief.metadata.industry}
+                              </span>
+                            )}
+                            {brief.metadata?.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {brief.metadata.location}
+                              </span>
+                            )}
+                            {!brief.metadata?.industry && !brief.metadata?.location && (
+                              <span>{new Date(brief.createdAt).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-400 hidden sm:block">
+                          {new Date(brief.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                        <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-violet-100 transition-colors">
+                          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-violet-600 transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   )
 }

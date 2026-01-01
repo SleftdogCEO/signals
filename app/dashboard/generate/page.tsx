@@ -1,238 +1,299 @@
 "use client"
 
-import { useAuth } from "@/context/AuthContext"
-import { useState, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import {
-  Loader2,
-  Sparkles,
-  MessageSquare,
-  ArrowLeft,
-  CheckCircle,
-  Brain,
-  Target,
-  AlertCircle,
-} from "lucide-react"
+import { Send, Loader2, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { LLMOnboardingChat } from "@/components/chat/LLMOnboardingChat"
 
-interface OnboardingData {
-  business_name: string
-  website_url: string
-  industry: string
-  location: string
-  partnership_goals: string
-  growth_objectives: string
-  custom_goal: string
-  networking_keyword: string
+interface Message {
+  role: "user" | "assistant"
+  content: string
 }
 
-export default function GeneratePage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [error, setError] = useState("")
+const QUESTIONS = [
+  { key: "business_name", prompt: "First things first - what's your business called?" },
+  { key: "industry", prompt: "Nice! What industry are you crushing it in?" },
+  { key: "location", prompt: "Where's your home base? (City, State)" },
+  { key: "custom_goal", prompt: "Last one - what's your #1 goal this quarter?" },
+]
 
+export default function GeneratePage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const [currentStep, setCurrentStep] = useState(0)
+  const [businessData, setBusinessData] = useState<Record<string, string>>({})
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+
+  const inputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Redirect if not authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push("/auth")
     }
-  }, [user, loading, router])
+  }, [user, authLoading, router])
 
-  const handleOnboardingComplete = async (data: OnboardingData) => {
-    console.log("Onboarding complete:", data)
-    setCurrentStep(2)
-    setError("")
+  // Initial greeting
+  useEffect(() => {
+    if (messages.length === 0 && user) {
+      setMessages([{ role: "assistant", content: QUESTIONS[0].prompt }])
+    }
+  }, [user, messages.length])
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  // Focus input
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [currentStep])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || isSending) return
+
+    const userMessage = input.trim()
+    setInput("")
+    setIsSending(true)
+
+    // Add user message
+    setMessages(prev => [...prev, { role: "user", content: userMessage }])
+
+    // Store the answer
+    const currentQuestion = QUESTIONS[currentStep]
+    const newData = { ...businessData, [currentQuestion.key]: userMessage }
+    setBusinessData(newData)
+
+    // Short delay for natural feel
+    await new Promise(r => setTimeout(r, 400))
+
+    // Next question or ready to generate
+    if (currentStep < QUESTIONS.length - 1) {
+      setCurrentStep(prev => prev + 1)
+      setMessages(prev => [...prev, { role: "assistant", content: QUESTIONS[currentStep + 1].prompt }])
+    } else {
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `Perfect! I'm about to scan ${newData.location} for leads, news, and events tailored to ${newData.business_name}. This takes about 60 seconds.`
+      }])
+    }
+
+    setIsSending(false)
+  }
+
+  const handleGenerate = async () => {
+    if (isGenerating) return
+    setIsGenerating(true)
+
+    setMessages(prev => [...prev, { role: "assistant", content: "Scanning your local market... This is where the magic happens." }])
 
     try {
-      if (!user?.id) {
-        throw new Error("Please log in again")
-      }
-
-      const formData = {
-        businessName: data.business_name,
-        websiteUrl: data.website_url === 'none' ? '' : data.website_url,
-        industry: data.industry,
-        location: data.location,
-        customGoal: data.custom_goal || `${data.growth_objectives || ''} ${data.partnership_goals || ''}`.trim(),
-        networkingKeyword: data.networking_keyword || data.industry,
-        partnershipGoals: data.partnership_goals,
-        conversationData: data,
-        userId: user.id
-      }
-
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          businessName: businessData.business_name,
+          industry: businessData.industry,
+          location: businessData.location,
+          customGoal: businessData.custom_goal,
+          userId: user?.id,
+        }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(result.error || `Server error ${response.status}`)
+      if (data.success && data.briefId) {
+        router.push(`/dashboard/briefs/${data.briefId}`)
+      } else {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: "Something went wrong. Please try again."
+        }])
+        setIsGenerating(false)
       }
-
-      if (!result.briefId) {
-        throw new Error("Brief generation failed")
-      }
-
-      setCurrentStep(3)
-      
-      setTimeout(() => {
-        router.push(`/dashboard/briefs/${result.briefId}`)
-      }, 2000)
-      
     } catch (error) {
-      console.error("Brief generation error:", error)
-      setError(error instanceof Error ? error.message : "An error occurred")
-      setCurrentStep(1)
+      console.error("Generation error:", error)
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: "Connection error. Please try again."
+      }])
+      setIsGenerating(false)
     }
   }
 
-  if (loading) {
+  const isComplete = currentStep >= QUESTIONS.length - 1 && Object.keys(businessData).length >= 4
+  const progress = ((currentStep + 1) / QUESTIONS.length) * 100
+
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-rose-400/50 via-pink-400/40 to-orange-300/30 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -bottom-20 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/50 via-teal-400/40 to-emerald-300/30 rounded-full blur-3xl"
+          />
+        </div>
+        <div className="relative flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+          <p className="text-gray-500 text-sm">Loading...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Mobile-Optimized Navigation */}
-      <nav className="border-b border-gray-800 bg-black">
-        <div className="mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80">
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
-            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-black" />
-            </div>
-            <span className="text-base sm:text-xl font-bold text-white">Sleft Signals</span>
-          </Link>
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      {/* Vibrant background with colorful gradient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            x: [0, 80, 40, 0],
+            y: [0, 40, 80, 0],
+            scale: [1, 1.2, 1.1, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-rose-400/40 via-pink-400/30 to-orange-300/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, -60, -30, 0],
+            y: [0, 60, 30, 0],
+            scale: [1, 1.15, 1.2, 1],
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/40 via-teal-400/30 to-emerald-300/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, 50, -50, 0],
+            y: [0, -30, 30, 0],
+            scale: [1, 1.1, 1.2, 1],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-violet-400/30 via-purple-400/20 to-indigo-300/10 rounded-full blur-3xl"
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-to-r from-amber-200/15 via-transparent to-sky-200/15 rounded-full blur-3xl" />
+      </div>
 
-          {/* Mobile-Optimized Progress Steps */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
-              currentStep >= 1 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
-            }`}>
-              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-            </div>
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
-              currentStep >= 2 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
-            }`}>
-              <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
-            </div>
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
-              currentStep >= 3 ? "bg-yellow-500 text-black" : "bg-gray-800 text-gray-400"
-            }`}>
-              <Target className="w-3 h-3 sm:w-4 sm:h-4" />
+      {/* Header */}
+      <header className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-3">
+              <button className="p-2 bg-white hover:bg-gray-50 rounded-xl transition-colors shadow-sm border border-gray-200">
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/25">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-lg font-bold text-gray-900 hidden sm:block">Sleft</span>
+              </div>
+            </Link>
+            <div className="flex items-center gap-4">
+              <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-rose-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+              <span className="text-sm text-gray-500 font-medium">{currentStep + 1}/{QUESTIONS.length}</span>
             </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
-        <AnimatePresence mode="wait">
-          {currentStep === 1 && (
-            <motion.div
-              key="chat"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+      {/* Chat area */}
+      <main className="relative z-10 flex-1 flex flex-col max-w-2xl mx-auto w-full px-4">
+        <div className="flex-1 py-8 space-y-4 overflow-y-auto">
+          <AnimatePresence>
+            {messages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] px-5 py-3.5 rounded-2xl shadow-sm ${
+                    msg.role === "user"
+                      ? "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white"
+                      : "bg-white/90 backdrop-blur-sm text-gray-700 border border-gray-200"
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input area */}
+        <div className="py-6">
+          {isComplete && !isGenerating ? (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleGenerate}
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold py-5 rounded-2xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-2xl shadow-fuchsia-500/30"
             >
-              {/* Mobile-Optimized Hero */}
-              <div className="text-center mb-4 sm:mb-6 md:mb-8">
-                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-white to-yellow-500 bg-clip-text text-transparent px-2">
-                  Let's Build Your Strategy Brief
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto px-4">
-                  Tell me about your business and I'll create a personalized strategy brief with competitive insights.
-                </p>
+              See My Opportunities
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
+          ) : isGenerating ? (
+            <div className="flex items-center justify-center gap-3 py-5 bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-lg">
+              <div className="relative">
+                <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
               </div>
-
-              {/* Mobile-Optimized Error Display */}
-              {error && (
-                <div className="mx-auto mb-4 sm:mb-6 p-3 sm:p-4 bg-red-900/50 border border-red-500/50 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
-                  <span className="text-red-200 text-xs sm:text-sm flex-1">{error}</span>
-                  <Button
-                    onClick={() => setError("")}
-                    variant="outline"
-                    size="sm"
-                    className="border-red-500/50 text-red-300 hover:bg-red-500/10 text-xs"
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              )}
-
-              {/* Mobile-Optimized Chat Interface */}
-              <div className="w-full h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)] md:h-[70vh] max-w-5xl mx-auto">
-                <div className="bg-gray-900 border border-gray-800 rounded-lg shadow-2xl h-full overflow-hidden">
-                  {user && (
-                    <LLMOnboardingChat
-                      onComplete={handleOnboardingComplete}
-                      userId={user.id}
-                    />
-                  )}
-                </div>
-              </div>
-            </motion.div>
+              <span className="text-gray-600 font-medium">Finding opportunities...</span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your answer..."
+                className="flex-1 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl px-5 py-4 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 shadow-sm transition-all"
+                disabled={isSending}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isSending}
+                className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white rounded-2xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </button>
+            </form>
           )}
-
-          {currentStep === 2 && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center max-w-2xl mx-auto px-4"
-            >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500 animate-pulse" />
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Creating Your Strategy Brief</h2>
-              <p className="text-sm sm:text-base text-gray-300 mb-6 sm:mb-8">
-                Analyzing your business, competitors, and market opportunities...
-              </p>
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
-                  <span className="text-sm sm:text-base">Processing business data...</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
-                  <span className="text-sm sm:text-base">Finding competitors...</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
-                  <span className="text-sm sm:text-base">Generating recommendations...</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 3 && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center max-w-2xl mx-auto px-4"
-            >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Brief Ready!</h2>
-              <p className="text-sm sm:text-base text-gray-300 mb-6 sm:mb-8">
-                Your strategy brief is complete. Redirecting you now...
-              </p>
-              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 animate-spin mx-auto" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }
