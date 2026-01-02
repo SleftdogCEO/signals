@@ -5,11 +5,19 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
+  const type = requestUrl.searchParams.get('type')
 
   // Handle OAuth error
   if (error) {
     console.error('❌ OAuth error:', error)
     return NextResponse.redirect(`${requestUrl.origin}/auth?error=oauth_error`)
+  }
+
+  // Check if this is a password recovery flow
+  if (type === 'recovery') {
+    console.log('🔑 Password recovery flow detected')
+    // Redirect to reset password page with the code
+    return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password${code ? `?code=${code}` : ''}`)
   }
 
   if (code) {

@@ -8,10 +8,11 @@ const client = new ApifyClient({
 // Rate limiting and usage tracking
 let dailyUsage = 0
 const DAILY_LIMIT = 100 // Increased for Serper API
-const MAX_LEADS_PER_REQUEST = 5 // Top 5 potential partners
+const MAX_LEADS_PER_REQUEST = 10 // Fetch more to filter down to quality leads
 const MAX_COMPETITORS_PER_REQUEST = 0 // No competitors needed - we only show partners
+const MIN_QUALITY_SCORE = 60 // Minimum score to include a lead
 
-async function scrapeBusinessData({ businessName, websiteUrl, industry, location, customGoal }) {
+async function scrapeBusinessData({ businessName, websiteUrl, industry, location, customGoal, targetLeads }) {
   try {
     // Check daily usage limit
     if (dailyUsage >= DAILY_LIMIT) {
@@ -24,18 +25,20 @@ async function scrapeBusinessData({ businessName, websiteUrl, industry, location
     console.log(`🏢 Industry: ${industry}`)
     console.log(`📍 Location: ${location}`)
     console.log(`🎯 Custom Goal: ${customGoal || 'Not specified'}`)
+    console.log(`🤝 Target Partners: ${targetLeads || 'Not specified'}`)
     console.log(`📊 Daily API usage: ${dailyUsage}/${DAILY_LIMIT}`)
 
     // Parse location for better targeting
     const locationData = parseLocation(location)
-    
+
     // Generate personalized search strategies based on all user inputs
     const searchStrategies = generatePersonalizedSearchStrategies({
       businessName,
       websiteUrl,
       industry,
       location: locationData,
-      customGoal
+      customGoal,
+      targetLeads  // Pass user-specified partner types
     })
 
     console.log(`🔍 Generated ${searchStrategies.length} personalized search strategies`)
@@ -43,31 +46,36 @@ async function scrapeBusinessData({ businessName, websiteUrl, industry, location
     const allResults = []
     
     // Execute multiple targeted searches using Google Serper Maps API
-    for (const strategy of searchStrategies.slice(0, 3)) { // Limit to 3 searches to save quota
+    for (const strategy of searchStrategies) {
       try {
         console.log(`🔍 Executing ${strategy.type} search:`, strategy.searchTerms)
-        
+
+        // For user_specified_partners, search ALL partner types to ensure diversity
+        // For other strategies, limit to 2 terms to save quota
+        const maxTerms = strategy.type === 'user_specified_partners' ? strategy.searchTerms.length : 2
+
         // Execute each search term in the strategy
-        for (const searchTerm of strategy.searchTerms.slice(0, 2)) { // Limit to 2 terms per strategy
+        for (const searchTerm of strategy.searchTerms.slice(0, maxTerms)) {
           const places = await searchGoogleMaps(searchTerm, locationData.city || location)
-          
-          // Tag results with search strategy for better processing
+
+          // Tag results with search strategy AND the specific search term for tracking
           const taggedPlaces = places.map(place => ({
             ...place,
             searchStrategy: strategy.type,
             relevanceScore: strategy.relevanceWeight,
-            searchTerm
+            searchTerm,
+            partnerCategory: searchTerm.replace(locationData.city || location, '').trim() // Track which partner type this came from
           }))
-          
+
           allResults.push(...taggedPlaces)
           dailyUsage++
-          
+
           console.log(`✅ ${strategy.type} search for "${searchTerm}" found ${places.length} places`)
-          
+
           // Add delay to respect rate limits
           await new Promise(resolve => setTimeout(resolve, 500))
         }
-        
+
       } catch (error) {
         console.error(`❌ Error in ${strategy.type} search:`, error.message)
       }
@@ -193,26 +201,57 @@ function generateMockGoogleMapsData(query) {
   return mockPlaces.slice(0, Math.floor(Math.random() * 3) + 1) // Return 1-3 mock results
 }
 
+// Common city abbreviations mapping
+const CITY_ABBREVIATIONS = {
+  "wpb": "West Palm Beach",
+  "ftl": "Fort Lauderdale",
+  "mia": "Miami",
+  "orl": "Orlando",
+  "tpa": "Tampa",
+  "jax": "Jacksonville",
+  "atl": "Atlanta",
+  "nyc": "New York",
+  "la": "Los Angeles",
+  "sf": "San Francisco",
+  "chi": "Chicago",
+  "hou": "Houston",
+  "dal": "Dallas",
+  "phx": "Phoenix",
+  "den": "Denver",
+  "sea": "Seattle",
+  "bos": "Boston",
+  "dc": "Washington",
+  "philly": "Philadelphia",
+  "lv": "Las Vegas"
+}
+
 function parseLocation(location) {
   // Enhanced location parsing to extract city, state, and ZIP
   const locationParts = location.split(',').map(part => part.trim())
-  
+
   let city, state, zipCode, fullLocation
-  
+
+  // Check for city abbreviations first
+  const firstPart = locationParts[0]?.toLowerCase()
+  if (CITY_ABBREVIATIONS[firstPart]) {
+    city = CITY_ABBREVIATIONS[firstPart]
+    console.log(`📍 Expanded city abbreviation: "${firstPart}" -> "${city}"`)
+  }
+
   // Check if it's a ZIP code pattern
   const zipMatch = location.match(/\b\d{5}(?:-\d{4})?\b/)
   if (zipMatch) {
     zipCode = zipMatch[0]
   }
-  
+
   // Check for state abbreviations or full state names
   const stateMatch = location.match(/\b[A-Z]{2}\b|\b(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\b/i)
   if (stateMatch) {
     state = stateMatch[0]
   }
   
-  // Extract city (usually the first part or second part if first contains numbers)
-  if (locationParts.length > 0) {
+  // Extract city (only if not already set from abbreviation)
+  if (!city && locationParts.length > 0) {
     // If first part has address numbers, try second part
     if (locationParts[0].match(/^\d+/)) {
       city = locationParts[1] || locationParts[0]
@@ -234,34 +273,39 @@ function parseLocation(location) {
   }
 }
 
-function generatePersonalizedSearchStrategies({ businessName, websiteUrl, industry, location, customGoal }) {
+function generatePersonalizedSearchStrategies({ businessName, websiteUrl, industry, location, customGoal, targetLeads }) {
   const strategies = []
-  
-  // Strategy 1: Direct Competitors & Similar Businesses (for Local Network Opportunities)
-  strategies.push({
-    type: "direct_competitors",
-    searchTerms: [
-      `${industry} ${location.city}`,
-      `${industry} near ${location.city}`,
-      `best ${industry} ${location.city}`,
-      `top ${industry} ${location.state || location.city}`
-    ],
-    maxResults: MAX_COMPETITORS_PER_REQUEST,
-    relevanceWeight: 0.9,
-    description: "Find direct competitors and similar businesses for local network opportunities"
-  })
 
-  // Strategy 2: Potential Partners/Customers (based on industry synergies)
-  const partnerIndustries = getStrategicPartnerIndustries(industry)
-  strategies.push({
-    type: "potential_partners",
-    searchTerms: partnerIndustries.map(partnerType => 
-      `${partnerType} ${location.city}`
-    ),
-    maxResults: MAX_LEADS_PER_REQUEST,
-    relevanceWeight: 0.8,
-    description: "Find potential partners and strategic connections"
-  })
+  // Strategy 1: USER-SPECIFIED PARTNER TYPES (highest priority)
+  // If user specified partners like "accountants, banks, business consultants", search for those directly
+  if (targetLeads && targetLeads.length > 0) {
+    const partnerTypes = targetLeads.split(',').map(p => p.trim()).filter(p => p.length > 0)
+    console.log(`🎯 Using user-specified partner types:`, partnerTypes)
+
+    strategies.push({
+      type: "user_specified_partners",
+      searchTerms: partnerTypes.slice(0, 5).map(partnerType =>
+        `${partnerType} ${location.city}`
+      ),
+      maxResults: MAX_LEADS_PER_REQUEST,
+      relevanceWeight: 1.0, // Highest weight for user-specified
+      description: "Find user-specified referral partner types"
+    })
+  }
+
+  // Strategy 2: Industry-based partners (fallback if no user-specified)
+  if (!targetLeads || targetLeads.length === 0) {
+    const partnerIndustries = getStrategicPartnerIndustries(industry)
+    strategies.push({
+      type: "potential_partners",
+      searchTerms: partnerIndustries.map(partnerType =>
+        `${partnerType} ${location.city}`
+      ),
+      maxResults: MAX_LEADS_PER_REQUEST,
+      relevanceWeight: 0.8,
+      description: "Find potential partners and strategic connections"
+    })
+  }
 
   // Strategy 3: Custom Goal-Based Search (if customGoal is provided)
   if (customGoal && customGoal.length > 10) {
@@ -269,11 +313,11 @@ function generatePersonalizedSearchStrategies({ businessName, websiteUrl, indust
     if (goalKeywords.length > 0) {
       strategies.push({
         type: "custom_goal_based",
-        searchTerms: goalKeywords.map(keyword => 
+        searchTerms: goalKeywords.map(keyword =>
           `${keyword} ${location.city}`
         ),
         maxResults: 10,
-        relevanceWeight: 1.0, // Highest weight for custom goals
+        relevanceWeight: 0.9,
         description: "Find businesses aligned with custom goals"
       })
     }
@@ -386,18 +430,30 @@ function processPersonalizedData(allResults, userProfile) {
   // Skip competitors processing - we only need potential partners
   processedData.competitors = []
 
-  // Generate leads (Potential Partners) - Focus only on this
+  // Generate leads (Potential Partners) - Focus only on quality leads
   const potentialLeads = uniqueResults
-    .filter(item => 
-      item.title && 
-      (item.searchStrategy === 'potential_partners' || item.searchStrategy === 'custom_goal_based') &&
-      !isOwnBusiness(item.title, businessName)
-    )
+    .filter(item => {
+      // Must have title and not be own business
+      if (!item.title || isOwnBusiness(item.title, businessName)) return false
+
+      // Must be from partner/goal search strategies (including user_specified_partners!)
+      const validStrategies = ['potential_partners', 'custom_goal_based', 'user_specified_partners']
+      if (!validStrategies.includes(item.searchStrategy)) return false
+
+      // QUALITY FILTER: Must have at least phone OR website
+      const hasContactInfo = (item.phone && item.phone.length >= 10) ||
+                            (item.website && item.website.startsWith('http'))
+      if (!hasContactInfo) return false
+
+      return true
+    })
     .map(item => {
       const leadScore = calculateLeadScore(item, userProfile)
       const leadType = determineLeadType(item, userProfile)
       const personalizationScore = calculatePersonalizationScore(item, userProfile)
-      
+      const outreachChannel = determineOutreachChannel(item)
+      const personalizedOpener = generatePersonalizedOpener(item, userProfile)
+
       return {
         businessName: item.title,
         contactPerson: generateContactPerson(item, leadType),
@@ -414,6 +470,9 @@ function processPersonalizedData(allResults, userProfile) {
         personalizationScore,
         matchReason: generateMatchReason(item, userProfile),
         actionableSteps: generateActionableSteps(item, userProfile),
+        // NEW: Outreach intelligence
+        outreachChannel, // { primary: 'email'|'call'|'visit'|'linkedin', reason: string, available: string[] }
+        personalizedOpener, // Ready-to-use conversation starter
         imageUrl: item.imageUrl || null,
         location: item.location || null,
         priority: Math.min(Math.round(leadScore / 10), 10),
@@ -428,13 +487,46 @@ function processPersonalizedData(allResults, userProfile) {
         city: location.city,
         state: location.state,
         postalCode: location.zipCode,
-        types: item.types || []
+        types: item.types || [],
+        partnerCategory: item.partnerCategory || null // Track which partner type this came from
       }
     })
-    .sort((a, b) => b.leadScore - a.leadScore)
-    .slice(0, MAX_LEADS_PER_REQUEST)
+    .filter(lead => lead.leadScore >= MIN_QUALITY_SCORE) // Only include quality leads
 
-  processedData.leads = potentialLeads
+  // ENSURE DIVERSITY: Group by partner category and pick top from each, then fill remaining slots
+  const leadsByCategory = {}
+  potentialLeads.forEach(lead => {
+    const category = lead.partnerCategory || 'Other'
+    if (!leadsByCategory[category]) leadsByCategory[category] = []
+    leadsByCategory[category].push(lead)
+  })
+
+  // Sort each category by score
+  Object.values(leadsByCategory).forEach(leads => leads.sort((a, b) => b.leadScore - a.leadScore))
+
+  // Round-robin pick from each category to ensure diversity
+  const diverseLeads = []
+  const categories = Object.keys(leadsByCategory)
+  let round = 0
+
+  while (diverseLeads.length < MAX_LEADS_PER_REQUEST) {
+    let addedThisRound = 0
+    for (const category of categories) {
+      if (leadsByCategory[category][round]) {
+        diverseLeads.push(leadsByCategory[category][round])
+        addedThisRound++
+        if (diverseLeads.length >= MAX_LEADS_PER_REQUEST) break
+      }
+    }
+    if (addedThisRound === 0) break // No more leads in any category
+    round++
+  }
+
+  console.log(`🎯 Diversity check: ${categories.length} partner categories represented`)
+  categories.forEach(cat => console.log(`   - ${cat}: ${leadsByCategory[cat].length} leads`))
+
+  processedData.leads = diverseLeads
+  console.log(`📊 Quality filter: ${potentialLeads.length} leads passed (min score: ${MIN_QUALITY_SCORE})`)
 
   console.log(`✅ Generated ${processedData.leads.length} potential partners (no competitors needed)`)
 
@@ -485,46 +577,49 @@ function isOwnBusiness(title, businessName) {
 }
 
 function calculateLeadScore(item, userProfile) {
-  let score = 50 // Base score
-  
-  // Rating bonus (0-30 points)
-  if (item.rating) {
-    score += (item.rating / 5) * 30
-  }
-  
-  // Review credibility (0-20 points)
-  if (item.reviewsCount) {
-    score += Math.min((item.reviewsCount / 50) * 20, 20)
-  }
-  
-  // Website presence (0-15 points)
-  if (item.website) {
-    score += 15
-  }
-  
-  // Phone availability (0-10 points)
-  if (item.phone) {
-    score += 10
-  }
-  
-  // Location relevance (0-15 points)
+  let score = 0 // Start from 0, earn points based on quality
+
+  // REQUIRED: Must have a business name
+  if (!item.title || item.title.length < 3) return 0
+
+  // Contact info is critical (0-40 points)
+  if (item.website && item.website.startsWith('http')) score += 20
+  if (item.phone && item.phone.length >= 10) score += 20
+
+  // Rating signals legitimacy (0-25 points)
+  if (item.rating && item.rating >= 4.0) score += 25
+  else if (item.rating && item.rating >= 3.5) score += 15
+  else if (item.rating && item.rating >= 3.0) score += 10
+
+  // Reviews indicate real business (0-20 points)
+  if (item.reviewsCount && item.reviewsCount >= 50) score += 20
+  else if (item.reviewsCount && item.reviewsCount >= 20) score += 15
+  else if (item.reviewsCount && item.reviewsCount >= 5) score += 10
+
+  // Address completeness (0-10 points)
+  if (item.address && item.address.length > 10) score += 10
+
+  // Location match (0-15 points)
   if (item.address && userProfile.location) {
     const cityMatch = item.address.toLowerCase().includes(userProfile.location.city?.toLowerCase() || '')
     if (cityMatch) score += 15
   }
-  
-  // Search strategy bonus (0-10 points)
-  if (item.searchStrategy === 'custom_goal_based') score += 10
+
+  // Search strategy bonus (0-20 points) - USER SPECIFIED gets highest priority!
+  if (item.searchStrategy === 'user_specified_partners') score += 20  // Highest priority - user chose these!
+  else if (item.searchStrategy === 'custom_goal_based') score += 10
   else if (item.searchStrategy === 'potential_partners') score += 8
-  
+
   return Math.round(Math.min(score, 100))
 }
 
 function determineLeadType(item, userProfile) {
-  if (item.searchStrategy === 'custom_goal_based') {
+  if (item.searchStrategy === 'user_specified_partners') {
+    return 'Referral Partner'  // User specified these - highest value
+  } else if (item.searchStrategy === 'custom_goal_based') {
     return 'Strategic Partner'
   } else if (item.searchStrategy === 'potential_partners') {
-    return 'Potential Customer'
+    return 'Potential Partner'
   } else {
     return 'Business Contact'
   }
@@ -609,8 +704,120 @@ function generateActionableSteps(item, userProfile) {
     `Schedule an introductory meeting to discuss synergies`,
     `Follow up with concrete partnership ideas within 48 hours`
   ]
-  
+
   return steps.slice(0, 2) // Return 2 actionable steps
+}
+
+// Determine best outreach channel based on available contact info and business type
+function determineOutreachChannel(item) {
+  const channels = []
+
+  // Check what contact methods are available
+  const hasPhone = item.phone && item.phone.length >= 10
+  const hasWebsite = item.website && item.website.startsWith('http')
+  const hasEmail = hasWebsite // If they have a website, we can derive email
+
+  // Business type indicators from category/types
+  const category = (item.category || '').toLowerCase()
+  const types = (item.types || []).map(t => t.toLowerCase()).join(' ')
+  const allText = `${category} ${types}`
+
+  // Professional services (accountants, lawyers, consultants) - prefer email/call
+  const isProfessionalService = /accountant|lawyer|attorney|consultant|financial|insurance|real estate|mortgage/.test(allText)
+
+  // Health/wellness (chiropractors, therapists, fitness) - prefer call/in-person
+  const isHealthWellness = /chiropract|therapist|doctor|dentist|fitness|gym|wellness|spa|massage/.test(allText)
+
+  // Retail/local service - prefer call or walk-in
+  const isLocalRetail = /restaurant|salon|barber|shop|store|cafe|bakery/.test(allText)
+
+  // Determine primary channel
+  let primary = 'email'
+  let reason = ''
+
+  if (isProfessionalService) {
+    if (hasEmail) {
+      primary = 'email'
+      reason = 'Professional services respond well to thoughtful emails'
+    } else if (hasPhone) {
+      primary = 'call'
+      reason = 'Direct call works for professional service providers'
+    }
+  } else if (isHealthWellness) {
+    if (hasPhone) {
+      primary = 'call'
+      reason = 'Health/wellness businesses prefer personal phone contact'
+    } else if (hasEmail) {
+      primary = 'email'
+      reason = 'Email introduction before in-person visit'
+    }
+  } else if (isLocalRetail) {
+    primary = 'visit'
+    reason = 'Local businesses appreciate face-to-face introductions'
+    if (hasPhone) {
+      primary = 'call'
+      reason = 'Call ahead to schedule a quick intro meeting'
+    }
+  } else {
+    // Default logic based on available channels
+    if (hasPhone && hasEmail) {
+      primary = 'email'
+      reason = 'Email first, then follow up with a call'
+    } else if (hasPhone) {
+      primary = 'call'
+      reason = 'Phone is their primary contact method'
+    } else if (hasEmail) {
+      primary = 'email'
+      reason = 'Reach out via their website contact'
+    } else {
+      primary = 'visit'
+      reason = 'Drop by to introduce yourself in person'
+    }
+  }
+
+  // Build available channels list
+  if (hasEmail) channels.push('email')
+  if (hasPhone) channels.push('call')
+  channels.push('visit') // Always an option for local businesses
+  if (hasWebsite) channels.push('linkedin') // Can often find owners on LinkedIn
+
+  return {
+    primary,
+    reason,
+    available: channels
+  }
+}
+
+// Generate personalized opener based on business context
+function generatePersonalizedOpener(item, userProfile) {
+  const { businessName, industry } = userProfile
+  const leadName = item.title
+  const leadCategory = item.category || 'business'
+  const rating = item.rating
+  const reviewCount = item.reviewsCount
+
+  // Build context-aware openers
+  const openers = []
+
+  // High rating opener
+  if (rating && rating >= 4.5 && reviewCount > 20) {
+    openers.push(`I noticed ${leadName} has excellent reviews (${rating}/5) - clearly you're doing something right. I run ${businessName} and think there could be a natural fit for referring clients to each other.`)
+  }
+
+  // Same area opener
+  openers.push(`Hi! I'm reaching out because we're both serving the ${userProfile.location?.city || 'local'} community. I run ${businessName} in ${industry}, and I think our clients could benefit from knowing about each other's services.`)
+
+  // Referral-focused opener
+  openers.push(`I own ${businessName} and I'm building relationships with ${leadCategory} professionals in the area. I often have clients who need your services and wanted to explore if a referral relationship makes sense.`)
+
+  // Direct value opener
+  openers.push(`Quick intro - I'm with ${businessName}. We serve similar clients and I'd love to chat about sending referrals your way. Do you have 10 minutes this week?`)
+
+  // Pick the best one based on available data
+  if (rating && rating >= 4.5 && reviewCount > 20) {
+    return openers[0]
+  }
+  return openers[Math.floor(Math.random() * (openers.length - 1)) + 1]
 }
 
 function determinePriceLevel(item) {

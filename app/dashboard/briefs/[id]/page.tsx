@@ -20,6 +20,17 @@ import {
   Building2,
   TrendingUp,
   Sparkles,
+  Download,
+  Copy,
+  Check,
+  MessageCircle,
+  Linkedin,
+  PhoneCall,
+  MapPinned,
+  Crown,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react"
 
 interface Lead {
@@ -33,7 +44,17 @@ interface Lead {
   rating?: number
   reviewsCount?: number
   leadScore?: number
+  outreachChannel?: {
+    primary: 'email' | 'call' | 'visit' | 'linkedin'
+    reason: string
+    available: string[]
+  }
+  personalizedOpener?: string
+  partnerCategory?: string
 }
+
+// Stripe payment link placeholder - replace with your actual link
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_PLACEHOLDER"
 
 interface NewsArticle {
   title?: string
@@ -85,6 +106,27 @@ interface BriefPageProps {
   params: Promise<{ id: string }>
 }
 
+// Helper to get outreach channel icon
+const getChannelIcon = (channel: string) => {
+  switch (channel) {
+    case 'email': return Mail
+    case 'call': return PhoneCall
+    case 'visit': return MapPinned
+    case 'linkedin': return Linkedin
+    default: return MessageCircle
+  }
+}
+
+const getChannelColor = (channel: string) => {
+  switch (channel) {
+    case 'email': return 'bg-violet-100 text-violet-700 border-violet-200'
+    case 'call': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    case 'visit': return 'bg-orange-100 text-orange-700 border-orange-200'
+    case 'linkedin': return 'bg-blue-100 text-blue-700 border-blue-200'
+    default: return 'bg-gray-100 text-gray-700 border-gray-200'
+  }
+}
+
 export default function BriefPage({ params }: BriefPageProps) {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -92,6 +134,12 @@ export default function BriefPage({ params }: BriefPageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [briefId, setBriefId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [expandedLead, setExpandedLead] = useState<string | null>(null)
+  const [feedbackLikes, setFeedbackLikes] = useState("")
+  const [feedbackDislikes, setFeedbackDislikes] = useState("")
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [submittingFeedback, setSubmittingFeedback] = useState(false)
 
   useEffect(() => {
     const getParams = async () => {
@@ -128,6 +176,72 @@ export default function BriefPage({ params }: BriefPageProps) {
       setError("Failed to load brief")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyOpener = async (opener: string, leadId: string) => {
+    await navigator.clipboard.writeText(opener)
+    setCopiedId(leadId)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const exportToCSV = () => {
+    if (!brief) return
+
+    const leads = brief.businessData?.leads || []
+    const headers = ['Business Name', 'Category', 'Phone', 'Email', 'Website', 'Address', 'Rating', 'Best Channel', 'Personalized Opener']
+
+    const csvRows = [
+      headers.join(','),
+      ...leads.map(lead => [
+        `"${(lead.businessName || lead.name || '').replace(/"/g, '""')}"`,
+        `"${(lead.category || '').replace(/"/g, '""')}"`,
+        `"${lead.phone || ''}"`,
+        `"${lead.email || ''}"`,
+        `"${lead.website || ''}"`,
+        `"${(lead.address || '').replace(/"/g, '""')}"`,
+        lead.rating || '',
+        `"${lead.outreachChannel?.primary || ''}"`,
+        `"${(lead.personalizedOpener || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ]
+
+    const csvContent = csvRows.join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${brief.businessName.replace(/\s+/g, '_')}_partners.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const submitFeedback = async () => {
+    if (!feedbackLikes.trim() || !feedbackDislikes.trim()) return
+
+    setSubmittingFeedback(true)
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          briefId,
+          userId: user?.id,
+          businessName: brief?.businessName,
+          likes: feedbackLikes,
+          dislikes: feedbackDislikes,
+          timestamp: new Date().toISOString()
+        })
+      })
+      setFeedbackSubmitted(true)
+    } catch (err) {
+      console.error('Failed to submit feedback:', err)
+      // Still mark as submitted so user can continue
+      setFeedbackSubmitted(true)
+    } finally {
+      setSubmittingFeedback(false)
     }
   }
 
@@ -244,16 +358,31 @@ export default function BriefPage({ params }: BriefPageProps) {
                 <span>{brief.metadata?.location}</span>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-sm font-medium">
-                {leads.length} Leads
-              </span>
-              <span className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-sm font-medium">
-                {news.length} News
-              </span>
-              <span className="px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-sm font-medium">
-                {events.length} Events
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-sm font-medium">
+                  {leads.length} Partners
+                </span>
+                <span className="px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-sm font-medium">
+                  {events.length} Events
+                </span>
+              </div>
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              <a
+                href={STRIPE_PAYMENT_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 text-sm font-medium"
+              >
+                <Crown className="w-4 h-4" />
+                <span className="hidden sm:inline">Upgrade</span>
+              </a>
             </div>
           </div>
         </div>
@@ -267,86 +396,150 @@ export default function BriefPage({ params }: BriefPageProps) {
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Local Leads</h2>
-              <p className="text-gray-500">{leads.length} potential opportunities discovered</p>
+              <h2 className="text-2xl font-bold text-gray-900">Potential Partners</h2>
+              <p className="text-gray-500">{leads.length} businesses worth connecting with</p>
             </div>
           </div>
 
           {leads.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {leads.slice(0, 10).map((lead, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="bg-white p-5 rounded-2xl border border-gray-200 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-800 group-hover:text-emerald-700 transition-colors">
-                      {lead.businessName || lead.name || "Business"}
-                    </h3>
-                    {lead.rating && lead.rating > 0 && (
-                      <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg border border-amber-200">
-                        <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                        <span className="text-sm font-medium">{lead.rating.toFixed(1)}</span>
-                        {lead.reviewsCount && lead.reviewsCount > 0 && (
-                          <span className="text-amber-500/70 text-xs">({lead.reviewsCount})</span>
+              {leads.slice(0, 10).map((lead, i) => {
+                const ChannelIcon = lead.outreachChannel ? getChannelIcon(lead.outreachChannel.primary) : MessageCircle
+                const channelColor = lead.outreachChannel ? getChannelColor(lead.outreachChannel.primary) : ''
+                const leadId = `lead-${i}`
+                const isExpanded = expandedLead === leadId
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-white p-5 rounded-2xl border border-gray-200 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-semibold text-gray-800">
+                        {lead.businessName || lead.name || "Business"}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        {lead.outreachChannel && (
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${channelColor}`}>
+                            <ChannelIcon className="w-3.5 h-3.5" />
+                            <span className="capitalize">{lead.outreachChannel.primary}</span>
+                          </div>
+                        )}
+                        {lead.rating && lead.rating > 0 && (
+                          <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-1 rounded-lg border border-amber-200">
+                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                            <span className="text-xs font-medium">{lead.rating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {lead.category && (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg text-xs font-medium">
+                          {lead.category}
+                        </span>
+                      )}
+                      {lead.partnerCategory && lead.partnerCategory !== lead.category && (
+                        <span className="bg-gray-50 text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg text-xs">
+                          {lead.partnerCategory}
+                        </span>
+                      )}
+                    </div>
+
+                    {lead.address && (
+                      <p className="text-sm text-gray-500 mb-3 flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        {lead.address}
+                      </p>
+                    )}
+
+                    {/* Outreach reason */}
+                    {lead.outreachChannel?.reason && (
+                      <p className="text-xs text-gray-400 mb-3 italic">
+                        {lead.outreachChannel.reason}
+                      </p>
+                    )}
+
+                    {/* Contact buttons */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {lead.phone && (
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 font-medium bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
+                        >
+                          <Phone className="w-4 h-4" />
+                          {lead.phone}
+                        </a>
+                      )}
+                      {lead.email && (
+                        <a
+                          href={`mailto:${lead.email}`}
+                          className="flex items-center gap-1.5 text-sm text-violet-600 hover:text-violet-700 font-medium bg-violet-50 px-3 py-1.5 rounded-lg hover:bg-violet-100 transition-colors"
+                        >
+                          <Mail className="w-4 h-4" />
+                          Email
+                        </a>
+                      )}
+                      {lead.website && (
+                        <a
+                          href={lead.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          <Globe className="w-4 h-4" />
+                          Website
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Personalized opener section */}
+                    {lead.personalizedOpener && (
+                      <div className="border-t border-gray-100 pt-3 mt-3">
+                        <button
+                          onClick={() => setExpandedLead(isExpanded ? null : leadId)}
+                          className="flex items-center gap-2 text-sm text-fuchsia-600 hover:text-fuchsia-700 font-medium w-full"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          {isExpanded ? 'Hide opener' : 'Show suggested opener'}
+                        </button>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mt-3"
+                          >
+                            <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-200 rounded-xl p-3 relative">
+                              <p className="text-sm text-gray-700 pr-8">{lead.personalizedOpener}</p>
+                              <button
+                                onClick={() => copyOpener(lead.personalizedOpener!, leadId)}
+                                className="absolute top-2 right-2 p-1.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors"
+                              >
+                                {copiedId === leadId ? (
+                                  <Check className="w-4 h-4 text-emerald-600" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-violet-600" />
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
                         )}
                       </div>
                     )}
-                  </div>
-                  {lead.category && (
-                    <span className="inline-block bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg text-xs font-medium mb-3">
-                      {lead.category}
-                    </span>
-                  )}
-                  {lead.address && (
-                    <p className="text-sm text-gray-500 mb-4 flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      {lead.address}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-3">
-                    {lead.phone && (
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 font-medium bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
-                      >
-                        <Phone className="w-4 h-4" />
-                        {lead.phone}
-                      </a>
-                    )}
-                    {lead.email && (
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="flex items-center gap-1.5 text-sm text-violet-600 hover:text-violet-700 font-medium bg-violet-50 px-3 py-1.5 rounded-lg hover:bg-violet-100 transition-colors"
-                      >
-                        <Mail className="w-4 h-4" />
-                        Email
-                      </a>
-                    )}
-                    {lead.website && (
-                      <a
-                        href={lead.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                      >
-                        <Globe className="w-4 h-4" />
-                        Website
-                      </a>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                )
+              })}
             </div>
           ) : (
             <div className="bg-white rounded-2xl p-8 text-center border border-gray-200">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500">No leads found for this search.</p>
+              <p className="text-gray-500">No partners found for this search.</p>
             </div>
           )}
         </section>
@@ -358,8 +551,8 @@ export default function BriefPage({ params }: BriefPageProps) {
               <Newspaper className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Industry News</h2>
-              <p className="text-gray-500">{news.length} recent articles to keep you informed</p>
+              <h2 className="text-2xl font-bold text-gray-900">Local Intel</h2>
+              <p className="text-gray-500">{news.length} recent articles about your market</p>
             </div>
           </div>
 
@@ -417,7 +610,7 @@ export default function BriefPage({ params }: BriefPageProps) {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Newspaper className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500">No news articles found.</p>
+              <p className="text-gray-500">No intel found for your market.</p>
             </div>
           )}
         </section>
@@ -508,6 +701,90 @@ export default function BriefPage({ params }: BriefPageProps) {
                 <Calendar className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-500">No events found in your area.</p>
+            </div>
+          )}
+        </section>
+
+        {/* Mandatory Feedback Section */}
+        <section className="bg-gradient-to-br from-violet-50 via-fuchsia-50 to-rose-50 rounded-3xl p-6 sm:p-8 border border-violet-200 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-fuchsia-500/25">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Quick Feedback</h2>
+              <p className="text-gray-500">Help us improve Sleft (required)</p>
+            </div>
+          </div>
+
+          {feedbackSubmitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl p-8 text-center border border-emerald-200"
+            >
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h3>
+              <p className="text-gray-500 mb-6">Your feedback helps us build a better product.</p>
+              <a
+                href={STRIPE_PAYMENT_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white rounded-xl font-medium hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25"
+              >
+                <Crown className="w-5 h-5" />
+                Upgrade for Unlimited Briefs
+              </a>
+            </motion.div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <ThumbsUp className="w-4 h-4 text-emerald-600" />
+                  What did you like about this? *
+                </label>
+                <textarea
+                  value={feedbackLikes}
+                  onChange={(e) => setFeedbackLikes(e.target.value)}
+                  placeholder="e.g., The partner suggestions were spot-on, loved the personalized openers..."
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                  rows={3}
+                  required
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <ThumbsDown className="w-4 h-4 text-rose-600" />
+                  What could be better? *
+                </label>
+                <textarea
+                  value={feedbackDislikes}
+                  onChange={(e) => setFeedbackDislikes(e.target.value)}
+                  placeholder="e.g., Would love more leads, the events weren't relevant to my industry..."
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                  rows={3}
+                  required
+                />
+              </div>
+              <button
+                onClick={submitFeedback}
+                disabled={!feedbackLikes.trim() || !feedbackDislikes.trim() || submittingFeedback}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingFeedback ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Submit Feedback
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-center text-gray-400">
+                Both fields are required to continue
+              </p>
             </div>
           )}
         </section>

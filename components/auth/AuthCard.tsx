@@ -252,7 +252,7 @@ export function AuthCard() {
                   disabled={loading || !formData.email || !formData.password}
                   className="w-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 text-white font-semibold py-6 shadow-xl shadow-fuchsia-500/25 rounded-xl text-base"
                 >
-                  {loading ? 'Signing in...' : 'Start Finding Leads'}
+                  {loading ? 'Signing in...' : 'Find My Partners'}
                 </Button>
 
                 <button
@@ -328,7 +328,7 @@ export function AuthCard() {
                   disabled={loading || !formData.email || !formData.password || !formData.fullName}
                   className="w-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 text-white font-semibold py-6 shadow-xl shadow-fuchsia-500/25 rounded-xl text-base"
                 >
-                  {loading ? 'Creating account...' : 'Unlock My Opportunities'}
+                  {loading ? 'Creating account...' : 'Get Started'}
                 </Button>
               </div>
             </TabsContent>

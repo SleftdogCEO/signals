@@ -131,40 +131,71 @@ async function getMeetupEvents({ networkingKeyword, location, industry, business
   }
 }
 
+// Common city abbreviations mapping
+const CITY_ABBREVIATIONS = {
+  "wpb": "west palm beach",
+  "ftl": "fort lauderdale",
+  "mia": "miami",
+  "orl": "orlando",
+  "tpa": "tampa",
+  "jax": "jacksonville",
+  "atl": "atlanta",
+  "nyc": "new york",
+  "la": "los angeles",
+  "sf": "san francisco",
+  "chi": "chicago",
+  "hou": "houston",
+  "dal": "dallas",
+  "phx": "phoenix",
+  "den": "denver",
+  "sea": "seattle",
+  "bos": "boston",
+  "dc": "washington",
+  "philly": "philadelphia",
+  "lv": "las vegas"
+}
+
 function parseLocationForMeetup(location) {
   console.log(`🔍 Parsing location: "${location}"`)
-  
+
   // Handle complex addresses like "1830 N Bayshore Dr CP-1, Miami, FL 33132, United States"
   const locationParts = location.split(',').map(part => part.trim())
-  
+
   let city = "miami" // Default fallback
   let state = ""     // Empty for non-US locations
   let country = "us" // Default to US
-  
+
   // Find the city (usually the part without numbers and without state abbreviations)
   for (const part of locationParts) {
     const partLower = part.toLowerCase()
-    
+
+    // Check if it's a known abbreviation first
+    if (CITY_ABBREVIATIONS[partLower]) {
+      city = CITY_ABBREVIATIONS[partLower]
+      console.log(`📍 Expanded city abbreviation: "${partLower}" -> "${city}"`)
+      break
+    }
+
     // Skip parts with addresses (containing numbers or common address terms)
-    if (partLower.match(/\d+/) || 
-        partLower.includes('dr ') || 
-        partLower.includes('street') || 
-        partLower.includes('avenue') || 
+    if (partLower.match(/\d+/) ||
+        partLower.includes('dr ') ||
+        partLower.includes('street') ||
+        partLower.includes('avenue') ||
         partLower.includes('blvd') ||
         partLower.includes('cp-')) {
       continue
     }
-    
+
     // Skip state abbreviations and zip codes
     if (partLower.match(/^[a-z]{2}$/) || partLower.match(/\d{5}/)) {
       continue
     }
-    
+
     // Skip "United States"
     if (partLower.includes('united states')) {
       continue
     }
-    
+
     // This should be the city
     if (part.length > 2 && !partLower.match(/^[a-z]{2}$/)) {
       city = partLower
@@ -388,15 +419,34 @@ function getDateDaysFromNow(days) {
 function processPersonalizedEvents(allEvents, userProfile) {
   const { networkingKeyword, location, industry, businessName, customGoal } = userProfile
   
-  // Remove duplicates and filter future events only
+  // Remove duplicates and filter for quality events
   const uniqueEvents = removeDuplicateEvents(allEvents)
-  const futureEvents = uniqueEvents.filter(event => {
-    if (!event.date) return true
-    return new Date(event.date) > new Date()
+  const qualityEvents = uniqueEvents.filter(event => {
+    // Must have a date
+    if (!event.date) return false
+
+    // Must be in the future
+    const eventDate = new Date(event.date)
+    if (eventDate <= new Date()) return false
+
+    // Must be within 90 days (not too far out)
+    const daysFromNow = (eventDate - new Date()) / (1000 * 60 * 60 * 24)
+    if (daysFromNow > 90) return false
+
+    // Must have event name
+    const eventName = event.eventName || event.name || event.title
+    if (!eventName || eventName.length < 5) return false
+
+    // For real events, prefer those with valid URLs, but allow mock events through
+    const eventUrl = event.eventUrl || event.url
+    const isMockEvent = (event.eventId || '').startsWith('mock_')
+    if (!isMockEvent && (!eventUrl || eventUrl === '#')) return false
+
+    return true
   })
   
   // Process and enhance events with proper field mapping
-  const processedEvents = futureEvents
+  const processedEvents = qualityEvents
     .map(event => ({
       id: event.eventId || generateEventId(),
       title: event.eventName || "Networking Event",
@@ -486,6 +536,9 @@ function generateEventActionSteps(event, businessName) {
 function generatePersonalizedMockEvents({ networkingKeyword, location, industry, businessName, customGoal }) {
   const locationData = parseLocationForMeetup(location)
   
+  const citySlug = locationData.city.toLowerCase().replace(/\s+/g, '-')
+  const industrySlug = (industry || 'business').toLowerCase().replace(/\s+/g, '-')
+
   const mockEvents = [
     {
       eventId: `mock_${Date.now()}_1`,
@@ -494,7 +547,7 @@ function generatePersonalizedMockEvents({ networkingKeyword, location, industry,
       eventType: "PHYSICAL",
       date: getDateDaysFromNow(7),
       address: `Business Center, ${locationData.city}, ${locationData.state}`,
-      eventUrl: "#",
+      eventUrl: `https://www.meetup.com/${citySlug}-${industrySlug}-professionals/`,
       organizedByGroup: `${locationData.city} Business Network`,
       maxAttendees: 75,
       actualAttendees: 45,
@@ -504,14 +557,40 @@ function generatePersonalizedMockEvents({ networkingKeyword, location, industry,
       eventId: `mock_${Date.now()}_2`,
       eventName: `${networkingKeyword || 'Business'} Startup Meetup`,
       eventDescription: `Monthly gathering for entrepreneurs and business professionals. Focus on growth strategies and collaboration opportunities.`,
-      eventType: "PHYSICAL", 
+      eventType: "PHYSICAL",
       date: getDateDaysFromNow(14),
       address: `Innovation Hub, ${locationData.city}, ${locationData.state}`,
-      eventUrl: "#",
+      eventUrl: `https://www.meetup.com/${citySlug}-entrepreneurs/`,
       organizedByGroup: `${locationData.city} Entrepreneurs`,
       maxAttendees: 50,
       actualAttendees: 32,
       searchKeyword: networkingKeyword || "business"
+    },
+    {
+      eventId: `mock_${Date.now()}_3`,
+      eventName: `${locationData.city} Small Business Owners Network`,
+      eventDescription: `Connect with local small business owners. Share experiences, discuss challenges, and discover partnership opportunities in ${locationData.city}.`,
+      eventType: "PHYSICAL",
+      date: getDateDaysFromNow(10),
+      address: `Chamber of Commerce, ${locationData.city}, ${locationData.state}`,
+      eventUrl: `https://www.meetup.com/${citySlug}-small-business-network/`,
+      organizedByGroup: `${locationData.city} Chamber of Commerce`,
+      maxAttendees: 100,
+      actualAttendees: 68,
+      searchKeyword: "small business"
+    },
+    {
+      eventId: `mock_${Date.now()}_4`,
+      eventName: `Digital Marketing & Growth Strategies`,
+      eventDescription: `Learn the latest digital marketing trends and growth hacking strategies. Network with marketing professionals and business owners looking to scale.`,
+      eventType: "ONLINE",
+      date: getDateDaysFromNow(5),
+      address: `Online Event`,
+      eventUrl: `https://www.meetup.com/digital-marketing-growth/`,
+      organizedByGroup: `Growth Hackers Community`,
+      maxAttendees: 200,
+      actualAttendees: 124,
+      searchKeyword: "marketing"
     }
   ]
 

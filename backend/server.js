@@ -21,6 +21,40 @@ const { scrapeBusinessData } = require("./services/scraperService")
 const { getNewsData } = require("./services/newsService")
 const { getMeetupEvents } = require("./services/meetupService")
 
+// Simple brief generator (no AI required)
+function generateSimpleBrief({ businessName, industry, location, customGoal, businessData, newsData, meetupData }) {
+  const leadsCount = businessData?.leads?.length || 0
+  const newsCount = newsData?.articles?.length || 0
+  const eventsCount = meetupData?.events?.length || 0
+
+  const topLeads = (businessData?.leads || []).slice(0, 3).map(l => l.businessName).join(', ')
+  const topNews = (newsData?.articles || []).slice(0, 2).map(n => n.title).join('; ')
+
+  return `# Strategy Brief for ${businessName}
+
+## Executive Summary
+We've analyzed the ${industry} market in ${location} to identify opportunities aligned with your goal: "${customGoal || 'business growth'}".
+
+## Key Findings
+
+### Local Leads & Partners (${leadsCount} found)
+${leadsCount > 0 ? `Top opportunities: ${topLeads}` : 'No leads found in this search.'}
+
+### Industry News (${newsCount} articles)
+${newsCount > 0 ? `Recent headlines: ${topNews}` : 'No recent news found.'}
+
+### Networking Events (${eventsCount} upcoming)
+${eventsCount > 0 ? `${eventsCount} networking opportunities identified in your area.` : 'No upcoming events found.'}
+
+## Next Steps
+1. Review the leads below and identify your top 3 outreach targets
+2. Check the news articles for conversation starters
+3. RSVP to relevant networking events
+
+---
+*Generated ${new Date().toLocaleDateString()}*`
+}
+
 // Initialize Supabase client with SERVICE ROLE KEY for backend operations
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -45,8 +79,10 @@ const PORT = process.env.PORT || 3001
 const allowedOrigins = {
   development: [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
     "http://127.0.0.1:3000",
-    "http://localhost:3001"
+    "http://127.0.0.1:3002"
   ],
   production: [
     "https://sleft-signals-mvp.vercel.app",
@@ -108,11 +144,13 @@ app.get("/health", (req, res) => {
 // MAIN GENERATION ENDPOINT - FIXED USER ID HANDLING
 app.post("/api/generate", async (req, res) => {
   try {
-    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword, partnershipGoals, conversationData, userId } = req.body
+    const { businessName, websiteUrl, industry, location, customGoal, networkingKeyword, partnershipGoals, conversationData, userId, targetLeads, targetEvents } = req.body
 
     console.log("🚀 Starting comprehensive business intelligence generation...")
     console.log(`📊 Request: ${businessName} in ${industry} at ${location}`)
-    console.log(`👤 User ID received: "${userId}" (type: ${typeof userId})`) // ENHANCED DEBUG LOG
+    console.log(`🎯 Target Partners: ${targetLeads || 'Not specified'}`)
+    console.log(`📅 Target Events: ${targetEvents || 'Not specified'}`)
+    console.log(`👤 User ID received: "${userId}" (type: ${typeof userId})`)
 
     // VALIDATE USER ID
     if (!userId || userId === 'undefined' || userId === 'null') {
@@ -130,25 +168,37 @@ app.post("/api/generate", async (req, res) => {
       userId
     });
 
-    // Generate all data in parallel
+    // Generate all data in parallel - pass targetLeads for specific partner search
     const [businessData, newsData, meetupData] = await Promise.all([
-      scrapeBusinessData({ businessName, websiteUrl, industry, location, customGoal }),
+      scrapeBusinessData({ businessName, websiteUrl, industry, location, customGoal, targetLeads }),
       getNewsData(industry, location, businessName, customGoal, networkingKeyword),
-      getMeetupEvents({ networkingKeyword, location, industry, businessName, customGoal })
+      getMeetupEvents({ networkingKeyword, location, industry, businessName, customGoal, targetEvents })
     ])
 
-    // Generate AI brief
-    const briefContent = await generateBrief({
+    // Skip AI brief generation for now - use placeholder
+    // TODO: Re-enable when OpenAI API key is valid
+    // const briefContent = await generateBrief({
+    //   businessName,
+    //   websiteUrl,
+    //   industry,
+    //   location,
+    //   customGoal,
+    //   networkingKeyword,
+    //   businessData,
+    //   newsData,
+    //   meetupData,
+    //   conversationData
+    // })
+
+    // Generate a simple summary without AI
+    const briefContent = generateSimpleBrief({
       businessName,
-      websiteUrl,
       industry,
       location,
       customGoal,
-      networkingKeyword,
       businessData,
       newsData,
-      meetupData,
-      conversationData // ✅ ADD THIS LINE - Pass conversation data to brief service
+      meetupData
     })
 
     // Create comprehensive brief object

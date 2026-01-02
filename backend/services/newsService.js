@@ -64,7 +64,25 @@ async function getNewsData(industry, location, businessName = "", customGoal = "
               processed.personalizedFor = businessName || `${industry} business`
               return processed
             })
-            .filter(article => article.relevanceScore >= 30) // Higher threshold for quality
+            .filter(article => {
+              // Must have minimum relevance
+              if (article.relevanceScore < 30) return false
+
+              // Must have valid URL
+              if (!article.url || article.url === '#' || !article.url.startsWith('http')) return false
+
+              // Must have meaningful title
+              if (!article.title || article.title.length < 20) return false
+
+              // Must be recent (within 60 days)
+              if (article.published) {
+                const articleDate = new Date(article.published)
+                const daysSince = (Date.now() - articleDate.getTime()) / (1000 * 60 * 60 * 24)
+                if (daysSince > 60) return false
+              }
+
+              return true
+            })
 
           newsResults.push(...processedArticles)
           console.log(`✅ Query "${queryData.type}": ${processedArticles.length} quality articles (relevance ≥30)`)

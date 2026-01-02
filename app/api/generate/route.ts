@@ -45,30 +45,34 @@ export async function POST(request: NextRequest) {
 
     // Enhanced form data with validation
     const enhancedFormData = {
-      businessName: hasBusinessName ? formData.businessName : 
+      businessName: hasBusinessName ? formData.businessName :
                    (hasIndustry ? `${formData.industry} Business` : 'Professional Business'),
-      
+
       industry: hasIndustry ? formData.industry : 'Professional Services',
-      
+
       location: hasLocation ? formData.location : 'Local Market',
-      
-      websiteUrl: formData.websiteUrl === 'none' ? '' : 
+
+      websiteUrl: formData.websiteUrl === 'none' ? '' :
                   (formData.websiteUrl || ''),
-      
-      customGoal: formData.customGoal || 
+
+      customGoal: formData.customGoal ||
                  formData.conversationData?.custom_goal ||
                  formData.conversationData?.growth_objectives ||
                  `Accelerate growth and market expansion in the ${formData.industry || 'business'} sector`,
-      
-      networkingKeyword: formData.networkingKeyword || 
+
+      networkingKeyword: formData.networkingKeyword ||
                         formData.conversationData?.networking_keyword ||
-                        formData.industry || 
+                        formData.industry ||
                         'business networking',
-      
-      partnershipGoals: formData.partnershipGoals || 
+
+      partnershipGoals: formData.partnershipGoals ||
                        formData.conversationData?.partnership_goals ||
                        'Build strategic partnerships for mutual growth',
-      
+
+      // Pass user-specified partner types for targeted search
+      targetLeads: formData.targetLeads || '',
+      targetEvents: formData.targetEvents || '',
+
       conversationData: formData.conversationData || {},
       userId: formData.userId,
       hasRealBusinessData: hasBusinessName || hasIndustry || hasLocation
@@ -108,11 +112,19 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await response.json()
-    
+
     console.log(`✅ Brief generated successfully for ${enhancedFormData.businessName}`)
     console.log(`📊 Total processing time: ${processingTime}ms`)
-    
+    console.log(`📦 Backend result:`, JSON.stringify(result, null, 2))
+
+    // Ensure briefId is in the response
+    if (!result.briefId) {
+      console.error(`❌ No briefId in backend response!`)
+    }
+
     return NextResponse.json({
+      success: true,
+      briefId: result.briefId,
       ...result,
       processingTime,
       enhancedWithAI: true,

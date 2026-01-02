@@ -1,769 +1,355 @@
 "use client"
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-
-import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { BentoGrid } from "@/components/ui/bento-grid"
-import { Footer7 } from "@/components/ui/footer-7"
-import { Connect } from "@/components/connect-section"
-import DatabaseWithRestApi from "@/components/ui/database-with-rest-api"
-import { Sparkles, TrendingUp, Users, Zap, Box, Lock, Search, Settings, Play, Pause, Volume2, VolumeX } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1"
-import { GlowingEffect } from "@/components/ui/glowing-effect"
-import { Pricing } from "@/components/ui/pricing"
-import { Navbar1 } from "@/components/ui/navbar-1"
-import { StarBorder } from "@/components/ui/star-border"
-import { Sparkles as SparklesComponent } from "@/components/ui/sparkles"
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from "framer-motion"
+import { ArrowRight, Sparkles, Zap, TrendingUp, Newspaper, Calendar, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
-const checkVideoFile = async () => {
-  try {
-    const response = await fetch('/avatars/Quick-Avatar-Video.mp4', { method: 'HEAD' })
-    console.log('Video file status:', response.status)
-    if (!response.ok) {
-      console.error('Video file not found or inaccessible')
-    }
-  } catch (error) {
-    console.error('Error checking video file:', error)
-  }
+// Typewriter effect for rotating words
+function TypewriterText() {
+  const words = ["Winning", "Growing", "Connecting", "Closing", "Scaling", "Thriving"]
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [displayText, setDisplayText] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const currentWord = words[currentIndex]
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentWord.length) {
+          setDisplayText(currentWord.slice(0, displayText.length + 1))
+        } else {
+          // Pause at full word
+          setTimeout(() => setIsDeleting(true), 1500)
+        }
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1))
+        } else {
+          setIsDeleting(false)
+          setCurrentIndex((prev) => (prev + 1) % words.length)
+        }
+      }
+    }, isDeleting ? 50 : 100)
+
+    return () => clearTimeout(timeout)
+  }, [displayText, isDeleting, currentIndex, words])
+
+  return (
+    <span className="inline-block min-w-[200px] md:min-w-[280px]">
+      {displayText}
+      <span className="animate-pulse">|</span>
+    </span>
+  )
 }
 
-const VideoPlayer = () => {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(true)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
-  const [canAutoplay, setCanAutoplay] = useState(false)
-  const [userInteracted, setUserInteracted] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
+// Animated counter component
+function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
+  const [count, setCount] = useState(0)
 
-  // Check autoplay capability - Fixed dependency array
   useEffect(() => {
-    const checkAutoplay = async () => {
-      try {
-        if (videoRef.current) {
-          videoRef.current.muted = true
-          videoRef.current.volume = 0
-          const playPromise = videoRef.current.play()
-          if (playPromise) {
-            await playPromise
-            videoRef.current.pause()
-            videoRef.current.currentTime = 0
-            setCanAutoplay(true)
-          }
-        }
-      } catch (error) {
-        console.log("Autoplay not allowed:", error)
-        setCanAutoplay(false)
+    const duration = 2000
+    const steps = 60
+    const increment = value / steps
+    let current = 0
+
+    const timer = setInterval(() => {
+      current += increment
+      if (current >= value) {
+        setCount(value)
+        clearInterval(timer)
+      } else {
+        setCount(Math.floor(current))
       }
-    }
+    }, duration / steps)
 
-    const timer = setTimeout(checkAutoplay, 100)
-    return () => clearTimeout(timer)
-  }, []) // Fixed: Keep this empty
+    return () => clearInterval(timer)
+  }, [value])
 
-  // Check video file on mount - Separate useEffect
-  useEffect(() => {
-    checkVideoFile()
-  }, [])
+  return <span>{count.toLocaleString()}{suffix}</span>
+}
 
-  // User interaction handler - Fixed dependency array
-  useEffect(() => {
-    if (userInteracted) return // Don't add listener if already interacted
+// Floating card component with mouse tracking
+function FloatingCard({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
 
-    const handleUserClick = () => {
-      setUserInteracted(true)
-      if (videoRef.current && isMuted && isPlaying) {
-        videoRef.current.muted = false
-        videoRef.current.volume = 0.7
-        setIsMuted(false)
-      }
-    }
+  const rotateX = useTransform(y, [-100, 100], [5, -5])
+  const rotateY = useTransform(x, [-100, 100], [-5, 5])
 
-    document.addEventListener('click', handleUserClick, { once: true })
-    return () => document.removeEventListener('click', handleUserClick)
-  }, [isMuted, isPlaying, userInteracted]) // Fixed: Consistent dependencies
+  const springConfig = { stiffness: 150, damping: 15 }
+  const rotateXSpring = useSpring(rotateX, springConfig)
+  const rotateYSpring = useSpring(rotateY, springConfig)
 
-  const playVideo = async () => {
-    if (!videoRef.current) return
-
-    try {
-      setHasError(false)
-      
-      // Set volume before playing
-      videoRef.current.volume = isMuted ? 0 : 0.7
-
-      const playPromise = videoRef.current.play()
-      if (playPromise !== undefined) {
-        await playPromise
-        setIsPlaying(true)
-      }
-    } catch (error) {
-      console.error("Video play error:", error)
-      
-      // Try playing muted if unmuted failed
-      try {
-        if (videoRef.current) {
-          videoRef.current.muted = true
-          videoRef.current.volume = 0
-          setIsMuted(true)
-          await videoRef.current.play()
-          setIsPlaying(true)
-        }
-      } catch (mutedError) {
-        console.error("Muted play error:", mutedError)
-        setHasError(true)
-      }
-    }
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    x.set(e.clientX - centerX)
+    y.set(e.clientY - centerY)
   }
 
-  const togglePlay = async () => {
-    if (!videoRef.current) return
-
-    if (isPlaying) {
-      videoRef.current.pause()
-      setIsPlaying(false)
-    } else {
-      await playVideo()
-    }
-  }
-
-  const toggleMute = async () => {
-    if (!videoRef.current) return
-    
-    try {
-      const newMutedState = !isMuted
-      videoRef.current.muted = newMutedState
-      videoRef.current.volume = newMutedState ? 0 : 0.7
-      setIsMuted(newMutedState)
-    } catch (error) {
-      console.error("Toggle mute error:", error)
-    }
-  }
-
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error("Video error:", e)
-    setHasError(true)
-    setIsLoaded(false)
-  }
-
-  const handleLoadedData = () => {
-    console.log("Video loaded successfully")
-    setIsLoaded(true)
-    setHasError(false)
-  }
-
-  const handleCanPlay = () => {
-    console.log("Video can play")
-    setIsLoaded(true)
+  const handleMouseLeave = () => {
+    x.set(0)
+    y.set(0)
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.6 }}
-      className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 mb-12 group"
+      transition={{ duration: 0.6, delay }}
+      style={{ rotateX: rotateXSpring, rotateY: rotateYSpring, transformPerspective: 1000 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="cursor-pointer"
     >
-      <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-yellow-500/20 shadow-2xl bg-black/50 backdrop-blur-sm">
-        {/* Video Preview Overlay */}
-        {(!isPlaying || hasError) && (
-          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/30 via-transparent to-black/60">
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 sm:p-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-center mb-4"
-              >
-                <h3 className="text-lg sm:text-2xl font-bold mb-2 text-yellow-500">
-                  {hasError ? "Video Error" : "Watch Our AI in Action"}
-                </h3>
-                <p className="text-xs sm:text-base text-gray-200 max-w-md mx-auto">
-                  {hasError 
-                    ? "Unable to load video. Please check your connection." 
-                    : "See how Sleft Signals transforms your business strategy"}
-                </p>
-              </motion.div>
-              {!hasError && (
-                <motion.button
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  onClick={togglePlay}
-                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-all duration-200 hover:scale-110 shadow-lg"
-                >
-                  <Play className="w-6 h-6 sm:w-8 sm:h-8 ml-1" />
-                </motion.button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Video Element */}
-        <video
-          ref={videoRef}
-          className="w-full aspect-video object-cover"
-          poster="/avatars/ai-avatar.png"
-          playsInline
-          preload="metadata"
-          muted={isMuted}
-          onLoadedData={handleLoadedData}
-          onCanPlay={handleCanPlay}
-          onError={handleVideoError}
-          onEnded={() => setIsPlaying(false)}
-          controls={false}
-          disablePictureInPicture
-          controlsList="nodownload"
-        >
-          <source 
-            src="/avatars/Quick-Avatar-Video.mp4" 
-            type="video/mp4"
-          />
-          <p>Your browser does not support the video tag.</p>
-        </video>
-
-        {/* Mobile Touch Area */}
-        <button
-          className="absolute inset-0 w-full h-full z-20 opacity-0"
-          onClick={togglePlay}
-          aria-label={isPlaying ? "Pause" : "Play"}
-        />
-
-        {/* Unmute Notification */}
-        {isPlaying && isMuted && (
-          <div className="absolute top-4 right-4 z-30">
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={toggleMute}
-              className="bg-yellow-500 text-black px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-yellow-400 transition-colors shadow-lg"
-            >
-              <Volume2 className="w-3 h-3" />
-              Tap to unmute
-            </motion.button>
-          </div>
-        )}
-
-        {/* Controls when playing */}
-        {isPlaying && !hasError && (
-          <>
-            {/* Center Play/Pause Button */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 z-25">
-              <button
-                onClick={togglePlay}
-                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-500/90 hover:bg-yellow-500 flex items-center justify-center text-black transition-transform duration-200 hover:scale-110 shadow-lg"
-              >
-                <Pause className="w-6 h-6 sm:w-8 sm:h-8" />
-              </button>
-            </div>
-
-            {/* Bottom Controls */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent">
-              <button
-                onClick={toggleMute}
-                className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors duration-200"
-              >
-                {isMuted ? (
-                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
-                ) : (
-                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
-                )}
-              </button>
-
-              {/* Video Progress Indicator */}
-              <div className="text-xs text-white/70">
-                {isPlaying ? "Playing" : "Paused"}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Loading State */}
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl sm:rounded-2xl z-30">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" />
-            <p className="text-xs text-gray-400">Loading video...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Status Message */}
-      <div className="mt-2 text-center">
-        <p className="text-xs sm:text-sm text-gray-400">
-          {hasError 
-            ? "Video failed to load - please refresh" 
-            : !isLoaded 
-            ? "Loading..." 
-            : isPlaying 
-            ? "Playing" 
-            : "Click to play"
-          }
-        </p>
-      </div>
+      {children}
     </motion.div>
   )
 }
 
 export default function HomePage() {
-  const router = useRouter()
-
-  const handleGenerateBrief = () => {
-    router.push("/generate")
-  }
-
-  const handleWatchDemo = () => {
-    // Add demo functionality or scroll to demo section
-    console.log("Watch demo clicked")
-  }
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <Navbar1 />
+    <div className="min-h-screen bg-white overflow-hidden">
+      {/* Vibrant background with colorful gradient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Top left - vibrant coral/pink */}
+        <motion.div
+          animate={{
+            x: [0, 80, 40, 0],
+            y: [0, 40, 80, 0],
+            scale: [1, 1.2, 1.1, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-rose-400/50 via-pink-400/40 to-orange-300/30 rounded-full blur-3xl"
+        />
+        {/* Top right - vibrant teal/cyan */}
+        <motion.div
+          animate={{
+            x: [0, -60, -30, 0],
+            y: [0, 60, 30, 0],
+            scale: [1, 1.15, 1.2, 1],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/50 via-teal-400/40 to-emerald-300/30 rounded-full blur-3xl"
+        />
+        {/* Bottom - vibrant purple/blue */}
+        <motion.div
+          animate={{
+            x: [0, 50, -50, 0],
+            y: [0, -30, 30, 0],
+            scale: [1, 1.1, 1.2, 1],
+          }}
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-violet-400/40 via-purple-400/30 to-indigo-300/20 rounded-full blur-3xl"
+        />
+        {/* Center glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-to-r from-amber-200/20 via-transparent to-sky-200/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Hero Section */}
-      <section id="home" className="relative overflow-hidden pt-16 sm:pt-24 min-h-[calc(100vh-4rem)] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent" />
-
-        <div className="container mx-auto px-4 py-8 sm:py-16 relative z-10">
-          {/* Hero Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-8 sm:mb-12"
-          >
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mb-6 sm:mb-8">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
-              <span className="text-xs sm:text-sm text-yellow-500 font-medium">AI-Powered Business Intelligence</span>
-            </div>
-
-            <motion.h1
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 sm:mb-8 leading-tight max-w-5xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2 }}
-            >
-              Transform your business with{" "}
-              <span className="bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-                AI-powered insights
-              </span>
-            </motion.h1>
-
-            <motion.p
-              className="text-base sm:text-lg lg:text-xl text-gray-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4 sm:px-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4 }}
-            >
-              Get personalized business strategy briefs that reveal your competitive edge, growth opportunities, and
-              valuable connections. Powered by GPT-4 and real business intelligence.
-            </motion.p>
-          </motion.div>
-
-          {/* Value Props */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 max-w-4xl mx-auto mb-12 sm:mb-16 px-4"
-          >
-            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
-              </div>
-              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Edge</span>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
-              </div>
-              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Leverage</span>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
-              </div>
-              <span className="text-gray-300 text-base sm:text-lg font-medium">Your Connections</span>
-            </div>
-          </motion.div>
-
-          {/* CTA Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="flex flex-col items-center"
-          >
-            {/* Add VideoPlayer here */}
-            <VideoPlayer />
-
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20">
-              <Link href="/auth" passHref>
-              <StarBorder
-                as="button"
-                className="cursor-pointer hover:scale-105 transition-transform duration-200"
-                color="#fbbf24"
-                speed="4s"
-              >
-                <div className="flex items-center gap-3 font-semibold text-lg text-yellow-500">
-                  <Sparkles className="w-5 h-5" />
-                  Generate My Strategy Brief
-                </div>
-              </StarBorder>
-              </Link>
-
-              <Button
-                onClick={handleWatchDemo}
-                variant="outline"
-                size="lg"
-                className="border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 bg-transparent px-8 py-4 text-lg h-auto cursor-pointer"
-              >
-                Watch Demo
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Curved Shadow Effect with Sparkles */}
-        <div className="absolute -bottom-32 left-0 right-0 h-96 w-full overflow-hidden [mask-image:radial-gradient(50%_50%,white,transparent)]">
-          {/* Background gradient */}
-          <div className="absolute inset-0 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_bottom_center,#fbbf24,transparent_70%)] before:opacity-40" />
-          
-          {/* Curved surface */}
-          <div className="absolute -left-1/2 top-1/2 aspect-[1/0.7] z-10 w-[200%] rounded-[100%] border-t border-yellow-500/20 bg-black" />
-          
-          {/* Sparkles effect */}
-          <SparklesComponent
-            density={800}
-            className="absolute inset-x-0 bottom-0 h-full w-full [mask-image:radial-gradient(50%_50%,white,transparent_85%)]"
-            color="#fbbf24"
-            size={1.2}
-            speed={0.8}
-            opacity={0.6}
-          />
-        </div>
-      </section>
-
-      {/* AI Intelligence Section */}
-      <section className="py-20 relative z-10 bg-black">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-              Powered by{" "}
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-                Advanced AI
-              </span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Our AI analyzes your business data, market trends, and competitive landscape to deliver actionable
-              insights.
-            </p>
-          </motion.div>
-
-          <div className="flex justify-center">
-            <DatabaseWithRestApi
-              title="AI-Powered Business Intelligence"
-              circleText="GPT-4"
-              badgeTexts={{
-                first: "EDGE",
-                second: "LEVERAGE",
-                third: "CONNECT",
-                fourth: "SCALE",
-              }}
-              buttonTexts={{
-                first: "Sleft Signals",
-                second: "AI_Insights",
-              }}
-              lightColor="#fbbf24"
-            />
+      {/* Nav */}
+      <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-3"
+        >
+          <div className="w-11 h-11 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
-        </div>
-      </section>
+          <span className="text-xl font-bold text-gray-900">Sleft</span>
+        </motion.div>
 
-      {/* Features Section */}
-      <section id="features" className="py-20">
-        <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <Link
+            href="/auth"
+            className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm font-medium text-white transition-all shadow-lg hover:shadow-xl"
+          >
+            Sign In
+          </Link>
+        </motion.div>
+      </nav>
+
+      {/* Hero */}
+      <main className="relative z-10 px-6 lg:px-12 pt-12 lg:pt-16 pb-20">
+        <div className="max-w-6xl mx-auto">
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex justify-center mb-8"
           >
-            <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-              Everything you need to{" "}
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-                grow faster
-              </span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              From competitive analysis to strategic partnerships, we provide the insights and connections you need.
-            </p>
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border border-orange-200 rounded-full shadow-sm">
+              <Zap className="w-4 h-4 text-orange-600" />
+              <span className="text-sm text-orange-700 font-semibold">Your unfair advantage starts here</span>
+            </div>
           </motion.div>
 
-          <BentoGrid
-            items={[
-              {
-                title: "Competitive Analysis",
-                description: "Understand your competitors and market trends with AI-driven insights.",
-                icon: <TrendingUp className="w-6 h-6 text-yellow-500" />,
-              },
-              {
-                title: "Growth Opportunities",
-                description: "Identify new markets and revenue streams tailored to your business.",
-                icon: <Zap className="w-6 h-6 text-yellow-500" />,
-              },
-              {
-                title: "Strategic Connections",
-                description: "Find valuable partners and connections to accelerate your growth.",
-                icon: <Users className="w-6 h-6 text-yellow-500" />,
-              },
-              {
-                title: "Data Security",
-                description: "Your business data is protected with enterprise-grade security.",
-                icon: <Lock className="w-6 h-6 text-yellow-500" />,
-              },
-              {
-                title: "Custom Insights",
-                description: "Receive personalized recommendations and strategies from AI.",
-                icon: <Settings className="w-6 h-6 text-yellow-500" />,
-              },
-              {
-                title: "Real-time Market Data",
-                description: "Stay ahead with up-to-date intelligence and analytics.",
-                icon: <Search className="w-6 h-6 text-yellow-500" />,
-              },
-            ]}
-          />
-        </div>
-      </section>
+          {/* Main headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl md:text-6xl lg:text-7xl font-bold text-center leading-tight mb-6"
+          >
+            <span className="text-gray-900">Stop guessing.</span>
+            <br />
+            <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">
+              Start <TypewriterText />
+            </span>
+          </motion.h1>
 
-      {/* Glowing Effect Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
+          {/* Subheadline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-lg md:text-xl text-gray-700 text-center max-w-2xl mx-auto mb-12 leading-relaxed"
+          >
+            Find <span className="font-semibold text-gray-900">referral partners</span> in your area who can send you customers.
+            We scan your local market in <span className="font-semibold text-gray-900">60 seconds</span> and hand you personalized openers to reach out.
+          </motion.p>
+
+          {/* CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col items-center gap-4 mb-16"
           >
-            <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-              Powerful{" "}
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-                AI Features
-              </span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Discover the advanced capabilities that make Sleft Signals the ultimate business intelligence platform.
-            </p>
+            <Link href="/auth">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold text-lg px-10 py-5 rounded-2xl overflow-hidden shadow-2xl shadow-fuchsia-500/30"
+              >
+                <span className="relative z-10">Try It Free</span>
+                <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-fuchsia-600 via-rose-500 to-orange-500"
+                  initial={{ x: "100%" }}
+                  whileHover={{ x: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
+            </Link>
+            <p className="text-sm text-gray-500 font-medium">Get your first brief free. No credit card required.</p>
           </motion.div>
 
-          <GlowingEffectDemo />
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-wrap justify-center gap-8 lg:gap-16 mb-20"
+          >
+            {[
+              { value: 10, suffix: "+", label: "Partners per scan", color: "text-emerald-600", bg: "bg-emerald-50" },
+              { value: 60, suffix: "s", label: "Average scan time", color: "text-violet-600", bg: "bg-violet-50" },
+              { value: 12, suffix: "+", label: "Events discovered", color: "text-rose-600", bg: "bg-rose-50" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className={`text-4xl lg:text-5xl font-bold ${stat.color}`}>
+                  <AnimatedNumber value={stat.value} suffix={stat.suffix} />
+                </div>
+                <div className={`text-sm font-medium text-gray-600 mt-2 px-3 py-1 ${stat.bg} rounded-full inline-block`}>{stat.label}</div>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Feature cards */}
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <FloatingCard delay={0.6}>
+              <div className="p-6 bg-white/80 backdrop-blur-sm border-2 border-emerald-200 rounded-2xl h-full hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/20 transition-all">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/30">
+                  <TrendingUp className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Referral Partners</h3>
+                <p className="text-gray-600">
+                  Businesses that serve your ideal customers. Complete with contact info and openers.
+                </p>
+              </div>
+            </FloatingCard>
+
+            <FloatingCard delay={0.7}>
+              <div className="p-6 bg-white/80 backdrop-blur-sm border-2 border-blue-200 rounded-2xl h-full hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 transition-all">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
+                  <Newspaper className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Ready-to-Send Openers</h3>
+                <p className="text-gray-600">
+                  Personalized messages for each partner. Just copy, paste, and send.
+                </p>
+              </div>
+            </FloatingCard>
+
+            <FloatingCard delay={0.8}>
+              <div className="p-6 bg-white/80 backdrop-blur-sm border-2 border-orange-200 rounded-2xl h-full hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/20 transition-all">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-orange-500/30">
+                  <Calendar className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Local Events</h3>
+                <p className="text-gray-600">
+                  Networking opportunities in your area. Show up where deals happen.
+                </p>
+              </div>
+            </FloatingCard>
+          </div>
+
+          {/* Social proof */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="mt-20 text-center"
+          >
+            <p className="text-sm text-gray-500 font-medium mb-6">Trusted by ambitious businesses</p>
+            <div className="flex flex-wrap justify-center items-center gap-3">
+              {["Agency owners", "Consultants", "Local businesses", "Freelancers", "Sales teams"].map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1 + i * 0.1 }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-full shadow-sm"
+                >
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-medium text-gray-700">{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <TestimonialsSection />
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-black">
-        <div className="container mx-auto">
-          <PricingSection />
-        </div>
-      </section>
-
-      {/* Connect Section */}
-      <section id="contact">
-        <Connect />
-      </section>
+      </main>
 
       {/* Footer */}
-      <Footer7 />
+      <footer className="relative z-10 px-6 py-8 border-t border-gray-200">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="text-sm text-gray-500">Sleft Signals - Your unfair advantage</span>
+          <div className="flex items-center gap-6">
+            <Link href="/auth" className="text-sm text-gray-600 hover:text-violet-600 transition-colors font-semibold">
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
-  )
-}
-
-function TestimonialsSection() {
-  return (
-    <section className="bg-black my-20 relative">
-      <div className="container z-10 mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          viewport={{ once: true }}
-          className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
-        >
-          <div className="flex justify-center">
-            <div className="border border-yellow-500/30 bg-yellow-500/10 py-1 px-4 rounded-lg">
-              <span className="text-yellow-500">Testimonials</span>
-            </div>
-          </div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5 text-white">
-            What our users say
-          </h2>
-          <p className="text-center mt-5 opacity-75 text-gray-300">
-            See what our customers have to say about transforming their businesses with AI-powered insights.
-          </p>
-        </motion.div>
-        <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
-          <TestimonialsColumn duration={15} />
-          <TestimonialsColumn className="hidden md:block" duration={19} />
-          <TestimonialsColumn className="hidden lg:block" duration={17} />
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function GlowingEffectDemo() {
-  return (
-    <ul className="grid grid-cols-1 grid-rows-none gap-4 md:grid-cols-12 md:grid-rows-3 lg:gap-4 xl:max-h-[34rem] xl:grid-rows-2">
-      <GridItem
-        area="md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
-        icon={<Box className="h-4 w-4 text-yellow-500" />}
-        title="AI-Powered Analysis"
-        description="Advanced algorithms analyze your business data to uncover hidden opportunities and competitive advantages."
-      />
-      <GridItem
-        area="md:[grid-area:1/7/2/13] xl:[grid-area:2/1/3/5]"
-        icon={<Settings className="h-4 w-4 text-yellow-500" />}
-        title="Strategic Recommendations"
-        description="Get personalized, actionable strategies tailored to your specific business needs and market position."
-      />
-      <GridItem
-        area="md:[grid-area:2/1/3/7] xl:[grid-area:1/5/3/8]"
-        icon={<Lock className="h-4 w-4 text-yellow-500" />}
-        title="Secure & Private"
-        description="Your business data is protected with enterprise-grade security and privacy measures."
-      />
-      <GridItem
-        area="md:[grid-area:2/7/2/13] xl:[grid-area:1/8/2/13]"
-        icon={<Sparkles className="h-4 w-4 text-yellow-500" />}
-        title="Real-time Insights"
-        description="Access up-to-date market intelligence and business insights powered by GPT-4."
-      />
-      <GridItem
-        area="md:[grid-area:3/1/4/13] xl:[grid-area:2/8/3/13]"
-        icon={<Search className="h-4 w-4 text-yellow-500" />}
-        title="Market Intelligence"
-        description="Comprehensive market analysis and competitor insights to stay ahead of the competition."
-      />
-    </ul>
-  )
-}
-
-interface GridItemProps {
-  area: string
-  icon: React.ReactNode
-  title: string
-  description: React.ReactNode
-}
-
-const GridItem = ({ area, icon, title, description }: GridItemProps) => {
-  return (
-    <li className={cn("min-h-[14rem] list-none", area)}>
-      <div className="relative h-full rounded-[1.25rem] border-[0.75px] border-yellow-500/20 p-2 md:rounded-[1.5rem] md:p-3">
-        <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
-        <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-xl border-[0.75px] bg-black/90 p-6 shadow-sm md:p-6">
-          <div className="relative flex flex-1 flex-col justify-between gap-3">
-            <div className="w-fit rounded-lg border-[0.75px] border-yellow-500/30 bg-yellow-500/10 p-2">{icon}</div>
-            <div className="space-y-3">
-              <h3 className="pt-0.5 text-xl leading-[1.375rem] font-semibold font-sans tracking-[-0.04em] md:text-2xl md:leading-[1.875rem] text-balance text-white">
-                {title}
-              </h3>
-              <h2 className="font-sans text-sm leading-[1.125rem] md:text-base md:leading-[1.375rem] text-gray-300">
-                {description}
-              </h2>
-            </div>
-          </div>
-        </div>
-      </div>
-    </li>
-  )
-}
-
-const pricingPlans = [
-  {
-    name: "STARTER",
-    price: "29",
-    yearlyPrice: "24",
-    period: "per month",
-    features: [
-      "1 strategy brief per month",
-      "Basic business analysis",
-      "Email support",
-      "Market insights",
-      "Competitor overview",
-    ],
-    description: "Perfect for small businesses getting started",
-    buttonText: "Start Free Trial",
-    href: "/generate",
-    isPopular: false,
-  },
-  {
-    name: "PROFESSIONAL",
-    price: "99",
-    yearlyPrice: "79",
-    period: "per month",
-    features: [
-      "Unlimited strategy briefs",
-      "Advanced AI analysis",
-      "Priority support",
-      "Strategic connections",
-      "Growth opportunities",
-      "Partnership recommendations",
-      "Custom insights",
-    ],
-    description: "Ideal for growing businesses and teams",
-    buttonText: "Get Started",
-    href: "/generate",
-    isPopular: true,
-  },
-  {
-    name: "ENTERPRISE",
-    price: "299",
-    yearlyPrice: "239",
-    period: "per month",
-    features: [
-      "Everything in Professional",
-      "Custom AI models",
-      "Dedicated account manager",
-      "White-label solutions",
-      "API access",
-      "Advanced integrations",
-      "Custom reporting",
-      "SLA agreement",
-    ],
-    description: "For large organizations with specific needs",
-    buttonText: "Contact Sales",
-    href: "/contact",
-    isPopular: false,
-  },
-]
-
-function PricingSection() {
-  return (
-    <Pricing
-      plans={pricingPlans}
-      title="Simple, Transparent Pricing"
-      description="Choose the plan that works for you. All plans include access to our AI-powered platform and dedicated support."
-    />
   )
 }

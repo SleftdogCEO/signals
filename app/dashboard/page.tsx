@@ -127,7 +127,7 @@ export default function DashboardPage() {
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white text-sm font-medium rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25"
             >
               <Zap className="w-4 h-4" />
-              New Scan
+              Find Partners
             </motion.button>
           </div>
         </div>
@@ -145,26 +145,26 @@ export default function DashboardPage() {
               <Zap className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-gray-900">Ready to find </span>
-              <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">your edge?</span>
+              <span className="text-gray-900">Find partners who </span>
+              <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">send you customers</span>
             </h1>
             <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
-              In 60 seconds, we&apos;ll scan your local market for leads, news, and networking events.
+              Tell us about your business and we&apos;ll find the local connections worth making.
             </p>
 
             {/* Feature highlights */}
             <div className="flex flex-wrap justify-center gap-3 mb-10">
               <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                <span className="text-sm text-emerald-700 font-medium">Local Leads</span>
-              </div>
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-2 rounded-full">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-blue-700 font-medium">Industry News</span>
+                <span className="text-sm text-emerald-700 font-medium">Referral Partners</span>
               </div>
               <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full">
                 <Calendar className="w-4 h-4 text-orange-600" />
                 <span className="text-sm text-orange-700 font-medium">Networking Events</span>
+              </div>
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-2 rounded-full">
+                <FileText className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-blue-700 font-medium">Local Intel</span>
               </div>
             </div>
 
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                 whileTap={{ scale: 0.98 }}
                 className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold text-lg px-10 py-5 rounded-2xl overflow-hidden shadow-2xl shadow-fuchsia-500/30"
               >
-                <span className="relative z-10">Start Your First Scan</span>
+                <span className="relative z-10">Find My Partners</span>
                 <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-fuchsia-600 via-rose-500 to-orange-500"
@@ -190,8 +190,8 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">Your Briefs</h1>
-                <p className="text-gray-500">View your market intelligence reports</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">Your Connections</h1>
+                <p className="text-gray-500">View your partnership opportunities</p>
               </div>
               <span className="px-4 py-2 bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-700 rounded-full text-sm font-medium border border-violet-200">
                 {briefs.length} total

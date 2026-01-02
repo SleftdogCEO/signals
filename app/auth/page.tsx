@@ -97,7 +97,7 @@ export default function AuthPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border border-orange-200 rounded-full shadow-sm">
               <Zap className="w-4 h-4 text-orange-600" />
-              <span className="text-sm text-orange-700 font-semibold">60 seconds to your first leads</span>
+              <span className="text-sm text-orange-700 font-semibold">Find partners who send you customers</span>
             </div>
           </motion.div>
 
@@ -109,13 +109,13 @@ export default function AuthPage() {
             className="text-center mb-8"
           >
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              <span className="text-gray-900">Unlock </span>
+              <span className="text-gray-900">One good partner </span>
               <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">
-                50+ Opportunities
+                beats 100 leads
               </span>
             </h1>
             <p className="text-lg text-gray-600 max-w-md mx-auto">
-              Your competitors are missing these leads right now. Don&apos;t be one of them.
+              We help you find businesses that already have your customers.
             </p>
           </motion.div>
 
@@ -127,9 +127,9 @@ export default function AuthPage() {
             className="flex flex-wrap justify-center gap-3 mb-8"
           >
             {[
-              { icon: TrendingUp, label: "Hot Leads", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
-              { icon: Newspaper, label: "Local News", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-              { icon: Calendar, label: "Events", color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
+              { icon: TrendingUp, label: "Referral Partners", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+              { icon: Calendar, label: "Networking Events", color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
+              { icon: Newspaper, label: "Local Intel", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
             ].map((item, i) => (
               <motion.div
                 key={i}
