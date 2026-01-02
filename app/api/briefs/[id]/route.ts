@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createClient } from '@supabase/supabase-js'
 
-// Environment-aware backend URL
-const getBackendUrl = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sleft-signal.onrender.com'
-  }
-  return process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
-}
-
-const BACKEND_URL = getBackendUrl()
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Await the params
-    const briefId = await Promise.resolve(params.id)
-    
+    const briefId = params.id
+
     if (!briefId || briefId === 'null' || briefId === 'undefined') {
       return NextResponse.json(
         { error: 'Invalid brief ID' },
@@ -25,16 +20,33 @@ export async function GET(
       )
     }
 
-    console.log(`Frontend API: Fetching brief ${briefId} from ${process.env.BACKEND_URL}`)
+    console.log(`Fetching brief ${briefId}`)
 
-    const response = await fetch(`${process.env.BACKEND_URL}/api/briefs/${briefId}`)
-    
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}`)
+    // Check if it's a demo brief ID
+    if (briefId.startsWith('demo-')) {
+      // Return a placeholder - the data should have been passed via the redirect
+      return NextResponse.json({
+        error: 'Demo brief data not found. Please generate a new brief.',
+        isDemo: true
+      }, { status: 404 })
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    // Fetch from Supabase
+    const { data: brief, error } = await supabase
+      .from('briefs')
+      .select('*')
+      .eq('id', briefId)
+      .single()
+
+    if (error) {
+      console.error('Supabase fetch error:', error)
+      return NextResponse.json(
+        { error: 'Brief not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(brief)
 
   } catch (error) {
     console.error('Error fetching brief:', error)
@@ -50,36 +62,32 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json()
     const briefId = params.id
-    
-    console.log(`Frontend API: Deleting brief ${briefId}`)
-    
-    const response = await fetch(`${BACKEND_URL}/api/briefs/${briefId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    })
 
-    console.log(`Frontend API: Delete response status: ${response.status}`)
+    console.log(`Deleting brief ${briefId}`)
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("Frontend API: Delete error:", errorText)
+    // Handle demo briefs
+    if (briefId.startsWith('demo-')) {
+      return NextResponse.json({ success: true, message: 'Demo brief cleared' })
+    }
+
+    const { error } = await supabase
+      .from('briefs')
+      .delete()
+      .eq('id', briefId)
+
+    if (error) {
+      console.error('Supabase delete error:', error)
       return NextResponse.json(
-        { error: "Failed to delete brief", details: errorText },
-        { status: response.status }
+        { error: 'Failed to delete brief' },
+        { status: 500 }
       )
     }
 
-    const result = await response.json()
-    console.log("Frontend API: Brief deleted successfully")
-    return NextResponse.json(result)
+    return NextResponse.json({ success: true })
 
   } catch (error) {
-    console.error("Frontend API Delete Error:", error)
+    console.error("Delete Error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

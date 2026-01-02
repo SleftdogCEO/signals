@@ -24,7 +24,7 @@ export function AuthCard() {
   const getRedirectURL = () => {
     const baseURL = process.env.NODE_ENV === 'production'
       ? 'https://sleft-signal.vercel.app'  // Replace with your actual domain
-      : 'http://localhost:3000';
+      : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
 
     return `${baseURL}/auth/callback`;  // This points to the route handler
   };
@@ -115,6 +115,13 @@ export function AuthCard() {
             authProvider: 'email',
             signupDate: new Date().toISOString()
           });
+        }
+
+        // If user is confirmed immediately (no email verification required), redirect
+        if (data.session) {
+          toast.success('Welcome! Redirecting to dashboard...');
+          window.location.href = '/dashboard/generate';
+          return;
         }
 
         toast.success('Check your email for the confirmation link!');

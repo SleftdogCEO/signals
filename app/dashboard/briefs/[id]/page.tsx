@@ -164,11 +164,60 @@ export default function BriefPage({ params }: BriefPageProps) {
   const fetchBrief = async (id: string) => {
     try {
       setLoading(true)
+
+      // First check sessionStorage for demo briefs
+      if (id.startsWith('demo-')) {
+        const storedBrief = sessionStorage.getItem(`brief-${id}`)
+        if (storedBrief) {
+          const parsedBrief = JSON.parse(storedBrief)
+          // Transform to expected format
+          setBrief({
+            id: id,
+            businessName: parsedBrief.business_name,
+            metadata: {
+              industry: parsedBrief.industry,
+              location: parsedBrief.location
+            },
+            businessData: {
+              leads: parsedBrief.leads
+            },
+            newsData: {
+              articles: parsedBrief.news
+            },
+            meetupData: {
+              events: parsedBrief.events
+            }
+          })
+          setLoading(false)
+          return
+        }
+      }
+
       const response = await fetch(`/api/briefs/${id}`)
       const data = await response.json()
 
-      if (data.success && data.brief) {
-        setBrief(data.brief)
+      if (data.error) {
+        setError(data.error)
+      } else if (data.id || data.success) {
+        // Handle both direct Supabase response and wrapped response
+        const briefData = data.brief || data
+        setBrief({
+          id: briefData.id || id,
+          businessName: briefData.business_name || briefData.businessName,
+          metadata: {
+            industry: briefData.industry || briefData.metadata?.industry,
+            location: briefData.location || briefData.metadata?.location
+          },
+          businessData: {
+            leads: briefData.leads || briefData.businessData?.leads || []
+          },
+          newsData: {
+            articles: briefData.news || briefData.newsData?.articles || []
+          },
+          meetupData: {
+            events: briefData.events || briefData.meetupData?.events || []
+          }
+        })
       } else {
         setError("Brief not found")
       }

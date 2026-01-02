@@ -88,9 +88,9 @@ Example for Payment Processing: accountants, bookkeepers, business consultants -
 
 {
   "business": {
-    "name": "business name or null",
-    "industry": "their industry/what they do or null",
-    "location": "city, state or null"
+    "name": "business name (use industry if no specific name given, e.g. 'My Gym' or 'Payment Processing Company')",
+    "industry": "their industry/what they do",
+    "location": "city, state"
   },
   "goal": "partnerships",
   "targetLeads": [
@@ -102,8 +102,14 @@ Example for Payment Processing: accountants, bookkeepers, business consultants -
   "targetIntel": [
     { "topic": "Intel topic", "reason": "Why useful" }
   ],
-  "isComplete": true/false (true if we have business name, location, and at least 2-3 referral partner types confirmed)
+  "isComplete": true or false
 }
+
+SET "isComplete" to TRUE when ALL of these are true:
+1. We know their industry/business type
+2. We know their location
+3. We have at least 2-3 referral partner types listed
+4. The user has confirmed/agreed (said "ok", "yes", "looks good", "perfect", "that works", etc.)
 
 Return ONLY valid JSON, no other text.`
 
@@ -199,11 +205,16 @@ export async function POST(req: Request) {
 
     // Build proposed strategy if ready
     let proposedStrategy: OutreachStrategy | null = null
-    if (isReadyForStrategy && extractedData.business?.name && extractedData.business?.location) {
+    // Check if we have enough data - business name can fallback to industry
+    const hasBusinessInfo = extractedData.business?.name || extractedData.business?.industry
+    const hasLocation = extractedData.business?.location
+    const hasPartners = (extractedData.targetLeads?.length || 0) >= 2
+
+    if (isReadyForStrategy && hasBusinessInfo && hasLocation && hasPartners) {
       proposedStrategy = {
         business: {
-          name: extractedData.business.name,
-          industry: extractedData.business.industry || 'General',
+          name: extractedData.business?.name || `My ${extractedData.business?.industry || 'Business'}`,
+          industry: extractedData.business?.industry || 'General',
           location: extractedData.business.location
         },
         goal: extractedData.goal || 'partnerships',

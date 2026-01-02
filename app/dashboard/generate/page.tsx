@@ -172,6 +172,10 @@ export default function GeneratePage() {
       console.log("Generate response:", data)
 
       if (data.briefId) {
+        // If it's a demo brief, store data in sessionStorage for the brief page to use
+        if (data.isDemo && data.brief) {
+          sessionStorage.setItem(`brief-${data.briefId}`, JSON.stringify(data.brief))
+        }
         // Success - redirect to the brief
         router.push(`/dashboard/briefs/${data.briefId}`)
       } else if (data.error) {
@@ -359,7 +363,7 @@ export default function GeneratePage() {
                         <div
                           className={`max-w-[85%] px-4 py-3 rounded-2xl ${
                             msg.role === "user"
-                              ? "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white"
+                              ? "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-medium shadow-lg"
                               : "bg-white/90 backdrop-blur-sm text-gray-700 border border-gray-200"
                           }`}
                         >
@@ -530,19 +534,35 @@ export default function GeneratePage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 mt-auto">
+              <div className="flex gap-3 mt-auto relative z-50">
                 <button
+                  type="button"
                   onClick={() => setPhase("discovery")}
-                  className="flex-1 py-4 bg-white border border-gray-200 text-gray-700 font-medium rounded-2xl hover:bg-gray-50 transition-all"
+                  disabled={isGenerating}
+                  className="flex-1 py-4 bg-white border border-gray-200 text-gray-700 font-medium rounded-2xl hover:bg-gray-50 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Go Back
                 </button>
                 <button
-                  onClick={handleGenerate}
-                  className="flex-[2] flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold rounded-2xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25"
+                  type="button"
+                  onClick={() => {
+                    console.log("Button clicked, strategy:", strategy, "isGenerating:", isGenerating)
+                    handleGenerate()
+                  }}
+                  disabled={isGenerating || !strategy}
+                  className="flex-[2] flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold rounded-2xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Find My Partners
-                  <ArrowRight className="w-5 h-5" />
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      Find My Partners
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>

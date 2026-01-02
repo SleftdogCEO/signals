@@ -25,32 +25,51 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/auth")
+      router.replace("/auth")
     }
   }, [user, authLoading, router])
 
   useEffect(() => {
     const fetchBriefs = async () => {
-      if (!user?.id) return
+      if (!user?.id) {
+        setLoading(false)
+        return
+      }
 
       try {
-        const response = await fetch(`/api/user-briefs/${user.id}?limit=10`)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout
+
+        const response = await fetch(`/api/user-briefs/${user.id}?limit=10`, {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+
         const data = await response.json()
 
         if (data.success && data.briefs) {
           setBriefs(data.briefs)
         }
-      } catch (error) {
-        console.error("Error fetching briefs:", error)
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          console.log("Briefs fetch timed out, continuing without briefs")
+        } else {
+          console.error("Error fetching briefs:", error)
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    if (user) {
+    if (!authLoading) {
       fetchBriefs()
     }
-  }, [user])
+  }, [user, authLoading])
+
+  // Redirect if not authenticated
+  if (!authLoading && !user) {
+    return null
+  }
 
   if (authLoading || loading) {
     return (
