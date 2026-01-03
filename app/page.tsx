@@ -16,39 +16,13 @@ export default function HomePage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [specialtySearch, setSpecialtySearch] = useState("")
-  const [showSpecialtyDropdown, setShowSpecialtyDropdown] = useState(false)
-
-  const filteredSpecialties = ALL_SPECIALTIES.filter(s =>
-    s.toLowerCase().includes(specialtySearch.toLowerCase())
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    // Use selected specialty or try to match typed text
-    let finalSpecialty = formData.specialty
-    if (!finalSpecialty && specialtySearch) {
-      // Try exact match first
-      const exactMatch = ALL_SPECIALTIES.find(
-        s => s.toLowerCase() === specialtySearch.toLowerCase()
-      )
-      if (exactMatch) {
-        finalSpecialty = exactMatch
-      } else {
-        // Try partial match
-        const partialMatch = ALL_SPECIALTIES.find(
-          s => s.toLowerCase().includes(specialtySearch.toLowerCase())
-        )
-        if (partialMatch) {
-          finalSpecialty = partialMatch
-        }
-      }
-    }
-
-    if (!finalSpecialty) {
-      setError("Please select a valid specialty from the list")
+    if (!formData.specialty) {
+      setError("Please select your specialty")
       return
     }
 
@@ -66,8 +40,7 @@ export default function HomePage() {
 
     try {
       // Store form data in sessionStorage for the results page
-      const dataToStore = { ...formData, specialty: finalSpecialty }
-      sessionStorage.setItem("snapshotRequest", JSON.stringify(dataToStore))
+      sessionStorage.setItem("snapshotRequest", JSON.stringify(formData))
 
       // Redirect to results page
       router.push("/snapshot")
@@ -188,47 +161,25 @@ export default function HomePage() {
                 </p>
 
                 <div className="space-y-5">
-                  {/* Specialty - Searchable Combobox */}
+                  {/* Specialty */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Building2 className="w-4 h-4 inline mr-1" />
                       Your Specialty *
                     </label>
                     <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.specialty || specialtySearch}
-                        onChange={(e) => {
-                          setSpecialtySearch(e.target.value)
-                          setFormData({ ...formData, specialty: "" })
-                          setShowSpecialtyDropdown(true)
-                        }}
-                        onFocus={() => setShowSpecialtyDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowSpecialtyDropdown(false), 200)}
-                        placeholder="Type to search specialties..."
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all bg-white"
+                      <select
+                        value={formData.specialty}
+                        onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
                         required
-                      />
+                      >
+                        <option value="">Select your specialty</option>
+                        {ALL_SPECIALTIES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-
-                      {showSpecialtyDropdown && filteredSpecialties.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                          {filteredSpecialties.map(s => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => {
-                                setFormData({ ...formData, specialty: s })
-                                setSpecialtySearch("")
-                                setShowSpecialtyDropdown(false)
-                              }}
-                              className="w-full px-4 py-2 text-left hover:bg-violet-50 text-gray-700 hover:text-violet-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
 
