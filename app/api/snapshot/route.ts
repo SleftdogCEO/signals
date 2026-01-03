@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdjacentSpecialties, calculateFitScore } from "@/lib/adjacency-map"
 
+const SERPER_API_KEY = process.env.SERPER_API_KEY
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
 const AIRTABLE_LEADS_TABLE = process.env.AIRTABLE_LEADS_TABLE || 'Snapshot Leads'
@@ -12,6 +13,28 @@ interface SnapshotLeadData {
   practiceName: string
   sourcesCount: number
   avgFitScore: number
+}
+
+interface ReferralSource {
+  name: string
+  specialty: string
+  address: string
+  distance: string
+  rating: number
+  reviewCount: number
+  website: string | null
+  phone: string | null
+  fitScore: number
+}
+
+interface SerperPlace {
+  title: string
+  address: string
+  rating?: number
+  ratingCount?: number
+  phoneNumber?: string
+  website?: string
+  category?: string
 }
 
 async function storeSnapshotLead(data: SnapshotLeadData) {
@@ -62,102 +85,124 @@ async function storeSnapshotLead(data: SnapshotLeadData) {
   }
 }
 
-interface SnapshotRequest {
-  specialty: string
-  location: string
-  practiceName?: string
-  email: string
-}
-
-interface ReferralSource {
-  name: string
-  specialty: string
-  address: string
-  distance: string
-  rating: number
-  reviewCount: number
-  website: string | null
-  phone: string | null
-  fitScore: number
-}
-
-// Demo practice name generators by specialty
-const PRACTICE_NAMES: Record<string, string[]> = {
-  "Physical Therapy": ["Peak Performance PT", "Movement Matters Therapy", "Active Life Physical Therapy", "Restore PT & Wellness"],
-  "Orthopedic Surgery": ["Summit Orthopedics", "Precision Bone & Joint", "Advanced Ortho Specialists", "Metro Orthopedic Center"],
-  "Primary Care": ["Family Health Partners", "Community Care Clinic", "Wellness First Medical", "Neighborhood Health Center"],
-  "Chiropractic": ["Spine & Wellness Center", "Back to Health Chiropractic", "Align Chiropractic Care", "Peak Chiropractic"],
-  "Pain Management": ["Pain Relief Specialists", "Comfort Care Pain Clinic", "Advanced Pain Solutions", "Integrated Pain Management"],
-  "Sports Medicine": ["Athletic Edge Sports Med", "Peak Performance Sports", "Pro Sports Medicine", "Active Sports Health"],
-  "Imaging Center": ["Premier Imaging", "Advanced Diagnostic Imaging", "ClearView Radiology", "Metro Imaging Center"],
-  "Neurology": ["Brain & Spine Neurology", "Advanced Neuro Associates", "Neural Health Specialists", "Metro Neuroscience"],
-  "Cardiology": ["Heart Health Specialists", "Advanced Cardiology Group", "Cardiovascular Care Center", "Metro Heart Clinic"],
-  "Gastroenterology": ["Digestive Health Center", "GI Specialists of Metro", "Advanced Gastro Care", "Gut Health Associates"],
-  "Dermatology": ["Clear Skin Dermatology", "Advanced Derm Associates", "Skin Health Center", "Metro Dermatology"],
-  "Mental Health": ["Mind Matters Therapy", "Wellness Mental Health", "Balanced Mind Counseling", "Hope Psychiatric Services"],
-  "Psychiatry": ["Clarity Psychiatry", "Mental Wellness Associates", "Behavioral Health Partners", "Mind Care Psychiatry"],
-  "Psychology": ["Insight Psychology", "Clear Mind Counseling", "Behavioral Wellness Center", "Growth Psychology Group"],
-  "Counseling": ["Hope Counseling Center", "Pathway Counseling", "New Horizons Therapy", "Clarity Counseling"],
-  "Dentist": ["Bright Smile Dental", "Family Dental Care", "Premier Dentistry", "Comfort Dental Group"],
-  "Oral Surgery": ["Metro Oral Surgery", "Advanced Oral & Maxillofacial", "Precision Oral Surgery", "Smile Surgery Center"],
-  "Orthodontist": ["Perfect Smile Orthodontics", "Align Orthodontic Care", "Braces & Beyond", "Metro Orthodontics"],
-  default: ["Metro Health Center", "Advanced Care Specialists", "Premier Medical Group", "Community Health Partners"]
-}
-
-// Street name components for realistic addresses
-const STREET_NAMES = ["Oak", "Main", "Elm", "Park", "Medical Center", "Healthcare", "Professional", "Commerce", "Valley", "Ridge"]
-const STREET_TYPES = ["Dr", "Blvd", "Ave", "Way", "Pkwy", "St"]
-
-function generatePracticeName(specialty: string, index: number): string {
-  const names = PRACTICE_NAMES[specialty] || PRACTICE_NAMES.default
-  // Cycle through names and add suffixes for variety
-  const baseName = names[index % names.length]
-  if (index >= names.length) {
-    const suffixes = ["Group", "Associates", "Partners", "Clinic", "Center"]
-    return `${baseName.split(" ")[0]} ${suffixes[index % suffixes.length]}`
+// Search Google Maps via Serper.dev
+async function searchGoogleMaps(query: string, location: string): Promise<SerperPlace[]> {
+  if (!SERPER_API_KEY) {
+    console.log('⚠️ Serper API not configured, using demo data')
+    return []
   }
-  return baseName
+
+  try {
+    const response = await fetch('https://google.serper.dev/places', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': SERPER_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        q: `${query} near ${location}`,
+        location: location,
+        gl: 'us',
+        hl: 'en'
+      })
+    })
+
+    if (!response.ok) {
+      console.error('Serper API error:', response.status)
+      return []
+    }
+
+    const data = await response.json()
+
+    // Extract places from response
+    const places: SerperPlace[] = (data.places || []).map((place: any) => ({
+      title: place.title,
+      address: place.address,
+      rating: place.rating,
+      ratingCount: place.ratingCount,
+      phoneNumber: place.phoneNumber,
+      website: place.website,
+      category: place.category
+    }))
+
+    return places
+  } catch (error) {
+    console.error('Serper search error:', error)
+    return []
+  }
 }
 
-function generateAddress(location: string, index: number): string {
-  const streetNum = 100 + (index * 127) % 9900
-  const streetName = STREET_NAMES[index % STREET_NAMES.length]
-  const streetType = STREET_TYPES[index % STREET_TYPES.length]
-  const suite = index % 3 === 0 ? `, Suite ${100 + (index * 17) % 400}` : ""
-  return `${streetNum} ${streetName} ${streetType}${suite}, ${location}`
+// Map specialty to Google Maps search terms
+function getSearchTerms(specialty: string): string {
+  const searchTermMap: Record<string, string> = {
+    "Physical Therapy": "physical therapy clinic",
+    "Orthopedic Surgery": "orthopedic surgeon",
+    "Primary Care": "primary care doctor",
+    "Chiropractic": "chiropractor",
+    "Pain Management": "pain management doctor",
+    "Sports Medicine": "sports medicine doctor",
+    "Neurology": "neurologist",
+    "Cardiology": "cardiologist",
+    "Dermatology": "dermatologist",
+    "Dentist": "dentist",
+    "Oral Surgery": "oral surgeon",
+    "Orthodontist": "orthodontist",
+    "Mental Health": "therapist mental health",
+    "Psychiatry": "psychiatrist",
+    "Psychology": "psychologist",
+    "Counseling": "counselor therapist",
+    "Gastroenterology": "gastroenterologist",
+    "Imaging Center": "imaging center MRI",
+    "Urgent Care": "urgent care clinic",
+    "OB/GYN": "obgyn gynecologist",
+    "ENT": "ENT doctor",
+    "Podiatry": "podiatrist",
+    "Optometry": "optometrist",
+    "Ophthalmology": "ophthalmologist",
+    "Endocrinology": "endocrinologist",
+    "Pulmonology": "pulmonologist",
+    "Rheumatology": "rheumatologist",
+    "Oncology": "oncologist",
+    "Urology": "urologist",
+    "Allergy/Immunology": "allergist",
+    "Acupuncture": "acupuncture clinic",
+    "Massage Therapy": "massage therapist",
+    "Nutrition": "nutritionist dietitian",
+    "Med Spa": "medical spa",
+  }
+
+  return searchTermMap[specialty] || specialty.toLowerCase()
 }
 
-function generateDistance(index: number): string {
-  // Generate distances from 0.3 to 8 miles
-  const miles = 0.3 + (index * 0.7) + Math.random() * 0.5
-  return `${miles.toFixed(1)} mi`
-}
+// Generate demo data as fallback
+function generateDemoSource(specialty: string, location: string, index: number): ReferralSource {
+  const demoNames: Record<string, string[]> = {
+    "Physical Therapy": ["Peak Performance PT", "Active Life Physical Therapy", "Movement Matters"],
+    "Orthopedic Surgery": ["Summit Orthopedics", "Advanced Ortho Specialists", "Precision Bone & Joint"],
+    "Primary Care": ["Family Health Partners", "Community Care Clinic", "Wellness First Medical"],
+    "Chiropractic": ["Spine & Wellness Center", "Align Chiropractic", "Back to Health"],
+    default: ["Metro Health Center", "Advanced Care Specialists", "Premier Medical Group"]
+  }
 
-function generateRating(): number {
-  // Generate ratings between 3.8 and 5.0
-  return Math.round((3.8 + Math.random() * 1.2) * 10) / 10
-}
+  const names = demoNames[specialty] || demoNames.default
+  const name = names[index % names.length]
 
-function generateReviewCount(): number {
-  // Generate review counts between 15 and 500
-  return 15 + Math.floor(Math.random() * 485)
-}
-
-function generatePhone(): string {
-  const areaCode = ["512", "737", "832", "713", "214", "469", "972"][Math.floor(Math.random() * 7)]
-  const prefix = 200 + Math.floor(Math.random() * 800)
-  const line = 1000 + Math.floor(Math.random() * 9000)
-  return `(${areaCode}) ${prefix}-${line}`
-}
-
-function generateWebsite(practiceName: string): string {
-  const slug = practiceName.toLowerCase().replace(/[^a-z0-9]+/g, "")
-  return `https://${slug}.com`
+  return {
+    name,
+    specialty,
+    address: `${100 + index * 100} Main St, ${location}`,
+    distance: "Nearby",
+    rating: 4.0 + Math.random() * 0.9,
+    reviewCount: 20 + Math.floor(Math.random() * 200),
+    website: `https://${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+    phone: `(555) ${100 + index}-${1000 + index * 111}`,
+    fitScore: 0
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: SnapshotRequest = await request.json()
+    const body = await request.json()
     const { specialty, location, email, practiceName } = body
 
     if (!specialty || !location || !email) {
@@ -177,42 +222,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate demo referral sources
-    // In production, this would call Google Places API
     const sources: ReferralSource[] = []
-    let sourceIndex = 0
+    const useSerper = !!SERPER_API_KEY
 
-    // Generate 2-4 practices per adjacent specialty, up to 15-20 total
-    for (const adjSpecialty of adjacentSpecialties) {
-      const count = 2 + Math.floor(Math.random() * 3) // 2-4 per specialty
+    console.log(`🔍 Generating snapshot for ${specialty} in ${location} (Serper: ${useSerper ? 'enabled' : 'disabled'})`)
 
-      for (let i = 0; i < count && sources.length < 18; i++) {
-        const name = generatePracticeName(adjSpecialty, sourceIndex)
-        sources.push({
-          name,
-          specialty: adjSpecialty,
-          address: generateAddress(location, sourceIndex),
-          distance: generateDistance(sourceIndex),
-          rating: generateRating(),
-          reviewCount: generateReviewCount(),
-          website: generateWebsite(name),
-          phone: generatePhone(),
-          fitScore: calculateFitScore(specialty, adjSpecialty)
-        })
-        sourceIndex++
+    // Search for each adjacent specialty (limit to top 4 to conserve API calls)
+    for (const adjSpecialty of adjacentSpecialties.slice(0, 4)) {
+      if (useSerper) {
+        // Use real Google Maps data via Serper
+        const searchTerm = getSearchTerms(adjSpecialty)
+        const places = await searchGoogleMaps(searchTerm, location)
+
+        for (const place of places.slice(0, 4)) {
+          sources.push({
+            name: place.title,
+            specialty: adjSpecialty,
+            address: place.address || 'Address not available',
+            distance: "Nearby",
+            rating: place.rating || 4.0,
+            reviewCount: place.ratingCount || 0,
+            website: place.website || null,
+            phone: place.phoneNumber || null,
+            fitScore: calculateFitScore(specialty, adjSpecialty)
+          })
+        }
+      } else {
+        // Use demo data as fallback
+        for (let i = 0; i < 3; i++) {
+          const source = generateDemoSource(adjSpecialty, location, sources.length)
+          source.fitScore = calculateFitScore(specialty, adjSpecialty)
+          sources.push(source)
+        }
       }
+
+      // Stop if we have enough
+      if (sources.length >= 15) break
     }
 
-    // Sort by fit score descending, then by distance
-    sources.sort((a, b) => {
-      if (b.fitScore !== a.fitScore) return b.fitScore - a.fitScore
-      return parseFloat(a.distance) - parseFloat(b.distance)
-    })
+    // Sort by fit score descending
+    sources.sort((a, b) => b.fitScore - a.fitScore)
 
     // Calculate summary stats
-    const avgFitScore = Math.round(
-      sources.reduce((sum, s) => sum + s.fitScore, 0) / sources.length
-    )
+    const avgFitScore = sources.length > 0
+      ? Math.round(sources.reduce((sum, s) => sum + s.fitScore, 0) / sources.length)
+      : 0
 
     // Find top specialty by count
     const specialtyCounts: Record<string, number> = {}
@@ -246,7 +300,7 @@ export async function POST(request: NextRequest) {
       avgFitScore
     })
 
-    console.log(`📊 Snapshot generated for ${email} - ${specialty} in ${location}`)
+    console.log(`📊 Snapshot generated: ${sources.length} sources for ${email}`)
 
     return NextResponse.json(snapshotData)
   } catch (error) {
