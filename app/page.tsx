@@ -27,8 +27,38 @@ export default function HomePage() {
     e.preventDefault()
     setError("")
 
-    if (!formData.specialty || !formData.location || !formData.email) {
-      setError("Please fill in all required fields")
+    // Use selected specialty or try to match typed text
+    let finalSpecialty = formData.specialty
+    if (!finalSpecialty && specialtySearch) {
+      // Try exact match first
+      const exactMatch = ALL_SPECIALTIES.find(
+        s => s.toLowerCase() === specialtySearch.toLowerCase()
+      )
+      if (exactMatch) {
+        finalSpecialty = exactMatch
+      } else {
+        // Try partial match
+        const partialMatch = ALL_SPECIALTIES.find(
+          s => s.toLowerCase().includes(specialtySearch.toLowerCase())
+        )
+        if (partialMatch) {
+          finalSpecialty = partialMatch
+        }
+      }
+    }
+
+    if (!finalSpecialty) {
+      setError("Please select a valid specialty from the list")
+      return
+    }
+
+    if (!formData.location) {
+      setError("Please enter your location")
+      return
+    }
+
+    if (!formData.email) {
+      setError("Please enter your email")
       return
     }
 
@@ -36,7 +66,8 @@ export default function HomePage() {
 
     try {
       // Store form data in sessionStorage for the results page
-      sessionStorage.setItem("snapshotRequest", JSON.stringify(formData))
+      const dataToStore = { ...formData, specialty: finalSpecialty }
+      sessionStorage.setItem("snapshotRequest", JSON.stringify(dataToStore))
 
       // Redirect to results page
       router.push("/snapshot")
