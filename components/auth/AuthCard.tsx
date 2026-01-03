@@ -21,12 +21,21 @@ export function AuthCard() {
     fullName: ''
   });
 
+  // Get redirect URL from query params
+  const getPostAuthRedirect = () => {
+    if (typeof window === 'undefined') return '/dashboard';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('redirect') || '/dashboard';
+  };
+
   const getRedirectURL = () => {
     const baseURL = process.env.NODE_ENV === 'production'
       ? 'https://signals-navy.vercel.app'
       : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-    return `${baseURL}/auth/callback`;
+    // Include the post-auth redirect in the callback URL
+    const postAuthRedirect = getPostAuthRedirect();
+    return `${baseURL}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`;
   };
 
   // Function to send user data to Airtable (ONLY FOR NEW SIGNUPS)
@@ -119,8 +128,8 @@ export function AuthCard() {
 
         // If user is confirmed immediately (no email verification required), redirect
         if (data.session) {
-          toast.success('Welcome! Setting up your profile...');
-          window.location.href = '/onboarding';
+          toast.success('Welcome! Loading your snapshot...');
+          window.location.href = getPostAuthRedirect();
           return;
         }
 
@@ -148,8 +157,8 @@ export function AuthCard() {
         console.log('User logged in successfully - NOT sending to Airtable');
 
         toast.success('Welcome back!');
-        // Redirect to dashboard which will check for provider profile
-        window.location.href = '/dashboard';
+        // Redirect to requested page or dashboard
+        window.location.href = getPostAuthRedirect();
       }
     } catch (error: any) {
       console.error('Auth error:', error);

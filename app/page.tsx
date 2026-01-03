@@ -39,11 +39,11 @@ export default function HomePage() {
     setIsSubmitting(true)
 
     try {
-      // Store form data in sessionStorage for the results page
+      // Store form data in sessionStorage for after auth
       sessionStorage.setItem("snapshotRequest", JSON.stringify(formData))
 
-      // Redirect to results page
-      router.push("/snapshot")
+      // Redirect to auth with return URL
+      router.push("/auth?redirect=/dashboard/snapshot")
     } catch (err) {
       setError("Something went wrong. Please try again.")
       setIsSubmitting(false)
@@ -254,7 +254,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="text-xs text-gray-400 text-center mt-4">
-                  We'll email you a link to your personalized snapshot.
+                  Sign up to see your personalized referral snapshot.
                 </p>
               </form>
             </motion.div>
