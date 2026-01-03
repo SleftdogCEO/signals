@@ -23,10 +23,10 @@ export function AuthCard() {
 
   const getRedirectURL = () => {
     const baseURL = process.env.NODE_ENV === 'production'
-      ? 'https://sleft-signal.vercel.app'  // Replace with your actual domain
-      : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+      ? 'https://signals-navy.vercel.app'
+      : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-    return `${baseURL}/auth/callback`;  // This points to the route handler
+    return `${baseURL}/auth/callback`;
   };
 
   // Function to send user data to Airtable (ONLY FOR NEW SIGNUPS)
@@ -119,8 +119,8 @@ export function AuthCard() {
 
         // If user is confirmed immediately (no email verification required), redirect
         if (data.session) {
-          toast.success('Welcome! Redirecting to dashboard...');
-          window.location.href = '/dashboard/generate';
+          toast.success('Welcome! Setting up your profile...');
+          window.location.href = '/onboarding';
           return;
         }
 
@@ -148,6 +148,8 @@ export function AuthCard() {
         console.log('User logged in successfully - NOT sending to Airtable');
 
         toast.success('Welcome back!');
+        // Redirect to dashboard which will check for provider profile
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       console.error('Auth error:', error);

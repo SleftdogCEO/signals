@@ -77,8 +77,21 @@ export async function GET(request: NextRequest) {
           console.log('🔄 Existing user login via Google')
         }
 
-        // Successful auth - redirect to dashboard
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+        // Check if user has a provider profile
+        const { data: provider } = await supabase
+          .from('providers')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single()
+
+        if (!provider) {
+          // New user or no profile - redirect to onboarding
+          console.log('📝 No provider profile - redirecting to onboarding')
+          return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
+        }
+
+        // Has profile - redirect to network
+        return NextResponse.redirect(`${requestUrl.origin}/dashboard/network`)
       }
     } catch (error) {
       console.error('❌ Auth callback error:', error)
