@@ -4,15 +4,14 @@ import { Inter } from "next/font/google"
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
 import "./globals.css"
-import { EnhancedChatWidget } from "@/components/chat/ChatWidget"
 
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sleft Signals - AI-Powered Business Strategy Briefs",
+  title: "Sleft Health - Find Referral Partners",
   description:
-    "Get personalized business strategy briefs that reveal your competitive edge, growth opportunities, and valuable connections.",
+    "Find healthcare referral partners who share your patient population. Get a free snapshot of nearby practices.",
 }
 
 export default function RootLayout({
@@ -21,12 +20,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
-          <EnhancedChatWidget />
         </AuthProvider>
       </body>
     </html>

@@ -98,7 +98,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero + Form */}
-      <main className="relative z-10 px-6 lg:px-12 pt-8 lg:pt-12 pb-20">
+      <main className="relative z-20 px-6 lg:px-12 pt-8 lg:pt-12 pb-20">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Copy */}
@@ -151,7 +151,7 @@ export default function HomePage() {
             >
               <form
                 onSubmit={handleSubmit}
-                className="bg-white/80 backdrop-blur-sm rounded-3xl border-2 border-gray-200 p-8 shadow-xl"
+                className="relative z-30 bg-white/80 backdrop-blur-sm rounded-3xl border-2 border-gray-200 p-8 shadow-xl"
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Get Your Free Snapshot
