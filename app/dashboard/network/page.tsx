@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Search, MapPin, Filter, Users, Star, Lock, ArrowRight, Sparkles } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { createClient } from "@supabase/supabase-js"
-import { DashboardSidebar } from "@/components/Dashboard/DashboardSidebar"
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

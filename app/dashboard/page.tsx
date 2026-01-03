@@ -38,7 +38,11 @@ export default function DashboardPage() {
         .eq("user_id", user.id)
         .single()
 
-      if (error || !provider) {
+      if (error) {
+        // Table might not exist or no profile - go to network with demo data
+        console.log("Provider check error (table may not exist):", error.message)
+        router.replace("/dashboard/network")
+      } else if (!provider) {
         // No provider profile - redirect to onboarding
         router.replace("/onboarding")
       } else {
@@ -47,8 +51,8 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error checking provider:", error)
-      // Default to onboarding on error
-      router.replace("/onboarding")
+      // Default to network on error (demo mode)
+      router.replace("/dashboard/network")
     }
   }
 

@@ -78,20 +78,26 @@ export async function GET(request: NextRequest) {
         }
 
         // Check if user has a provider profile
-        const { data: provider } = await supabase
-          .from('providers')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single()
+        try {
+          const { data: provider, error } = await supabase
+            .from('providers')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .single()
 
-        if (!provider) {
-          // New user or no profile - redirect to onboarding
-          console.log('📝 No provider profile - redirecting to onboarding')
-          return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
+          if (error || !provider) {
+            // Table doesn't exist or no profile - go to network (demo mode)
+            console.log('📝 No provider profile or table - redirecting to network')
+            return NextResponse.redirect(`${requestUrl.origin}/dashboard/network`)
+          }
+
+          // Has profile - redirect to network
+          return NextResponse.redirect(`${requestUrl.origin}/dashboard/network`)
+        } catch (e) {
+          // On any error, go to network
+          console.log('Provider check failed, going to network')
+          return NextResponse.redirect(`${requestUrl.origin}/dashboard/network`)
         }
-
-        // Has profile - redirect to network
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard/network`)
       }
     } catch (error) {
       console.error('❌ Auth callback error:', error)
