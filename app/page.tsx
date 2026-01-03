@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useState } from "react"
-import { ArrowRight, Sparkles, MapPin, Mail, Building2, CheckCircle, Loader2 } from "lucide-react"
+import { ArrowRight, Sparkles, MapPin, Mail, Building2, CheckCircle, Loader2, ChevronDown } from "lucide-react"
 import { ALL_SPECIALTIES } from "@/lib/adjacency-map"
 import { useRouter } from "next/navigation"
 
@@ -102,14 +102,14 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                <span className="text-gray-900">See which local practices </span>
+                <span className="text-gray-900">Find referral partners </span>
                 <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">
-                  send patients your way
+                  who share your patients
                 </span>
               </h1>
 
               <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                Get a free snapshot of nearby practices whose patients naturally need your services.
+                Discover nearby practices with overlapping patient populations—providers who naturally refer to your specialty.
                 <span className="font-semibold text-gray-900"> No cold calling. Just clarity.</span>
               </p>
 
@@ -157,17 +157,20 @@ export default function HomePage() {
                       <Building2 className="w-4 h-4 inline mr-1" />
                       Your Specialty *
                     </label>
-                    <select
-                      value={formData.specialty}
-                      onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
-                      required
-                    >
-                      <option value="">Select your specialty</option>
-                      {ALL_SPECIALTIES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={formData.specialty}
+                        onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
+                        required
+                      >
+                        <option value="">Select your specialty</option>
+                        {ALL_SPECIALTIES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
 
                   {/* Location */}
