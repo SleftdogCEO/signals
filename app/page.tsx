@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useState } from "react"
-import { ArrowRight, Sparkles, MapPin, Mail, Building2, CheckCircle, Loader2, ChevronDown } from "lucide-react"
+import { ArrowRight, Stethoscope, MapPin, Mail, Building2, CheckCircle, Loader2, ChevronDown } from "lucide-react"
 import { ALL_SPECIALTIES } from "@/lib/adjacency-map"
 import { useRouter } from "next/navigation"
 
@@ -52,7 +52,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white overflow-hidden">
-      {/* Background gradients */}
+      {/* Background gradients - Medical blue theme */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{
@@ -61,7 +61,7 @@ export default function HomePage() {
             scale: [1, 1.2, 1.1, 1],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-violet-400/40 via-fuchsia-400/30 to-pink-300/20 rounded-full blur-3xl"
+          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/40 via-sky-400/30 to-cyan-300/20 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -70,7 +70,7 @@ export default function HomePage() {
             scale: [1, 1.15, 1.2, 1],
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/40 via-teal-400/30 to-emerald-300/20 rounded-full blur-3xl"
+          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-teal-400/40 via-cyan-400/30 to-sky-300/20 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -79,7 +79,7 @@ export default function HomePage() {
             scale: [1, 1.1, 1.2, 1],
           }}
           transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-violet-400/30 via-purple-400/20 to-indigo-300/10 rounded-full blur-3xl"
+          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-blue-400/30 via-sky-400/20 to-indigo-300/10 rounded-full blur-3xl"
         />
       </div>
 
@@ -90,8 +90,8 @@ export default function HomePage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <div className="w-11 h-11 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <Stethoscope className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-gray-900">Sleft Health</span>
         </motion.div>
@@ -113,7 +113,7 @@ export default function HomePage() {
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
                 <span className="text-gray-900">Find referral partners </span>
-                <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 bg-clip-text text-transparent">
                   who share your patients
                 </span>
               </h1>
@@ -171,7 +171,7 @@ export default function HomePage() {
                       <select
                         value={formData.specialty}
                         onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
                         required
                       >
                         <option value="">Select your specialty</option>
@@ -194,7 +194,7 @@ export default function HomePage() {
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       placeholder="e.g., Austin, TX or 78701"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                       required
                     />
                   </div>
@@ -209,7 +209,7 @@ export default function HomePage() {
                       value={formData.practiceName}
                       onChange={(e) => setFormData({ ...formData, practiceName: e.target.value })}
                       placeholder="e.g., Summit Physical Therapy"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                     />
                   </div>
 
@@ -224,7 +224,7 @@ export default function HomePage() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="you@practice.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                       required
                     />
                   </div>
@@ -237,7 +237,7 @@ export default function HomePage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white font-semibold text-lg rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-semibold text-lg rounded-xl hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>

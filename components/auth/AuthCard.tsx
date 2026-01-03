@@ -204,19 +204,19 @@ export function AuthCard() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-md mx-auto"
     >
-      <Card className="bg-white/90 backdrop-blur-sm border-gray-200 shadow-2xl shadow-violet-500/10 relative overflow-hidden">
+      <Card className="bg-white/90 backdrop-blur-sm border-gray-200 shadow-2xl shadow-blue-500/10 relative overflow-hidden">
         <CardContent className="pt-6">
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 mb-6 p-1 rounded-xl">
               <TabsTrigger
                 value="login"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:via-fuchsia-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-cyan-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
               >
                 Sign In
               </TabsTrigger>
               <TabsTrigger
                 value="signup"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:via-fuchsia-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-cyan-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
               >
                 Sign Up
               </TabsTrigger>
@@ -226,7 +226,7 @@ export function AuthCard() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-violet-600" />
+                    <Mail className="w-4 h-4 text-blue-600" />
                     Email
                   </Label>
                   <Input
@@ -235,14 +235,14 @@ export function AuthCard() {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 h-12 rounded-xl"
+                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-violet-600" />
+                    <Lock className="w-4 h-4 text-blue-600" />
                     Password
                   </Label>
                   <div className="relative">
@@ -252,7 +252,7 @@ export function AuthCard() {
                       placeholder="Enter your password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 pr-10 h-12 rounded-xl"
+                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 pr-10 h-12 rounded-xl"
                       required
                     />
                     <button
@@ -268,7 +268,7 @@ export function AuthCard() {
                 <Button
                   onClick={() => handleEmailAuth('login')}
                   disabled={loading || !formData.email || !formData.password}
-                  className="w-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 text-white font-semibold py-6 shadow-xl shadow-fuchsia-500/25 rounded-xl text-base"
+                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 text-white font-semibold py-6 shadow-xl shadow-blue-500/25 rounded-xl text-base"
                 >
                   {loading ? 'Signing in...' : 'Find My Partners'}
                 </Button>
@@ -276,7 +276,7 @@ export function AuthCard() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="w-full text-center text-sm text-violet-600 hover:text-fuchsia-600 transition-colors"
+                  className="w-full text-center text-sm text-blue-600 hover:text-cyan-600 transition-colors"
                 >
                   Forgot your password?
                 </button>
@@ -287,7 +287,7 @@ export function AuthCard() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-gray-700 flex items-center gap-2">
-                    <User className="w-4 h-4 text-violet-600" />
+                    <User className="w-4 h-4 text-blue-600" />
                     Full Name
                   </Label>
                   <Input
@@ -295,14 +295,14 @@ export function AuthCard() {
                     placeholder="Enter your full name"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 h-12 rounded-xl"
+                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email-signup" className="text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-violet-600" />
+                    <Mail className="w-4 h-4 text-blue-600" />
                     Email
                   </Label>
                   <Input
@@ -311,14 +311,14 @@ export function AuthCard() {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 h-12 rounded-xl"
+                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password-signup" className="text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-violet-600" />
+                    <Lock className="w-4 h-4 text-blue-600" />
                     Password
                   </Label>
                   <div className="relative">
@@ -328,7 +328,7 @@ export function AuthCard() {
                       placeholder="Create a password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 pr-10 h-12 rounded-xl"
+                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 pr-10 h-12 rounded-xl"
                       required
                     />
                     <button
@@ -344,7 +344,7 @@ export function AuthCard() {
                 <Button
                   onClick={() => handleEmailAuth('signup')}
                   disabled={loading || !formData.email || !formData.password || !formData.fullName}
-                  className="w-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 text-white font-semibold py-6 shadow-xl shadow-fuchsia-500/25 rounded-xl text-base"
+                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 text-white font-semibold py-6 shadow-xl shadow-blue-500/25 rounded-xl text-base"
                 >
                   {loading ? 'Creating account...' : 'Get Started'}
                 </Button>
@@ -385,8 +385,8 @@ export function AuthCard() {
             >
               <div className="w-full space-y-4">
                 <div className="text-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-fuchsia-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Mail className="w-6 h-6 text-violet-600" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Mail className="w-6 h-6 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-bold text-gray-800">Reset Password</h3>
                   <p className="text-gray-500 text-sm mt-1">
@@ -396,7 +396,7 @@ export function AuthCard() {
 
                 <div className="space-y-2">
                   <Label htmlFor="reset-email" className="text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-violet-600" />
+                    <Mail className="w-4 h-4 text-blue-600" />
                     Email
                   </Label>
                   <Input
@@ -405,14 +405,14 @@ export function AuthCard() {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-100 h-12 rounded-xl"
+                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
                   />
                 </div>
 
                 <Button
                   onClick={handleForgotPassword}
                   disabled={loading || !formData.email}
-                  className="w-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 text-white font-semibold py-6 shadow-xl shadow-fuchsia-500/25 rounded-xl"
+                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 text-white font-semibold py-6 shadow-xl shadow-blue-500/25 rounded-xl"
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </Button>
@@ -420,7 +420,7 @@ export function AuthCard() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(false)}
-                  className="w-full text-center text-sm text-gray-500 hover:text-violet-600 transition-colors"
+                  className="w-full text-center text-sm text-gray-500 hover:text-blue-600 transition-colors"
                 >
                   Back to Sign In
                 </button>

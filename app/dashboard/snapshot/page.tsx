@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
-  Sparkles,
+  Stethoscope,
   MapPin,
   Star,
   ExternalLink,
@@ -110,10 +110,10 @@ export default function DashboardSnapshotPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-500/30">
-            <Sparkles className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30">
+            <Stethoscope className="w-8 h-8 text-white" />
           </div>
-          <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Generating Your Snapshot</h2>
             <p className="text-gray-500">Finding referral opportunities near you...</p>
@@ -132,7 +132,7 @@ export default function DashboardSnapshotPage() {
           <p className="text-gray-500 mb-6">{error}</p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all"
           >
             <RefreshCw className="w-4 h-4" />
             Start Over
@@ -150,8 +150,8 @@ export default function DashboardSnapshotPage() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Stethoscope className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900">Sleft Health</span>
           </div>
@@ -189,7 +189,7 @@ export default function DashboardSnapshotPage() {
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         >
           <div className="bg-white rounded-2xl border border-gray-200 p-4">
-            <div className="text-3xl font-bold text-violet-600">{data.summary.totalSources}</div>
+            <div className="text-3xl font-bold text-blue-600">{data.summary.totalSources}</div>
             <div className="text-sm text-gray-500">Referral Sources</div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 p-4">
@@ -201,7 +201,7 @@ export default function DashboardSnapshotPage() {
             <div className="text-sm text-gray-500">Search Radius</div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 p-4">
-            <div className="text-lg font-bold text-fuchsia-600 truncate">{data.summary.topSpecialty}</div>
+            <div className="text-lg font-bold text-teal-600 truncate">{data.summary.topSpecialty}</div>
             <div className="text-sm text-gray-500">Top Specialty</div>
           </div>
         </motion.div>
@@ -248,7 +248,7 @@ export default function DashboardSnapshotPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                         {source.specialty}
                       </span>
                     </td>
@@ -279,7 +279,7 @@ export default function DashboardSnapshotPage() {
                         {source.phone && (
                           <a
                             href={`tel:${source.phone}`}
-                            className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
+                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                             title="Call"
                           >
                             <Phone className="w-4 h-4" />
@@ -290,7 +290,7 @@ export default function DashboardSnapshotPage() {
                             href={source.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
+                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                             title="Website"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -317,7 +317,7 @@ export default function DashboardSnapshotPage() {
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <h3 className="font-medium text-gray-900">{source.name}</h3>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700 mt-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-1">
                       {source.specialty}
                     </span>
                   </div>
@@ -352,7 +352,7 @@ export default function DashboardSnapshotPage() {
                       href={source.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Website
@@ -369,14 +369,14 @@ export default function DashboardSnapshotPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-500 rounded-2xl p-8 text-center text-white"
+          className="mt-8 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 rounded-2xl p-8 text-center text-white"
         >
           <h2 className="text-2xl font-bold mb-2">Want Real-Time Updates?</h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto">
             Upgrade to get live data from Google Places, new referral sources as they open, and direct introductions.
           </p>
           <button
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-violet-600 font-semibold rounded-xl hover:bg-gray-100 transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100 transition-all shadow-lg"
           >
             <TrendingUp className="w-5 h-5" />
             Coming Soon
