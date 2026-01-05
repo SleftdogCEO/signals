@@ -4,42 +4,20 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  Search, 
-  Building2, 
-  BarChart3, 
+import {
+  LayoutDashboard,
   Target,
-  Zap, 
-  Users,
   Settings,
   LogOut,
-  Crown,
-  Plus,
   PanelLeftClose,
   PanelLeftOpen,
-  Eye,
-  Calendar,
-  FileText,
-  Network,
-  Newspaper,
-  CreditCard,
-  Bell,
-  Sparkles,
-  MessageCircle,
-  Globe,
-  TrendingDown,
-  DollarSign,
-  Shield,
-  Briefcase,
+  Stethoscope,
   LucideIcon
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
-import UpgradeModal from '@/components/ui/upgrade-modal'; // Add this import
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -68,8 +46,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false); // Add this state
-  
+
   // Determine if we're on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -120,43 +97,42 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
       )}
 
       <div className={`
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} 
-        ${isOpen ? 'w-[280px] md:w-64' : 'w-0 md:w-16'} 
-        fixed 
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isOpen ? 'w-[280px] md:w-64' : 'w-0 md:w-16'}
+        fixed
         transition-all duration-300
         flex flex-col h-screen
         top-0 left-0 z-[60]
-        bg-gray-900/95 backdrop-blur-xl border-r border-white/10
+        bg-white border-r border-gray-200
         overflow-hidden
       `}>
         {/* Header with Logo */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-3 group" onClick={handleLinkClick}>
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group" onClick={handleLinkClick}>
             <div className="relative">
               <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg"
+                className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30"
                 whileHover={{ scale: 1.05 }}
               >
-                <Sparkles className="w-5 h-5 text-black" />
+                <Stethoscope className="w-5 h-5 text-white" />
               </motion.div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
             </div>
             {isOpen && (
               <div className="flex flex-col">
-                <span className="text-white font-bold text-lg tracking-tight">Sleft Signals</span>
-                <span className="text-white/60 text-xs">AI Business Intelligence</span>
+                <span className="text-gray-900 font-bold text-lg tracking-tight">Sleft Health</span>
+                <span className="text-gray-500 text-xs">Referral Intelligence</span>
               </div>
             )}
           </Link>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white md:block hidden"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700 md:block hidden"
           >
             {isOpen ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white md:hidden"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700 md:hidden"
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>
@@ -174,115 +150,38 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
                 <div key={item.name}>
                   <Collapsible open={isSubmenuOpen} onOpenChange={() => hasSubmenu && handleSubmenuToggle(item.name)}>
                     <div className="relative group">
-                      {hasSubmenu ? (
-                        <CollapsibleTrigger asChild>
-                          <motion.div
-                            className={`flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                              isActive 
-                                ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' 
-                                : 'text-white/70 hover:text-white hover:bg-white/5'
-                            }`}
-                            whileHover={{ x: 1 }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-md ${isActive ? 'bg-yellow-500/20' : 'bg-white/5'} flex items-center justify-center`}>
-                                <item.icon className="w-4 h-4" />
-                              </div>
-                              {isOpen && (
-                                <span className="font-medium text-sm">{item.name}</span>
-                              )}
+                      <Link href={item.path} onClick={handleLinkClick}>
+                        <motion.div
+                          className={`flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          }`}
+                          whileHover={{ x: 1 }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-1.5 rounded-md ${isActive ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                              <item.icon className="w-4 h-4" />
                             </div>
                             {isOpen && (
-                              <div className="flex items-center gap-2">
-                                {item.isPremium && <Crown className="w-3 h-3 text-amber-400" />}
-                                {item.badge && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">
-                                    {item.badge}
-                                  </span>
-                                )}
-                                <motion.div
-                                  animate={{ rotate: isSubmenuOpen ? 90 : 0 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <PanelLeftClose className="w-3 h-3" />
-                                </motion.div>
-                              </div>
+                              <span className="font-medium text-sm">{item.name}</span>
                             )}
-                          </motion.div>
-                        </CollapsibleTrigger>
-                      ) : (
-                        <Link href={item.path} onClick={handleLinkClick}>
-                          <motion.div
-                            className={`flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                              isActive 
-                                ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' 
-                                : 'text-white/70 hover:text-white hover:bg-white/5'
-                            }`}
-                            whileHover={{ x: 1 }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-md ${isActive ? 'bg-yellow-500/20' : 'bg-white/5'}`}>
-                                <item.icon className="w-4 h-4" />
-                              </div>
-                              {isOpen && (
-                                <span className="font-medium text-sm">{item.name}</span>
-                              )}
-                            </div>
-                            {isOpen && (
-                              <div className="flex items-center gap-2">
-                                {item.isPremium && <Crown className="w-3 h-3 text-amber-400" />}
-                                {item.badge && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </motion.div>
-                        </Link>
-                      )}
+                          </div>
+                          {isOpen && item.badge && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">
+                              {item.badge}
+                            </span>
+                          )}
+                        </motion.div>
+                      </Link>
 
                       {/* Tooltip for collapsed state */}
                       {!isOpen && (
                         <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                           {item.name}
-                          {item.description && (
-                            <div className="text-gray-400 text-xs">{item.description}</div>
-                          )}
                         </div>
                       )}
                     </div>
-
-                    {/* Submenu */}
-                    {hasSubmenu && isOpen && (
-                      <CollapsibleContent className="space-y-1 mt-1">
-                        <AnimatePresence>
-                          {isSubmenuOpen && item.subItems?.map((subItem) => {
-                            const isSubActive = pathname === subItem.path;
-                            return (
-                              <motion.div
-                                key={subItem.name}
-                                initial={{ opacity: 0, x: -10, height: 0 }}
-                                animate={{ opacity: 1, x: 0, height: 'auto' }}
-                                exit={{ opacity: 0, x: -10, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Link href={subItem.path} onClick={handleLinkClick}>
-                                  <div className={`flex items-center gap-3 px-6 py-2 rounded-md transition-all duration-200 ${
-                                    isSubActive 
-                                      ? 'bg-yellow-500/15 text-yellow-500 border-l-2 border-yellow-500' 
-                                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                                  }`}>
-                                    <subItem.icon className="w-3.5 h-3.5" />
-                                    <span className="text-sm">{subItem.name}</span>
-                                  </div>
-                                </Link>
-                              </motion.div>
-                            );
-                          })}
-                        </AnimatePresence>
-                      </CollapsibleContent>
-                    )}
                   </Collapsible>
                 </div>
               );
@@ -292,30 +191,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
         </ScrollArea>
 
         {/* Bottom section */}
-        <div className="p-3 border-t border-white/10 space-y-1">
-          <Link href="/dashboard/settings" className="group block" onClick={handleLinkClick}>
-            <motion.div
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                pathname === '/dashboard/settings' 
-                  ? 'bg-yellow-500/20 text-yellow-500' 
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-              whileHover={{ x: 1 }}
-            >
-              <div className={`p-1.5 rounded-md ${pathname === '/dashboard/settings' ? 'bg-yellow-500/20' : 'bg-white/5 group-hover:bg-white/10'}`}>
-                <Settings className="w-4 h-4" />
-              </div>
-              {isOpen && <span className="font-medium text-sm">Settings</span>}
-            </motion.div>
-          </Link>
-          
+        <div className="p-3 border-t border-gray-200 space-y-1">
           <motion.button
             onClick={handleSignOut}
             className="w-full group"
             whileHover={{ x: 1 }}
           >
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200">
-              <div className="p-1.5 rounded-md bg-white/5 group-hover:bg-red-500/20">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200">
+              <div className="p-1.5 rounded-md bg-gray-100 group-hover:bg-red-100">
                 <LogOut className="w-4 h-4" />
               </div>
               {isOpen && <span className="font-medium text-sm">Sign Out</span>}
@@ -325,33 +208,27 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
           {/* User Info */}
           {user && isOpen && (
             <motion.div
-              className="mt-3 p-3 bg-white/5 rounded-lg"
+              className="mt-3 p-3 bg-gray-50 rounded-lg"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center">
-                  <span className="text-black font-semibold text-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
                     {(user?.user_metadata?.full_name || user?.email || 'U')[0].toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">
-                    {user?.user_metadata?.full_name || 'Business Owner'}
+                  <p className="text-gray-900 font-medium text-sm truncate">
+                    {user?.user_metadata?.full_name || 'Healthcare Provider'}
                   </p>
-                  <p className="text-white/60 text-xs truncate">{user?.email}</p>
+                  <p className="text-gray-500 text-xs truncate">{user?.email}</p>
                 </div>
               </div>
             </motion.div>
           )}
         </div>
       </div>
-
-      {/* Add the Upgrade Modal */}
-      <UpgradeModal 
-        isOpen={isUpgradeModalOpen} 
-        onClose={() => setIsUpgradeModalOpen(false)} 
-      />
     </>
   );
 };
