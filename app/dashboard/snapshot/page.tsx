@@ -67,8 +67,23 @@ export default function DashboardSnapshotPage() {
       setLoading(true)
       setError("")
 
-      // Get form data from sessionStorage
+      // First check if we have cached snapshot results
+      const cachedSnapshot = localStorage.getItem("lastSnapshotResult")
+
+      // Get form data from sessionStorage (new request)
       const storedData = sessionStorage.getItem("snapshotRequest")
+
+      // If no new request but we have cached data, show that
+      if (!storedData && cachedSnapshot) {
+        try {
+          const parsed = JSON.parse(cachedSnapshot)
+          setData(parsed)
+          setLoading(false)
+          return
+        } catch {
+          // Invalid cache, continue to error
+        }
+      }
 
       if (!storedData) {
         setError("No snapshot request found. Please start from the homepage.")
@@ -94,6 +109,9 @@ export default function DashboardSnapshotPage() {
 
       const snapshotData = await response.json()
       setData(snapshotData)
+
+      // Save to localStorage for persistence
+      localStorage.setItem("lastSnapshotResult", JSON.stringify(snapshotData))
 
       // Clear sessionStorage after successful load
       sessionStorage.removeItem("snapshotRequest")
@@ -149,13 +167,19 @@ export default function DashboardSnapshotPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900">Sleft Health</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + New Snapshot
+            </Link>
             <span className="text-sm text-gray-500">{user?.email}</span>
           </div>
         </div>

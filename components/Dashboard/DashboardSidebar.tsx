@@ -74,90 +74,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const menuItems: MenuItem[] = [
-    { 
-      name: 'Dashboard', 
-      icon: LayoutDashboard, 
+    {
+      name: 'Dashboard',
+      icon: LayoutDashboard,
       path: '/dashboard',
       description: 'Your command center'
     },
-    { 
-      name: 'Strategy Briefs', 
-      icon: Briefcase, 
-      path: '/dashboard/my-briefs',
-      description: 'AI-powered business insights',
+    {
+      name: 'My Snapshots',
+      icon: Target,
+      path: '/dashboard/snapshot',
+      description: 'Your referral opportunities',
       badge: 'New'
-    },
-    { 
-      name: 'Lead Generation', 
-      icon: Target, 
-      path: '/lead-generation',
-      isPremium: true,
-      description: 'Discover qualified leads',
-      subItems: [
-        { name: 'Lead Scanner', icon: Search, path: '/lead-generation/scanner' },
-        { name: 'Industry Analysis', icon: TrendingUp, path: '/lead-generation/analysis' },
-        { name: 'Lead Scoring', icon: BarChart3, path: '/lead-generation/scoring' },
-        { name: 'Market Intelligence', icon: Eye, path: '/lead-generation/intelligence' },
-        { name: 'Lead Calendar', icon: Calendar, path: '/lead-generation/calendar' },
-        { name: 'Reports', icon: FileText, path: '/lead-generation/reports' }
-      ]
-    },
-    { 
-      name: 'Business Network', 
-      icon: Network, 
-      path: '/network', 
-      isPremium: true,
-      description: 'Connect with local businesses',
-      subItems: [
-        { name: 'Discover Businesses', icon: Building2, path: '/network/discover' },
-        { name: 'My Connections', icon: Users, path: '/network/connections' },
-        { name: 'Messages', icon: MessageCircle, path: '/network/messages' },
-        { name: 'Networking Events', icon: Calendar, path: '/network/events' }
-      ]
-    },
-    { 
-      name: 'Market Intelligence', 
-      icon: BarChart3, 
-      path: '/market-intelligence', 
-      isPremium: true,
-      description: 'Industry trends & insights',
-      subItems: [
-        { name: 'Industry News', icon: Newspaper, path: '/market-intelligence/news' },
-        { name: 'Competitor Analysis', icon: Eye, path: '/market-intelligence/competitors' },
-        { name: 'Market Trends', icon: TrendingUp, path: '/market-intelligence/trends' },
-        { name: 'Growth Opportunities', icon: Zap, path: '/market-intelligence/opportunities' }
-      ]
-    },
-    { 
-      name: 'AI Content Generator', 
-      icon: Zap, 
-      path: '/ai-content', 
-      isPremium: true,
-      description: 'Generate marketing content'
-    },
-    { 
-      name: 'Business Analytics', 
-      icon: TrendingUp, 
-      path: '/analytics',
-      description: 'Performance metrics',
-      subItems: [
-        { name: 'Growth Metrics', icon: TrendingUp, path: '/analytics/growth' },
-        { name: 'Lead Performance', icon: Target, path: '/analytics/leads' },
-        { name: 'Network Stats', icon: Network, path: '/analytics/network' },
-        { name: 'ROI Analysis', icon: DollarSign, path: '/analytics/roi' }
-      ]
-    },
-    { 
-      name: 'Financial Services', 
-      icon: CreditCard, 
-      path: '/financial-services',
-      description: 'Payment & tax solutions',
-      subItems: [
-        { name: 'Sleft Payments', icon: CreditCard, path: '/financial-services/payments' },
-        { name: 'FICA Tax Credit', icon: DollarSign, path: '/financial-services/tax-credit' },
-        { name: 'Airwallex Integration', icon: Globe, path: '/financial-services/international' },
-        { name: 'Transaction History', icon: FileText, path: '/financial-services/history' }
-      ]
     },
   ];
 
@@ -360,27 +288,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
               );
             })}
 
-            {/* Upgrade Card */}
-            {isOpen && (
-              <motion.div
-                className="mt-6 p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-400 font-semibold text-sm">Upgrade to Pro</span>
-                </div>
-                <p className="text-white/60 text-xs mb-3">Unlock advanced business intelligence and premium networking features</p>
-                <button 
-                  className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black text-sm font-bold py-2 px-3 rounded-lg transition-all"
-                  onClick={() => setIsUpgradeModalOpen(true)} // Update this
-                >
-                  <Plus className="w-3 h-3 inline mr-1" />
-                  Upgrade Now
-                </button>
-              </motion.div>
-            )}
           </nav>
         </ScrollArea>
 
