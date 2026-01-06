@@ -206,82 +206,21 @@ export function AuthCard() {
     >
       <Card className="bg-white/90 backdrop-blur-sm border-gray-200 shadow-2xl shadow-blue-500/10 relative overflow-hidden">
         <CardContent className="pt-6">
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="signup" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 mb-6 p-1 rounded-xl">
-              <TabsTrigger
-                value="login"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-cyan-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
-              >
-                Sign In
-              </TabsTrigger>
               <TabsTrigger
                 value="signup"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-cyan-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
               >
                 Sign Up
               </TabsTrigger>
+              <TabsTrigger
+                value="login"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-cyan-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-600 rounded-lg transition-all"
+              >
+                Sign In
+              </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="login" className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-blue-600" />
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-blue-600" />
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 pr-10 h-12 rounded-xl"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => handleEmailAuth('login')}
-                  disabled={loading || !formData.email || !formData.password}
-                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 text-white font-semibold py-6 shadow-xl shadow-blue-500/25 rounded-xl text-base"
-                >
-                  {loading ? 'Signing in...' : 'Find My Partners'}
-                </Button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="w-full text-center text-sm text-blue-600 hover:text-cyan-600 transition-colors"
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
               <div className="space-y-4">
@@ -348,6 +287,67 @@ export function AuthCard() {
                 >
                   {loading ? 'Creating account...' : 'Get Started'}
                 </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="login" className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 h-12 rounded-xl"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-gray-700 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-blue-600" />
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-100 pr-10 h-12 rounded-xl"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => handleEmailAuth('login')}
+                  disabled={loading || !formData.email || !formData.password}
+                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 text-white font-semibold py-6 shadow-xl shadow-blue-500/25 rounded-xl text-base"
+                >
+                  {loading ? 'Signing in...' : 'Find My Partners'}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="w-full text-center text-sm text-blue-600 hover:text-cyan-600 transition-colors"
+                >
+                  Forgot your password?
+                </button>
               </div>
             </TabsContent>
           </Tabs>
