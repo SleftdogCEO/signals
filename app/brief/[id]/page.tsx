@@ -48,12 +48,14 @@ interface BriefData {
   }
 }
 
-// Generate personalized intro message
+// Generate personalized intro message - curiosity-driven, not commitment-driven
 function generateIntro(source: ReferralSource, userSpecialty: string, practiceName: string): string {
+  const practiceIntro = practiceName ? `I'm with ${practiceName}, a ${userSpecialty} practice` : `I run a ${userSpecialty} practice`
+
   const templates = [
-    `Hi! I'm a ${userSpecialty} provider at ${practiceName || 'a local practice'} and I often have clients who need ${source.specialty} services. I came across ${source.name} and wanted to reach out - I'd love to refer my clients your way when they need your expertise. Would you be open to a quick chat about how we might work together?`,
-    `Hello! I run a ${userSpecialty} practice (${practiceName || 'nearby'}) and I'm looking for a quality ${source.specialty} provider to refer my clients to. Your practice came highly recommended. Would you have 10 minutes for a call? I'd love to learn more about your services so I can confidently send clients your way.`,
-    `Hi there! I'm reaching out because I regularly have clients who need ${source.specialty} care, and I'm looking for trusted providers to refer them to. I found ${source.name} and it looks like a great fit. Would you be interested in connecting? I'd love to send some referrals your way.`
+    `Hi! ${practiceIntro} in the area and I came across ${source.name}. I'm always looking to connect with other healthcare providers — would you have a few minutes for a quick call? I'd love to learn more about your practice and see if there might be ways we could help each other's patients.`,
+    `Hello! ${practiceIntro} nearby. I found ${source.name} while researching ${source.specialty} providers in the area and your practice stood out. I'm curious to learn more about the work you do — would you be open to a brief intro call sometime?`,
+    `Hi there! ${practiceIntro} and I'm reaching out to connect with other quality providers in our area. I'd love to learn more about ${source.name} and how you serve your patients. Would you have 10 minutes to chat? Always great to know who's doing good work nearby.`
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -151,11 +153,29 @@ export default function BriefPage() {
       {/* Header */}
       <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
-              <Stethoscope className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center gap-4 group">
+            <motion.div
+              className="relative"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              {/* Glow effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl blur-lg opacity-60"
+                animate={{
+                  opacity: [0.4, 0.8, 0.4],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <div className="relative w-14 h-14 bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-400 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/40">
+                <Stethoscope className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+            </motion.div>
+            <div className="flex flex-col">
+              <span className="text-xl font-black text-white group-hover:text-cyan-300 transition-colors">Sleft Health</span>
+              <span className="text-xs text-slate-400 font-medium">Referral Intelligence</span>
             </div>
-            <span className="text-lg font-bold text-white">Sleft Health</span>
           </Link>
         </div>
       </header>
@@ -166,23 +186,55 @@ export default function BriefPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
+          className="mb-10 text-center"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-4">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm text-emerald-400 font-semibold">Your Custom Referral Partner List</span>
-          </div>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-blue-500/20 border border-emerald-500/40 rounded-full mb-6 shadow-lg shadow-emerald-500/10"
+          >
+            <motion.div
+              animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            >
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+            </motion.div>
+            <span className="text-sm text-emerald-300 font-bold tracking-wide">Your Curated Referral Partners</span>
+          </motion.div>
+
           {data.practiceName && (
-            <h1 className="text-3xl md:text-4xl font-black text-white mb-3">
-              {data.practiceName}
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+              className="text-4xl md:text-6xl lg:text-7xl font-black mb-4 leading-tight"
+            >
+              <motion.span
+                className="bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-2xl"
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                style={{ backgroundSize: "200% 200%" }}
+              >
+                {data.practiceName}
+              </motion.span>
+            </motion.h1>
           )}
-          <p className="text-xl text-slate-400">
-            {data.summary.totalSources} {data.specialty} referral partners in <span className="font-semibold text-white">{data.location}</span>
-          </p>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-xl md:text-2xl text-slate-400 font-medium"
+          >
+            <span className="text-emerald-400 font-bold">{data.summary.totalSources}</span> {data.specialty} referral partners near{" "}
+            <span className="font-bold text-white">{data.location}</span>
+          </motion.p>
         </motion.div>
 
-        {/* Value Exchange Education */}
+        {/* Value Exchange Education - Personalized to their search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -191,38 +243,51 @@ export default function BriefPage() {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-rose-500/5" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl" />
 
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <ArrowLeftRight className="w-7 h-7 text-white" />
-              </div>
+              <motion.div
+                className="w-14 h-14 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Lightbulb className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <h2 className="text-2xl font-black text-white">Make It a Two-Way Street</h2>
-                <p className="text-amber-200/80 font-medium">The best referral relationships are mutual</p>
+                <h2 className="text-2xl font-black text-white">Our Suggestion for You</h2>
+                <p className="text-amber-200/80 font-medium">How to turn these leads into lasting partnerships</p>
               </div>
+            </div>
+
+            {/* Main insight - personalized */}
+            <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-600 mb-6">
+              <p className="text-lg text-slate-200 leading-relaxed">
+                These <span className="text-emerald-400 font-bold">{data.summary.totalSources} {data.specialty} practices</span> near {data.location} are potential partners who could send you clients.
+                The key to getting referrals? <span className="text-amber-300 font-semibold">Start a genuine conversation</span> — not a sales pitch.
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-5">
               <div className="bg-slate-900/50 rounded-xl p-5 border border-emerald-500/30">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <Gift className="w-5 h-5 text-emerald-400" />
+                    <MessageSquare className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <h3 className="font-bold text-lg text-white">What You Can Offer Them</h3>
+                  <h3 className="font-bold text-lg text-white">What Actually Works</h3>
                 </div>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">Refer your clients</strong> who need their specialty services</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Introduce yourself</strong> — who you are, what you do, where you're located</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">Collaborative care</strong> - work together on shared patients</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Express genuine interest</strong> in their practice and how they serve clients</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">Cross-promotion</strong> - recommend each other to your networks</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Suggest a quick call</strong> to explore if there's a good fit</span>
                   </li>
                 </ul>
               </div>
@@ -230,34 +295,39 @@ export default function BriefPage() {
               <div className="bg-slate-900/50 rounded-xl p-5 border border-amber-500/30">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                    <Lightbulb className="w-5 h-5 text-amber-400" />
+                    <ArrowLeftRight className="w-5 h-5 text-amber-400" />
                   </div>
-                  <h3 className="font-bold text-lg text-white">How to Reach Out</h3>
+                  <h3 className="font-bold text-lg text-white">Why This Approach Wins</h3>
                 </div>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200">Click <strong className="text-white font-semibold">"Intro that gets replies"</strong> on any card below</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">No pressure</strong> — you're exploring mutual fit, not asking for favors</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">Copy the message</strong> and personalize it</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Trust builds naturally</strong> when both parties see value</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200">Send via their website contact form or <strong className="text-white font-semibold">call directly</strong></span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Referrals flow both ways</strong> once you establish a real relationship</span>
                   </li>
                 </ul>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 rounded-xl border border-amber-500/20">
-              <p className="text-base text-amber-100 text-center font-medium">
-                <Sparkles className="w-4 h-4 inline mr-2 text-amber-400" />
-                <strong className="text-white">Pro tip:</strong> Lead with what you can offer them.
-                When you provide value first, referrals naturally flow both ways.
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-6 p-5 bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-blue-500/10 rounded-xl border border-emerald-500/30"
+            >
+              <p className="text-base text-slate-200 text-center font-medium leading-relaxed">
+                <Gift className="w-5 h-5 inline mr-2 text-emerald-400" />
+                <strong className="text-emerald-300">The best partnerships start with curiosity.</strong>{" "}
+                Click "Start a Conversation" on any card below — we've written an opener that focuses on connection, not commitment.
               </p>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -353,12 +423,12 @@ export default function BriefPage() {
                     <div className="border-t border-slate-600 bg-gradient-to-br from-slate-700/80 to-slate-800/80 p-4">
                       <button
                         onClick={() => setExpandedIntro(isExpanded ? null : sourceId)}
-                        className="w-full flex items-center justify-between font-bold text-white hover:text-amber-300 transition-colors"
+                        className="w-full flex items-center justify-between font-bold text-white hover:text-emerald-300 transition-colors"
                       >
                         <span className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-amber-400" />
-                          <span className="text-sm">Intro that gets replies</span>
-                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          <MessageSquare className="w-4 h-4 text-emerald-400" />
+                          <span className="text-sm">Start a Conversation</span>
+                          <Sparkles className="w-3 h-3 text-emerald-400" />
                         </span>
                         <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </button>
