@@ -658,86 +658,151 @@ export default function DashboardSnapshotPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {data.sources.map((source, index) => {
               const sourceId = `source-${index}`
               const isExpanded = expandedIntro === sourceId
               const intro = generateIntro(source, data.specialty, data.practiceName)
 
+              // Rotate through gradient colors for visual variety
+              const gradients = [
+                'from-blue-500 via-cyan-500 to-teal-500',
+                'from-violet-500 via-purple-500 to-fuchsia-500',
+                'from-rose-500 via-pink-500 to-orange-500',
+                'from-emerald-500 via-teal-500 to-cyan-500',
+                'from-indigo-500 via-blue-500 to-sky-500',
+                'from-amber-500 via-orange-500 to-red-500',
+              ]
+              const gradient = gradients[index % gradients.length]
+
+              // Fit score color
+              const fitScoreColor = source.fitScore >= 85
+                ? 'from-emerald-400 to-green-500'
+                : source.fitScore >= 70
+                  ? 'from-cyan-400 to-blue-500'
+                  : 'from-amber-400 to-orange-500'
+
               return (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + index * 0.03 }}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-200 transition-all group"
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    delay: 0.1 + index * 0.05,
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="bg-white rounded-3xl overflow-hidden shadow-lg shadow-gray-200/50 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 group relative"
                 >
+                  {/* Colorful top accent bar */}
+                  <div className={`h-2 bg-gradient-to-r ${gradient}`} />
+
                   {/* Card Header */}
                   <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+                        <motion.h3
+                          className="font-bold text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-cyan-600 transition-all duration-300 text-lg line-clamp-2"
+                        >
                           {source.name}
-                        </h3>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-1">
+                        </motion.h3>
+                        <motion.span
+                          initial={{ scale: 0.9 }}
+                          animate={{ scale: 1 }}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${gradient} text-white mt-2 shadow-sm`}
+                        >
                           {source.specialty}
-                        </span>
+                        </motion.span>
                       </div>
-                      <div className="text-right ml-3">
-                        <div className="text-2xl font-bold text-emerald-600">{source.fitScore}</div>
-                        <div className="text-xs text-gray-400">Fit Score</div>
-                      </div>
+
+                      {/* Animated Fit Score Circle */}
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ delay: 0.2 + index * 0.05, type: "spring" }}
+                        className="relative"
+                      >
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${fitScoreColor} flex items-center justify-center shadow-lg`}>
+                          <div className="text-center">
+                            <div className="text-xl font-black text-white">{source.fitScore}</div>
+                            <div className="text-[10px] text-white/80 font-medium">FIT</div>
+                          </div>
+                        </div>
+                      </motion.div>
                     </div>
 
-                    {/* Rating & Distance */}
-                    <div className="flex items-center gap-3 mb-3 text-sm">
-                      <span className="flex items-center gap-1 text-gray-600">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="font-medium">{source.rating.toFixed(1)}</span>
-                        <span className="text-gray-400">({source.reviewCount})</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-gray-500">
-                        <MapPin className="w-4 h-4" />
-                        {source.distance}
-                      </span>
+                    {/* Rating & Distance with icons */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        className="flex items-center gap-1.5 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-1.5 rounded-xl border border-amber-200"
+                      >
+                        <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                        <span className="font-bold text-amber-700">{source.rating.toFixed(1)}</span>
+                        <span className="text-amber-600/70 text-sm">({source.reviewCount})</span>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        className="flex items-center gap-1.5 bg-gradient-to-r from-blue-50 to-cyan-50 px-3 py-1.5 rounded-xl border border-blue-200"
+                      >
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        <span className="font-medium text-blue-700">{source.distance}</span>
+                      </motion.div>
                     </div>
 
-                    {/* Address */}
-                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">{source.address}</p>
+                    {/* Address with subtle background */}
+                    <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                      <p className="text-sm text-gray-600 line-clamp-2 flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        {source.address}
+                      </p>
+                    </div>
 
-                    {/* Future Enhancement Placeholders */}
+                    {/* Tags with colors */}
                     <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500">
-                        <Building className="w-3 h-3" />
+                      <motion.span
+                        whileHover={{ scale: 1.05 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-700"
+                      >
+                        <Building className="w-3.5 h-3.5" />
                         In-person
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500">
-                        <Shield className="w-3 h-3" />
+                      </motion.span>
+                      <motion.span
+                        whileHover={{ scale: 1.05 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl text-xs font-medium text-violet-700"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
                         Accepts insurance
-                      </span>
+                      </motion.span>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    {/* Action Buttons - More vibrant */}
+                    <div className="flex gap-3">
                       {source.phone && (
-                        <a
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           href={`tel:${source.phone}`}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-medium hover:bg-emerald-100 transition-colors border border-emerald-200"
+                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
                         >
                           <Phone className="w-4 h-4" />
-                          Call
-                        </a>
+                          Call Now
+                        </motion.a>
                       )}
                       {source.website && (
-                        <a
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           href={source.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all"
                         >
                           <Globe className="w-4 h-4" />
-                          Website
-                        </a>
+                          Visit Site
+                        </motion.a>
                       )}
                     </div>
                   </div>
