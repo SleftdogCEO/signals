@@ -24,7 +24,9 @@ import {
   Building,
   Shield,
   Sparkles,
-  X
+  X,
+  Plus,
+  FileText
 } from "lucide-react"
 import Link from "next/link"
 
@@ -41,11 +43,13 @@ interface ReferralSource {
 }
 
 interface SnapshotData {
+  id?: string
   specialty: string
   location: string
   practiceName: string
   email: string
   sources: ReferralSource[]
+  createdAt?: string
   summary: {
     totalSources: number
     avgFitScore: number
@@ -53,6 +57,8 @@ interface SnapshotData {
     radiusMiles: number
   }
 }
+
+const MAX_SNAPSHOTS = 3
 
 // Generate personalized intro message
 function generateIntro(source: ReferralSource, userSpecialty: string, practiceName: string): string {
@@ -64,17 +70,42 @@ function generateIntro(source: ReferralSource, userSpecialty: string, practiceNa
   return templates[Math.floor(Math.random() * templates.length)]
 }
 
+// Get saved snapshots from localStorage
+function getSavedSnapshots(): SnapshotData[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem("userSnapshots")
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+// Save snapshots to localStorage
+function saveSnapshots(snapshots: SnapshotData[]) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem("userSnapshots", JSON.stringify(snapshots))
+}
+
 export default function DashboardSnapshotPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [data, setData] = useState<SnapshotData | null>(null)
+  const [savedSnapshots, setSavedSnapshots] = useState<SnapshotData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedIntro, setExpandedIntro] = useState<string | null>(null)
   const [selectedRadius, setSelectedRadius] = useState(10)
   const [showRadiusDropdown, setShowRadiusDropdown] = useState(false)
+  const [showSnapshotSelector, setShowSnapshotSelector] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+  const [showNewSnapshotForm, setShowNewSnapshotForm] = useState(false)
+  const [newSnapshotForm, setNewSnapshotForm] = useState({
+    specialty: "",
+    location: "",
+    practiceName: ""
+  })
 
   const radiusOptions = [
     { value: 10, label: "10 miles", description: "Local area" },
@@ -89,66 +120,108 @@ export default function DashboardSnapshotPage() {
     }
 
     if (user) {
+      // Load saved snapshots
+      const saved = getSavedSnapshots()
+      setSavedSnapshots(saved)
       loadSnapshot()
     }
   }, [user, authLoading, router])
 
-  const loadSnapshot = async (radius?: number) => {
+  const loadSnapshot = async (radius?: number, forceNew?: boolean) => {
     try {
       setLoading(true)
       setError("")
 
-      // First check if we have cached snapshot results
-      const cachedSnapshot = localStorage.getItem("lastSnapshotResult")
-
       // Get form data from sessionStorage (new request)
       const storedData = sessionStorage.getItem("snapshotRequest")
 
-      // If no new request but we have cached data, show that
-      if (!storedData && cachedSnapshot && !radius) {
-        try {
-          const parsed = JSON.parse(cachedSnapshot)
-          setData(parsed)
-          setSelectedRadius(parsed.summary?.radiusMiles || 10)
+      // Load existing snapshots
+      const existingSnapshots = getSavedSnapshots()
+      setSavedSnapshots(existingSnapshots)
+
+      // If we have a new request in session, process it
+      if (storedData) {
+        const formData = JSON.parse(storedData)
+
+        // Check if we've hit the limit
+        if (existingSnapshots.length >= MAX_SNAPSHOTS && !forceNew) {
+          setError(`You've reached the maximum of ${MAX_SNAPSHOTS} snapshots. Delete one to create a new one.`)
           setLoading(false)
+          // Show the most recent snapshot
+          if (existingSnapshots.length > 0) {
+            setData(existingSnapshots[0])
+          }
+          sessionStorage.removeItem("snapshotRequest")
           return
-        } catch {
-          // Invalid cache, continue to error
+        }
+
+        // Call API to generate snapshot
+        const response = await fetch("/api/snapshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            userId: user?.id,
+            radiusMiles: radius || selectedRadius
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to generate snapshot")
+        }
+
+        const snapshotData = await response.json()
+
+        // Add metadata
+        const newSnapshot: SnapshotData = {
+          ...snapshotData,
+          id: `snapshot-${Date.now()}`,
+          createdAt: new Date().toISOString()
+        }
+
+        setData(newSnapshot)
+        setSelectedRadius(newSnapshot.summary?.radiusMiles || radius || 10)
+
+        // Save to snapshots list (prepend new one)
+        const updatedSnapshots = [newSnapshot, ...existingSnapshots].slice(0, MAX_SNAPSHOTS)
+        saveSnapshots(updatedSnapshots)
+        setSavedSnapshots(updatedSnapshots)
+
+        // Also keep lastSnapshotResult for backwards compatibility
+        localStorage.setItem("lastSnapshotResult", JSON.stringify(newSnapshot))
+
+        // Clear sessionStorage after successful load
+        sessionStorage.removeItem("snapshotRequest")
+
+      } else if (existingSnapshots.length > 0) {
+        // No new request, show most recent snapshot
+        setData(existingSnapshots[0])
+        setSelectedRadius(existingSnapshots[0].summary?.radiusMiles || 10)
+      } else {
+        // Check old format for backwards compatibility
+        const cachedSnapshot = localStorage.getItem("lastSnapshotResult")
+        if (cachedSnapshot) {
+          try {
+            const parsed = JSON.parse(cachedSnapshot)
+            const migratedSnapshot = {
+              ...parsed,
+              id: `snapshot-${Date.now()}`,
+              createdAt: new Date().toISOString()
+            }
+            setData(migratedSnapshot)
+            setSelectedRadius(parsed.summary?.radiusMiles || 10)
+            // Migrate to new format
+            saveSnapshots([migratedSnapshot])
+            setSavedSnapshots([migratedSnapshot])
+          } catch {
+            setError("No snapshot found. Create your first one!")
+            setShowNewSnapshotForm(true)
+          }
+        } else {
+          setError("No snapshot found. Create your first one!")
+          setShowNewSnapshotForm(true)
         }
       }
-
-      if (!storedData && !cachedSnapshot) {
-        setError("No snapshot request found. Please start from the homepage.")
-        setLoading(false)
-        return
-      }
-
-      const formData = storedData ? JSON.parse(storedData) : JSON.parse(cachedSnapshot!)
-
-      // Call API to generate snapshot
-      const response = await fetch("/api/snapshot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          userId: user?.id,
-          radiusMiles: radius || selectedRadius
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to generate snapshot")
-      }
-
-      const snapshotData = await response.json()
-      setData(snapshotData)
-      setSelectedRadius(snapshotData.summary?.radiusMiles || radius || 10)
-
-      // Save to localStorage for persistence
-      localStorage.setItem("lastSnapshotResult", JSON.stringify(snapshotData))
-
-      // Clear sessionStorage after successful load
-      sessionStorage.removeItem("snapshotRequest")
 
     } catch (err) {
       console.error("Error loading snapshot:", err)
@@ -174,7 +247,55 @@ export default function DashboardSnapshotPage() {
       }))
     }
 
-    await loadSnapshot(radius)
+    await loadSnapshot(radius, true)
+  }
+
+  const switchToSnapshot = (snapshot: SnapshotData) => {
+    setData(snapshot)
+    setSelectedRadius(snapshot.summary?.radiusMiles || 10)
+    setShowSnapshotSelector(false)
+  }
+
+  const deleteSnapshot = (snapshotId: string) => {
+    const updated = savedSnapshots.filter(s => s.id !== snapshotId)
+    saveSnapshots(updated)
+    setSavedSnapshots(updated)
+
+    // If we deleted the current one, switch to another
+    if (data?.id === snapshotId) {
+      if (updated.length > 0) {
+        setData(updated[0])
+      } else {
+        setData(null)
+        setShowNewSnapshotForm(true)
+      }
+    }
+  }
+
+  const handleCreateNewSnapshot = () => {
+    if (savedSnapshots.length >= MAX_SNAPSHOTS) {
+      setError(`You've reached the maximum of ${MAX_SNAPSHOTS} snapshots. Delete one to create a new one.`)
+      return
+    }
+    setShowNewSnapshotForm(true)
+  }
+
+  const submitNewSnapshot = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!newSnapshotForm.specialty || !newSnapshotForm.location) {
+      return
+    }
+
+    // Store in session and reload
+    sessionStorage.setItem("snapshotRequest", JSON.stringify({
+      ...newSnapshotForm,
+      email: user?.email || data?.email || ""
+    }))
+
+    setShowNewSnapshotForm(false)
+    setLoading(true)
+    await loadSnapshot()
   }
 
   const copyIntro = async (intro: string, sourceId: string) => {
@@ -182,6 +303,8 @@ export default function DashboardSnapshotPage() {
     setCopiedId(sourceId)
     setTimeout(() => setCopiedId(null), 2000)
   }
+
+  const snapshotsRemaining = MAX_SNAPSHOTS - savedSnapshots.length
 
   if (authLoading || loading) {
     return (
@@ -202,7 +325,136 @@ export default function DashboardSnapshotPage() {
     )
   }
 
-  if (error) {
+  // Show new snapshot form
+  if (showNewSnapshotForm || (!data && !loading)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <Stethoscope className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">Sleft Health</span>
+            </Link>
+            {savedSnapshots.length > 0 && (
+              <button
+                onClick={() => {
+                  setShowNewSnapshotForm(false)
+                  setData(savedSnapshots[0])
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Back to snapshots
+              </button>
+            )}
+          </div>
+        </header>
+
+        <main className="max-w-lg mx-auto px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg"
+          >
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-7 h-7 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Create New Snapshot</h2>
+              <p className="text-gray-500">
+                {snapshotsRemaining > 0
+                  ? `You have ${snapshotsRemaining} snapshot${snapshotsRemaining === 1 ? '' : 's'} remaining`
+                  : "Delete an existing snapshot to create a new one"}
+              </p>
+            </div>
+
+            {snapshotsRemaining > 0 ? (
+              <form onSubmit={submitNewSnapshot} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Specialty *
+                  </label>
+                  <select
+                    value={newSnapshotForm.specialty}
+                    onChange={(e) => setNewSnapshotForm({ ...newSnapshotForm, specialty: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                    required
+                  >
+                    <option value="">Select specialty</option>
+                    <option value="Psychology">Psychology</option>
+                    <option value="Psychiatry">Psychiatry</option>
+                    <option value="Physical Therapy">Physical Therapy</option>
+                    <option value="Chiropractic">Chiropractic</option>
+                    <option value="Primary Care">Primary Care</option>
+                    <option value="Orthopedic Surgery">Orthopedic Surgery</option>
+                    <option value="Dentist">Dentist</option>
+                    <option value="Mental Health">Mental Health</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Dermatology">Dermatology</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSnapshotForm.location}
+                    onChange={(e) => setNewSnapshotForm({ ...newSnapshotForm, location: e.target.value })}
+                    placeholder="e.g., Miami, FL or 33139"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Practice Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newSnapshotForm.practiceName}
+                    onChange={(e) => setNewSnapshotForm({ ...newSnapshotForm, practiceName: e.target.value })}
+                    placeholder="e.g., Miami Psychology Associates"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-semibold rounded-xl hover:from-blue-700 hover:via-cyan-700 hover:to-teal-600 transition-all shadow-lg"
+                >
+                  Generate Snapshot
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-center text-gray-600">Select a snapshot to delete:</p>
+                {savedSnapshots.map((snapshot) => (
+                  <div key={snapshot.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div>
+                      <p className="font-medium text-gray-900">{snapshot.specialty}</p>
+                      <p className="text-sm text-gray-500">{snapshot.location}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteSnapshot(snapshot.id!)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </div>
+    )
+  }
+
+  if (error && !data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 flex items-center justify-center">
         <div className="text-center px-6">
@@ -234,14 +486,66 @@ export default function DashboardSnapshotPage() {
             </div>
             <span className="text-lg font-bold text-gray-900">Sleft Health</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          <div className="flex items-center gap-3">
+            {/* Snapshot selector */}
+            {savedSnapshots.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSnapshotSelector(!showSnapshotSelector)}
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  {savedSnapshots.length} Snapshots
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showSnapshotSelector ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {showSnapshotSelector && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-20 overflow-hidden"
+                    >
+                      {savedSnapshots.map((snapshot) => (
+                        <button
+                          key={snapshot.id}
+                          onClick={() => switchToSnapshot(snapshot)}
+                          className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${
+                            data?.id === snapshot.id ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div>
+                            <div className="font-medium text-gray-900">{snapshot.specialty}</div>
+                            <div className="text-sm text-gray-500">{snapshot.location}</div>
+                          </div>
+                          {data?.id === snapshot.id && (
+                            <Check className="w-4 h-4 text-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* New snapshot button */}
+            <button
+              onClick={handleCreateNewSnapshot}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                snapshotsRemaining > 0
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+              disabled={snapshotsRemaining === 0}
+              title={snapshotsRemaining === 0 ? 'Delete a snapshot to create a new one' : ''}
             >
-              + New Snapshot
-            </Link>
-            <span className="text-sm text-gray-500">{user?.email}</span>
+              <Plus className="w-4 h-4" />
+              New ({snapshotsRemaining} left)
+            </button>
+
+            <span className="text-sm text-gray-500 hidden md:inline">{user?.email}</span>
           </div>
         </div>
       </header>
@@ -326,7 +630,7 @@ export default function DashboardSnapshotPage() {
                   <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
                     <p className="text-xs text-amber-700">
                       <Sparkles className="w-3 h-3 inline mr-1" />
-                      Your sister is right - referrals often come from farther away!
+                      Referrals often come from farther away than you'd expect!
                     </p>
                   </div>
                 </motion.div>
@@ -446,7 +750,8 @@ export default function DashboardSnapshotPage() {
                     >
                       <span className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4" />
-                        Copy intro message
+                        <span>Intro that gets replies</span>
+                        <Sparkles className="w-3 h-3 text-amber-500" />
                       </span>
                       <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </button>
