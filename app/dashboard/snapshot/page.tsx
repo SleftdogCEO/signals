@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Stethoscope,
   MapPin,
-  Phone,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -22,7 +21,10 @@ import {
   X,
   Plus,
   Search,
-  Zap
+  Zap,
+  ArrowLeftRight,
+  Lightbulb,
+  Gift
 } from "lucide-react"
 import Link from "next/link"
 import { ALL_SPECIALTIES, getAdjacentSpecialties } from "@/lib/adjacency-map"
@@ -720,40 +722,40 @@ export default function DashboardSnapshotPage() {
                     </div>
 
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-2 mb-5">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs font-semibold text-slate-300">
                         <Building className="w-3.5 h-3.5" />
                         In-person
                       </span>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                      {source.phone && (
-                        <motion.a
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          href={`tel:${source.phone}`}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all"
+                    {/* Website Button - Hero Action */}
+                    {source.website && (
+                      <motion.a
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        href={source.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r ${accent.bg} text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all relative overflow-hidden group/btn`}
+                      >
+                        <motion.div
+                          className="absolute inset-0 bg-white/20"
+                          initial={{ x: '-100%' }}
+                          whileHover={{ x: '100%' }}
+                          transition={{ duration: 0.5 }}
+                        />
+                        <Globe className="w-5 h-5 relative z-10" />
+                        <span className="relative z-10">Visit Website</span>
+                        <motion.span
+                          className="relative z-10"
+                          animate={{ x: [0, 4, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
                         >
-                          <Phone className="w-4 h-4" />
-                          Call
-                        </motion.a>
-                      )}
-                      {source.website && (
-                        <motion.a
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          href={source.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all"
-                        >
-                          <Globe className="w-4 h-4" />
-                          Website
-                        </motion.a>
-                      )}
-                    </div>
+                          →
+                        </motion.span>
+                      </motion.a>
+                    )}
                   </div>
 
                   {/* Intro Message Section */}
@@ -804,6 +806,126 @@ export default function DashboardSnapshotPage() {
                 </motion.div>
               )
             })}
+          </div>
+        </motion.div>
+
+        {/* Value Exchange Education */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-slate-800 rounded-2xl border border-slate-700 p-8 mb-8"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+              <ArrowLeftRight className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white">Make It a Two-Way Street</h2>
+              <p className="text-slate-400">The best referral relationships are mutual</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* What you can offer */}
+            <div className="bg-slate-700/30 rounded-xl p-5 border border-slate-600/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Gift className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-bold text-white">What You Can Offer Them</h3>
+              </div>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-start gap-2 text-slate-300">
+                  <span className="text-emerald-400 mt-1">•</span>
+                  <span><strong className="text-white">Refer your clients</strong> who need their specialty services</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300">
+                  <span className="text-emerald-400 mt-1">•</span>
+                  <span><strong className="text-white">Collaborative care</strong> - work together on shared patients</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300">
+                  <span className="text-emerald-400 mt-1">•</span>
+                  <span><strong className="text-white">Cross-promotion</strong> - recommend each other to your networks</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Tips for your specialty */}
+            <div className="bg-slate-700/30 rounded-xl p-5 border border-slate-600/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-white">Ideas for {data.specialty}</h3>
+              </div>
+              <ul className="space-y-3 text-sm">
+                {data.specialty === "Psychology" || data.specialty === "Mental Health" || data.specialty === "Counseling" ? (
+                  <>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Refer clients needing <strong className="text-white">neuropsych evals</strong> or <strong className="text-white">medication management</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Offer to be their go-to for <strong className="text-white">therapy after diagnosis</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Provide <strong className="text-white">specialized therapy</strong> (ADHD coaching, CBT, etc.) they don't offer</span>
+                    </li>
+                  </>
+                ) : data.specialty === "Psychiatry" ? (
+                  <>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Refer patients needing <strong className="text-white">ongoing therapy</strong> to therapists</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Partner with PCPs for <strong className="text-white">mental health screenings</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Offer <strong className="text-white">medication consults</strong> for their complex cases</span>
+                    </li>
+                  </>
+                ) : data.specialty === "Physical Therapy" ? (
+                  <>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Refer patients needing <strong className="text-white">imaging or surgery consults</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Offer to be their <strong className="text-white">post-surgical rehab</strong> partner</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Provide <strong className="text-white">progress reports</strong> on shared patients</span>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Identify services <strong className="text-white">you don't offer</strong> that your clients need</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Offer to handle <strong className="text-white">their overflow</strong> or specialty cases</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span>Create a <strong className="text-white">referral agreement</strong> with clear expectations</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl border border-blue-500/20">
+            <p className="text-sm text-slate-300 text-center">
+              <strong className="text-white">Pro tip:</strong> Lead with what you can offer them.
+              When you provide value first, referrals naturally flow both ways.
+            </p>
           </div>
         </motion.div>
 
