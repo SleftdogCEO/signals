@@ -2,13 +2,14 @@
 
 import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Loader2, Stethoscope } from "lucide-react"
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -17,16 +18,30 @@ export default function DashboardPage() {
     }
 
     if (user) {
-      // Check if user has a snapshot to view
-      const hasSnapshot = typeof window !== 'undefined' && localStorage.getItem("lastSnapshotResult")
-      if (hasSnapshot) {
-        router.replace("/dashboard/snapshot")
-      } else {
-        // No snapshot yet, send them to create one
-        router.replace("/")
-      }
+      // Check if user has a provider profile (network member)
+      checkProviderAndRedirect()
     }
   }, [user, authLoading, router])
+
+  const checkProviderAndRedirect = async () => {
+    try {
+      const response = await fetch(`/api/network/profile?userId=${user?.id}`)
+      const data = await response.json()
+
+      if (data.provider) {
+        // User has a profile - go to Intelligence Hub
+        router.replace("/dashboard/network/hub")
+      } else {
+        // No profile - send to onboarding to create one
+        router.replace("/onboarding")
+      }
+    } catch (error) {
+      // Fallback to onboarding
+      router.replace("/onboarding")
+    } finally {
+      setChecking(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">

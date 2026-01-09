@@ -2,10 +2,56 @@
 
 import { AuthCard } from "@/components/auth/AuthCard"
 import { motion } from "framer-motion"
-import { Sparkles, ArrowLeft, Shield, Users, UserPlus, Heart } from "lucide-react"
+import { Sparkles, ArrowLeft, Shield, Users, UserPlus, Heart, LogOut, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function AuthPage() {
+  const { user, loading, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.refresh()
+  }
+
+  // Show logged in state
+  if (!loading && user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center"
+        >
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">You're logged in</h1>
+          <p className="text-slate-400 mb-8">as {user.email}</p>
+
+          <div className="space-y-3">
+            <Link
+              href="/dashboard/network/hub"
+              className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Continue to Dashboard
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-slate-800 text-slate-300 font-semibold rounded-xl hover:bg-slate-700 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out & Switch Account
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* Background gradients */}

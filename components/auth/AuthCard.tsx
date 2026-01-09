@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,12 +21,22 @@ export function AuthCard() {
     fullName: ''
   });
 
-  // Get redirect URL from query params
+  // Get redirect URL from query params and store in sessionStorage
   const getPostAuthRedirect = () => {
     if (typeof window === 'undefined') return '/dashboard';
     const params = new URLSearchParams(window.location.search);
-    return params.get('redirect') || '/dashboard';
+    const redirect = params.get('redirect') || '/dashboard';
+    // Store in sessionStorage so AuthContext can use it
+    if (redirect !== '/dashboard') {
+      sessionStorage.setItem('redirectAfterAuth', redirect);
+    }
+    return redirect;
   };
+
+  // Store redirect URL on mount so AuthContext can use it after login
+  useEffect(() => {
+    getPostAuthRedirect();
+  }, []);
 
   const getRedirectURL = () => {
     const baseURL = process.env.NODE_ENV === 'production'
@@ -131,6 +141,21 @@ export function AuthCard() {
           toast.success('Welcome! Loading your snapshot...');
           window.location.href = getPostAuthRedirect();
           return;
+        }
+
+        // Check if user was created but needs email confirmation
+        if (data.user && !data.session) {
+          // In development, try to sign in immediately (Supabase may auto-confirm in dev)
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
+          });
+
+          if (signInData?.session) {
+            toast.success('Account created! Welcome!');
+            window.location.href = getPostAuthRedirect();
+            return;
+          }
         }
 
         toast.success('Check your email for the confirmation link!');

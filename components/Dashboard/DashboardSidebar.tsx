@@ -12,7 +12,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Stethoscope,
-  LucideIcon
+  Users,
+  LucideIcon,
+  Sparkles,
+  MessageSquare,
+  Star,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -58,11 +63,24 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
       description: 'Your command center'
     },
     {
+      name: 'Intelligence Hub',
+      icon: Sparkles,
+      path: '/dashboard/network/hub',
+      description: 'Community insights & reviews',
+      badge: 'New'
+    },
+    {
+      name: 'Partner Network',
+      icon: Users,
+      path: '/dashboard/network',
+      description: 'Two-way referral matches',
+      badge: 'Pro'
+    },
+    {
       name: 'My Snapshots',
       icon: Target,
       path: '/dashboard/snapshot',
-      description: 'Your referral opportunities',
-      badge: 'New'
+      description: 'Your referral opportunities'
     },
   ];
 

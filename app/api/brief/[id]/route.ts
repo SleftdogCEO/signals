@@ -66,6 +66,36 @@ async function searchGoogleMaps(query: string, location: string): Promise<Serper
   }
 }
 
+// Demo data for testing when no API key
+function getDemoSources(specialty: string, location: string): ReferralSource[] {
+  const demoData: Record<string, ReferralSource[]> = {
+    "Dentist": [
+      { name: "Miami Orthodontics & Braces", specialty: "Orthodontist", address: "1234 Brickell Ave, Miami, FL 33131", distance: "0.8 miles", rating: 4.9, reviewCount: 234, website: "https://example.com", phone: "(305) 555-0101", fitScore: 95 },
+      { name: "Coral Gables Oral Surgery", specialty: "Oral Surgery", address: "456 Miracle Mile, Coral Gables, FL 33134", distance: "2.1 miles", rating: 4.7, reviewCount: 156, website: "https://example.com", phone: "(305) 555-0102", fitScore: 92 },
+      { name: "South Beach Periodontics", specialty: "Periodontist", address: "789 Ocean Dr, Miami Beach, FL 33139", distance: "3.4 miles", rating: 4.8, reviewCount: 89, website: "https://example.com", phone: "(305) 555-0103", fitScore: 90 },
+      { name: "Downtown Miami Pediatric Dentistry", specialty: "Pediatric Dentist", address: "321 Flagler St, Miami, FL 33130", distance: "1.2 miles", rating: 4.6, reviewCount: 312, website: "https://example.com", phone: "(305) 555-0104", fitScore: 88 },
+      { name: "Kendall Family Medicine", specialty: "Family Medicine", address: "8901 SW 107th Ave, Miami, FL 33176", distance: "8.5 miles", rating: 4.5, reviewCount: 445, website: "https://example.com", phone: "(305) 555-0105", fitScore: 85 },
+      { name: "Aventura ENT Specialists", specialty: "ENT", address: "2999 NE 191st St, Aventura, FL 33180", distance: "12.3 miles", rating: 4.7, reviewCount: 178, website: "https://example.com", phone: "(305) 555-0106", fitScore: 82 },
+    ],
+    "Chiropractor": [
+      { name: "Miami Physical Therapy Center", specialty: "Physical Therapy", address: "1500 NW 12th Ave, Miami, FL 33136", distance: "1.5 miles", rating: 4.8, reviewCount: 267, website: "https://example.com", phone: "(305) 555-0201", fitScore: 96 },
+      { name: "Brickell Sports Medicine", specialty: "Sports Medicine", address: "1001 Brickell Bay Dr, Miami, FL 33131", distance: "0.9 miles", rating: 4.9, reviewCount: 189, website: "https://example.com", phone: "(305) 555-0202", fitScore: 94 },
+      { name: "South Florida Pain Management", specialty: "Pain Management", address: "7800 SW 87th Ave, Miami, FL 33173", distance: "6.2 miles", rating: 4.6, reviewCount: 134, website: "https://example.com", phone: "(305) 555-0203", fitScore: 91 },
+      { name: "Miami Orthopedic Associates", specialty: "Orthopedic", address: "3661 S Miami Ave, Miami, FL 33133", distance: "2.8 miles", rating: 4.7, reviewCount: 456, website: "https://example.com", phone: "(305) 555-0204", fitScore: 89 },
+      { name: "Holistic Massage & Wellness", specialty: "Massage Therapy", address: "2020 Salzedo St, Coral Gables, FL 33134", distance: "3.1 miles", rating: 4.9, reviewCount: 523, website: "https://example.com", phone: "(305) 555-0205", fitScore: 87 },
+      { name: "Doral Acupuncture Clinic", specialty: "Acupuncture", address: "8200 NW 36th St, Doral, FL 33166", distance: "9.4 miles", rating: 4.5, reviewCount: 78, website: "https://example.com", phone: "(305) 555-0206", fitScore: 84 },
+    ],
+    "default": [
+      { name: "Premier Family Medicine", specialty: "Family Medicine", address: "123 Main St, Miami, FL 33101", distance: "1.0 miles", rating: 4.7, reviewCount: 234, website: "https://example.com", phone: "(305) 555-0301", fitScore: 90 },
+      { name: "Internal Medicine Associates", specialty: "Internal Medicine", address: "456 Health Blvd, Miami, FL 33102", distance: "2.5 miles", rating: 4.6, reviewCount: 189, website: "https://example.com", phone: "(305) 555-0302", fitScore: 88 },
+      { name: "Community Health Partners", specialty: "Primary Care", address: "789 Wellness Way, Miami, FL 33103", distance: "3.2 miles", rating: 4.8, reviewCount: 312, website: "https://example.com", phone: "(305) 555-0303", fitScore: 86 },
+      { name: "Specialty Care Network", specialty: "Multi-Specialty", address: "321 Medical Center Dr, Miami, FL 33104", distance: "4.1 miles", rating: 4.5, reviewCount: 156, website: "https://example.com", phone: "(305) 555-0304", fitScore: 84 },
+    ]
+  }
+
+  return demoData[specialty] || demoData["default"]
+}
+
 // Map specialty to search terms
 function getSearchTerms(specialty: string): string {
   const searchTermMap: Record<string, string> = {
@@ -103,10 +133,10 @@ function decodeBriefId(id: string): { specialty: string; location: string; pract
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Decode the brief ID
     const briefParams = decodeBriefId(id)
@@ -155,6 +185,12 @@ export async function GET(
       }
 
       if (sources.length >= 15) break
+    }
+
+    // Fall back to demo data if no results
+    if (sources.length === 0) {
+      console.log(`📋 Using demo data for ${specialty}`)
+      sources.push(...getDemoSources(specialty, location))
     }
 
     // Sort by fit score

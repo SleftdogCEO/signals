@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(user)
         setLoading(false)
 
-        // Only redirect if NOT already on a dashboard page and NOT on reset-password page
-        if (user && !pathname.startsWith("/dashboard") && !pathname.includes("/reset-password")) {
+        // Only redirect if NOT already on a dashboard page, onboarding, welcome, auth, or reset-password page
+        if (user && !pathname.startsWith("/dashboard") && !pathname.startsWith("/onboarding") && !pathname.startsWith("/welcome") && !pathname.startsWith("/auth") && !pathname.includes("/reset-password")) {
           const redirectPath = sessionStorage.getItem("redirectAfterAuth")
           if (redirectPath) {
             sessionStorage.removeItem("redirectAfterAuth")
@@ -71,8 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
 
-      // Only redirect if NOT already on a dashboard page and NOT on reset-password page
-      if (event === "SIGNED_IN" && session?.user && !pathname.startsWith("/dashboard") && !pathname.includes("/reset-password")) {
+      // Only redirect if NOT already on a dashboard page, onboarding, welcome, auth, or reset-password page
+      if (event === "SIGNED_IN" && session?.user && !pathname.startsWith("/dashboard") && !pathname.startsWith("/onboarding") && !pathname.startsWith("/welcome") && !pathname.startsWith("/auth") && !pathname.includes("/reset-password")) {
         console.log("User signed in, redirecting to dashboard")
         const redirectPath = sessionStorage.getItem("redirectAfterAuth")
         if (redirectPath) {

@@ -83,9 +83,16 @@ CREATE TABLE providers (
   -- Status
   is_verified BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT true,
+
+  -- Network membership
+  network_opted_in BOOLEAN DEFAULT false,
+
+  -- Subscription
   subscription_status subscription_status DEFAULT 'trial',
   trial_ends_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '14 days'),
   stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  subscription_ends_at TIMESTAMP WITH TIME ZONE,
 
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -125,6 +132,7 @@ CREATE TABLE matches (
 CREATE INDEX idx_providers_location ON providers(location);
 CREATE INDEX idx_providers_specialty ON providers(specialty);
 CREATE INDEX idx_providers_subscription ON providers(subscription_status);
+CREATE INDEX idx_providers_network ON providers(network_opted_in) WHERE network_opted_in = true;
 CREATE INDEX idx_providers_user_id ON providers(user_id);
 CREATE INDEX idx_matches_provider_a ON matches(provider_a);
 CREATE INDEX idx_matches_provider_b ON matches(provider_b);
@@ -214,5 +222,248 @@ BEGIN
   END IF;
 
   RETURN score;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- NETWORK INTELLIGENCE TABLES
+-- ============================================
+
+-- Post categories for the feed
+CREATE TYPE post_category AS ENUM (
+  'software',
+  'payment_processing',
+  'marketing',
+  'practice_management',
+  'ai_tools',
+  'patient_experience',
+  'hiring',
+  'insurance',
+  'general',
+  'announcement'
+);
+
+-- Reviews for software/services
+CREATE TYPE review_type AS ENUM (
+  'ehr_software',
+  'practice_management',
+  'payment_processing',
+  'marketing_service',
+  'billing_service',
+  'telehealth',
+  'scheduling',
+  'patient_communication',
+  'ai_tool',
+  'other'
+);
+
+-- Network posts (feed/forum content)
+CREATE TABLE network_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
+
+  -- Content
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category post_category DEFAULT 'general',
+
+  -- Engagement
+  upvotes INTEGER DEFAULT 0,
+  comment_count INTEGER DEFAULT 0,
+  view_count INTEGER DEFAULT 0,
+
+  -- Visibility
+  is_pinned BOOLEAN DEFAULT false,
+  is_featured BOOLEAN DEFAULT false,
+  is_ai_insight BOOLEAN DEFAULT false, -- Curated by AI
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Comments on posts
+CREATE TABLE network_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES network_posts(id) ON DELETE CASCADE,
+  provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
+  parent_comment_id UUID REFERENCES network_comments(id) ON DELETE CASCADE,
+
+  content TEXT NOT NULL,
+  upvotes INTEGER DEFAULT 0,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Upvotes tracking (prevent duplicate votes)
+CREATE TABLE network_upvotes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES network_posts(id) ON DELETE CASCADE,
+  comment_id UUID REFERENCES network_comments(id) ON DELETE CASCADE,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  -- One vote per provider per item
+  UNIQUE(provider_id, post_id),
+  UNIQUE(provider_id, comment_id),
+  -- Must vote on either post or comment
+  CHECK (
+    (post_id IS NOT NULL AND comment_id IS NULL) OR
+    (post_id IS NULL AND comment_id IS NOT NULL)
+  )
+);
+
+-- Product/Service reviews
+CREATE TABLE network_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
+
+  -- What's being reviewed
+  review_type review_type NOT NULL,
+  product_name TEXT NOT NULL,
+  vendor_name TEXT,
+
+  -- Rating (1-5 stars)
+  overall_rating INTEGER NOT NULL CHECK (overall_rating >= 1 AND overall_rating <= 5),
+  ease_of_use INTEGER CHECK (ease_of_use >= 1 AND ease_of_use <= 5),
+  value_for_money INTEGER CHECK (value_for_money >= 1 AND value_for_money <= 5),
+  customer_support INTEGER CHECK (customer_support >= 1 AND customer_support <= 5),
+
+  -- Content
+  title TEXT NOT NULL,
+  pros TEXT,
+  cons TEXT,
+  review_content TEXT NOT NULL,
+
+  -- Would recommend
+  would_recommend BOOLEAN DEFAULT true,
+
+  -- Engagement
+  helpful_count INTEGER DEFAULT 0,
+
+  -- Verified purchase/use
+  is_verified BOOLEAN DEFAULT false,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Market intelligence (AI-curated from scraping)
+CREATE TABLE market_intelligence (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Location targeting
+  location TEXT, -- "City, State" or NULL for national
+  specialty TEXT, -- Specific specialty or NULL for all
+
+  -- Content
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  source_url TEXT,
+  source_name TEXT,
+
+  -- Categorization
+  category TEXT NOT NULL, -- 'competitor', 'regulation', 'trend', 'opportunity', 'news'
+  relevance_score INTEGER DEFAULT 50 CHECK (relevance_score >= 0 AND relevance_score <= 100),
+
+  -- AI metadata
+  ai_generated BOOLEAN DEFAULT true,
+  raw_data JSONB,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days')
+);
+
+-- Indexes for network tables
+CREATE INDEX idx_posts_category ON network_posts(category);
+CREATE INDEX idx_posts_provider ON network_posts(provider_id);
+CREATE INDEX idx_posts_created ON network_posts(created_at DESC);
+CREATE INDEX idx_posts_featured ON network_posts(is_featured) WHERE is_featured = true;
+CREATE INDEX idx_comments_post ON network_comments(post_id);
+CREATE INDEX idx_reviews_type ON network_reviews(review_type);
+CREATE INDEX idx_reviews_product ON network_reviews(product_name);
+CREATE INDEX idx_reviews_rating ON network_reviews(overall_rating);
+CREATE INDEX idx_intelligence_location ON market_intelligence(location);
+CREATE INDEX idx_intelligence_category ON market_intelligence(category);
+
+-- RLS for network tables
+ALTER TABLE network_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE network_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE network_upvotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE network_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_intelligence ENABLE ROW LEVEL SECURITY;
+
+-- Posts policies
+CREATE POLICY "Anyone can view posts" ON network_posts
+  FOR SELECT USING (true);
+
+CREATE POLICY "Providers can create posts" ON network_posts
+  FOR INSERT WITH CHECK (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+CREATE POLICY "Providers can update own posts" ON network_posts
+  FOR UPDATE USING (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+-- Comments policies
+CREATE POLICY "Anyone can view comments" ON network_comments
+  FOR SELECT USING (true);
+
+CREATE POLICY "Providers can create comments" ON network_comments
+  FOR INSERT WITH CHECK (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+-- Upvotes policies
+CREATE POLICY "Providers can manage own upvotes" ON network_upvotes
+  FOR ALL USING (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+-- Reviews policies
+CREATE POLICY "Anyone can view reviews" ON network_reviews
+  FOR SELECT USING (true);
+
+CREATE POLICY "Providers can create reviews" ON network_reviews
+  FOR INSERT WITH CHECK (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+CREATE POLICY "Providers can update own reviews" ON network_reviews
+  FOR UPDATE USING (
+    provider_id IN (SELECT id FROM providers WHERE user_id = auth.uid())
+  );
+
+-- Intelligence is read-only for all
+CREATE POLICY "Anyone can view intelligence" ON market_intelligence
+  FOR SELECT USING (true);
+
+-- Triggers for updated_at
+CREATE TRIGGER update_network_posts_updated_at
+  BEFORE UPDATE ON network_posts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_network_comments_updated_at
+  BEFORE UPDATE ON network_comments
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_network_reviews_updated_at
+  BEFORE UPDATE ON network_reviews
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to increment comment count on a post
+CREATE OR REPLACE FUNCTION increment_comment_count(post_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE network_posts
+  SET comment_count = comment_count + 1
+  WHERE id = post_id;
 END;
 $$ LANGUAGE plpgsql;

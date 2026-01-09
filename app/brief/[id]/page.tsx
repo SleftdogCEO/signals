@@ -19,7 +19,16 @@ import {
   ArrowLeftRight,
   Lightbulb,
   Gift,
-  ExternalLink
+  ExternalLink,
+  Target,
+  Zap,
+  Users,
+  Calendar,
+  FileText,
+  Coffee,
+  Presentation,
+  HandshakeIcon,
+  TrendingUp
 } from "lucide-react"
 import Link from "next/link"
 
@@ -46,6 +55,149 @@ interface BriefData {
     topSpecialty: string
     radiusMiles: number
   }
+}
+
+interface MatchInsight {
+  score: number
+  reasons: string[]
+  strengthLevel: 'excellent' | 'strong' | 'good'
+}
+
+interface PlaybookAction {
+  icon: 'coffee' | 'presentation' | 'document' | 'calendar' | 'handshake'
+  title: string
+  description: string
+  priority: 'high' | 'medium'
+}
+
+// Healthcare specialty adjacency map - which specialties commonly refer to each other
+const specialtyAdjacency: Record<string, string[]> = {
+  'dentist': ['orthodontist', 'oral surgeon', 'periodontist', 'pediatric dentist', 'endodontist', 'prosthodontist', 'family medicine', 'pediatrician', 'ent'],
+  'orthodontist': ['dentist', 'oral surgeon', 'pediatric dentist', 'tmj specialist'],
+  'chiropractor': ['physical therapist', 'massage therapist', 'orthopedic', 'pain management', 'sports medicine', 'acupuncturist', 'neurologist'],
+  'physical therapist': ['chiropractor', 'orthopedic', 'sports medicine', 'pain management', 'neurologist', 'rheumatologist'],
+  'dermatologist': ['plastic surgeon', 'allergist', 'rheumatologist', 'oncologist', 'family medicine'],
+  'cardiologist': ['internal medicine', 'family medicine', 'endocrinologist', 'nephrologist', 'pulmonologist'],
+  'pediatrician': ['pediatric dentist', 'allergist', 'dermatologist', 'ent', 'family medicine'],
+  'orthopedic': ['physical therapist', 'chiropractor', 'sports medicine', 'pain management', 'rheumatologist'],
+  'optometrist': ['ophthalmologist', 'neurologist', 'endocrinologist', 'family medicine'],
+  'psychiatrist': ['psychologist', 'therapist', 'family medicine', 'neurologist', 'internal medicine'],
+  'obgyn': ['fertility specialist', 'urologist', 'endocrinologist', 'family medicine', 'pediatrician'],
+  'urologist': ['nephrologist', 'oncologist', 'obgyn', 'family medicine'],
+  'gastroenterologist': ['internal medicine', 'oncologist', 'nutritionist', 'family medicine'],
+  'neurologist': ['psychiatrist', 'physical therapist', 'pain management', 'neurosurgeon', 'family medicine'],
+  'ent': ['allergist', 'audiologist', 'sleep specialist', 'pediatrician', 'family medicine'],
+  'allergist': ['ent', 'dermatologist', 'pulmonologist', 'pediatrician'],
+  'family medicine': ['all'], // family medicine refers to everything
+  'internal medicine': ['all'],
+}
+
+// Generate match insight based on specialty adjacency and other factors
+function generateMatchInsight(source: ReferralSource, userSpecialty: string): MatchInsight {
+  const userSpecLower = userSpecialty.toLowerCase()
+  const sourceSpecLower = source.specialty.toLowerCase()
+
+  const adjacentSpecs = specialtyAdjacency[userSpecLower] || []
+  const isHighlyAdjacent = adjacentSpecs.some(spec => sourceSpecLower.includes(spec)) || adjacentSpecs.includes('all')
+
+  // Parse distance
+  const distanceMatch = source.distance.match(/(\d+\.?\d*)/)
+  const distanceMiles = distanceMatch ? parseFloat(distanceMatch[1]) : 5
+  const isVeryClose = distanceMiles <= 2
+  const isClose = distanceMiles <= 5
+
+  // Calculate score (85-98 range to feel realistic)
+  let score = 85
+  if (isHighlyAdjacent) score += 8
+  if (isVeryClose) score += 5
+  else if (isClose) score += 2
+  if (source.rating >= 4.5) score += 3
+  if (source.reviewCount > 50) score += 2
+
+  score = Math.min(98, score)
+
+  // Generate reasons
+  const reasons: string[] = []
+
+  if (isHighlyAdjacent) {
+    reasons.push(`${source.specialty} practices frequently refer patients to ${userSpecialty} providers`)
+  } else {
+    reasons.push(`Complementary services create natural referral opportunities`)
+  }
+
+  if (isVeryClose) {
+    reasons.push(`Only ${source.distance} away — easy for patients to follow through on referrals`)
+  } else if (isClose) {
+    reasons.push(`Convenient ${source.distance} proximity for patient referrals`)
+  }
+
+  if (source.rating >= 4.5) {
+    reasons.push(`High patient satisfaction (${source.rating}★) suggests quality-focused practice`)
+  } else if (source.rating >= 4.0) {
+    reasons.push(`Strong reputation with ${source.reviewCount}+ patient reviews`)
+  }
+
+  // Determine strength level
+  let strengthLevel: 'excellent' | 'strong' | 'good' = 'good'
+  if (score >= 93) strengthLevel = 'excellent'
+  else if (score >= 88) strengthLevel = 'strong'
+
+  return { score, reasons, strengthLevel }
+}
+
+// Generate specific playbook actions based on context
+function generatePlaybook(source: ReferralSource, userSpecialty: string): PlaybookAction[] {
+  const actions: PlaybookAction[] = []
+  const sourceSpecLower = source.specialty.toLowerCase()
+
+  // Parse distance for proximity-based suggestions
+  const distanceMatch = source.distance.match(/(\d+\.?\d*)/)
+  const distanceMiles = distanceMatch ? parseFloat(distanceMatch[1]) : 5
+
+  // Everyone gets the intro coffee/call suggestion
+  if (distanceMiles <= 3) {
+    actions.push({
+      icon: 'coffee',
+      title: 'Schedule a Coffee Meet',
+      description: `They're only ${source.distance} away. Suggest a 20-minute coffee to introduce yourself and learn about their practice.`,
+      priority: 'high'
+    })
+  } else {
+    actions.push({
+      icon: 'calendar',
+      title: 'Book a Quick Intro Call',
+      description: `A 15-minute Zoom call to introduce yourself and explore if there's a good fit for referrals.`,
+      priority: 'high'
+    })
+  }
+
+  // Create a referral guide/one-pager
+  actions.push({
+    icon: 'document',
+    title: 'Create a Referral One-Pager',
+    description: `Make a simple guide for their front desk: "When to refer to ${userSpecialty}" with your contact info and what you treat.`,
+    priority: 'high'
+  })
+
+  // Lunch & Learn for certain specialties
+  if (['dentist', 'orthodontist', 'chiropractor', 'physical therapist', 'dermatologist', 'pediatrician'].some(s => sourceSpecLower.includes(s))) {
+    actions.push({
+      icon: 'presentation',
+      title: 'Offer a Lunch & Learn',
+      description: `Offer to bring lunch and give a 20-minute talk on topics relevant to their patient base.`,
+      priority: 'medium'
+    })
+  }
+
+  // Cross-promotion suggestion
+  actions.push({
+    icon: 'handshake',
+    title: 'Propose Cross-Promotion',
+    description: `Offer to display their brochures in your waiting room if they'll do the same. Low effort, mutual benefit.`,
+    priority: 'medium'
+  })
+
+  return actions.slice(0, 3) // Return top 3 actions
 }
 
 // Generate personalized intro message - curiosity-driven, not commitment-driven
@@ -339,12 +491,43 @@ export default function BriefPage() {
           className="mb-8"
         >
           <h2 className="text-2xl font-bold text-white mb-6">Your Referral Partners</h2>
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             {data.sources.map((source, index) => {
               const sourceId = `source-${index}`
               const isExpanded = expandedIntro === sourceId
               const intro = generateIntro(source, data.specialty, data.practiceName)
               const accent = accents[index % accents.length]
+              const matchInsight = generateMatchInsight(source, data.specialty)
+              const playbook = generatePlaybook(source, data.specialty)
+
+              const getPlaybookIcon = (iconName: string) => {
+                switch (iconName) {
+                  case 'coffee': return <Coffee className="w-4 h-4" />
+                  case 'presentation': return <Presentation className="w-4 h-4" />
+                  case 'document': return <FileText className="w-4 h-4" />
+                  case 'calendar': return <Calendar className="w-4 h-4" />
+                  case 'handshake': return <HandshakeIcon className="w-4 h-4" />
+                  default: return <Zap className="w-4 h-4" />
+                }
+              }
+
+              const getScoreColor = (level: string) => {
+                switch (level) {
+                  case 'excellent': return 'from-emerald-500 to-cyan-500'
+                  case 'strong': return 'from-blue-500 to-indigo-500'
+                  default: return 'from-violet-500 to-purple-500'
+                }
+              }
+
+              const getScoreBadge = (level: string) => {
+                switch (level) {
+                  case 'excellent': return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', label: 'Excellent Match' }
+                  case 'strong': return { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-400', label: 'Strong Match' }
+                  default: return { bg: 'bg-violet-500/20', border: 'border-violet-500/40', text: 'text-violet-400', label: 'Good Match' }
+                }
+              }
+
+              const scoreBadge = getScoreBadge(matchInsight.strengthLevel)
 
               return (
                 <motion.div
@@ -357,30 +540,123 @@ export default function BriefPage() {
                     stiffness: 100,
                     damping: 15
                   }}
-                  whileHover={{ y: -8, scale: 1.02 }}
                   className="relative group"
                 >
-                  <div className={`absolute -inset-0.5 bg-gradient-to-r ${accent.bg} rounded-2xl blur opacity-0 group-hover:opacity-50 transition-all duration-500`} />
+                  <div className={`absolute -inset-0.5 bg-gradient-to-r ${accent.bg} rounded-2xl blur opacity-0 group-hover:opacity-30 transition-all duration-500`} />
 
-                  <div className="relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 group-hover:border-slate-500 transition-all duration-300">
-                    <div className={`h-2 bg-gradient-to-r ${accent.bg}`} />
+                  <div className="relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 group-hover:border-slate-600 transition-all duration-300">
+                    {/* Header with Match Score */}
+                    <div className="p-5 pb-4">
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-xl text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
+                            {source.name}
+                          </h3>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${accent.light}`}>
+                            {source.specialty}
+                          </span>
+                        </div>
 
-                    <div className="p-5">
-                      <div className="mb-4">
-                        <h3 className="font-bold text-xl text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
-                          {source.name}
-                        </h3>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${accent.light}`}>
-                          {source.specialty}
-                        </span>
+                        {/* Match Score Circle */}
+                        <div className="flex-shrink-0">
+                          <div className="relative">
+                            <svg className="w-16 h-16 transform -rotate-90">
+                              <circle
+                                cx="32"
+                                cy="32"
+                                r="28"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                                className="text-slate-700"
+                              />
+                              <circle
+                                cx="32"
+                                cy="32"
+                                r="28"
+                                stroke="url(#scoreGradient)"
+                                strokeWidth="4"
+                                fill="none"
+                                strokeDasharray={`${(matchInsight.score / 100) * 176} 176`}
+                                strokeLinecap="round"
+                                className="transition-all duration-1000"
+                              />
+                              <defs>
+                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#10b981" />
+                                  <stop offset="100%" stopColor="#06b6d4" />
+                                </linearGradient>
+                              </defs>
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-lg font-black text-white">{matchInsight.score}</span>
+                            </div>
+                          </div>
+                          <div className={`mt-1 px-2 py-0.5 ${scoreBadge.bg} ${scoreBadge.border} border rounded-full`}>
+                            <span className={`text-[10px] font-bold ${scoreBadge.text} whitespace-nowrap`}>{scoreBadge.label}</span>
+                          </div>
+                        </div>
                       </div>
 
+                      {/* Location */}
                       <div className="flex items-start gap-2 mb-4 p-3 bg-slate-700/50 rounded-xl">
                         <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-slate-300 font-medium line-clamp-2">{source.address}</p>
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mb-5">
+                      {/* Why This Match - Intelligence Layer */}
+                      <div className="mb-4 p-4 bg-gradient-to-br from-slate-700/60 to-slate-800/60 rounded-xl border border-slate-600/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`w-6 h-6 bg-gradient-to-r ${getScoreColor(matchInsight.strengthLevel)} rounded-lg flex items-center justify-center`}>
+                            <Target className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-white">Why This Match</span>
+                        </div>
+                        <ul className="space-y-2">
+                          {matchInsight.reasons.map((reason, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <Zap className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                              <span className="text-xs text-slate-300 leading-relaxed">{reason}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Partnership Playbook */}
+                      <div className="mb-4 p-4 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/30">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-white">Your Action Plan</span>
+                        </div>
+                        <div className="space-y-2">
+                          {playbook.map((action, i) => (
+                            <div
+                              key={i}
+                              className={`p-3 rounded-lg ${action.priority === 'high' ? 'bg-slate-800/80 border border-emerald-500/30' : 'bg-slate-800/50 border border-slate-600/50'}`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${action.priority === 'high' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-600/50 text-slate-400'}`}>
+                                  {getPlaybookIcon(action.icon)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-white">{action.title}</span>
+                                    {action.priority === 'high' && (
+                                      <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">START HERE</span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{action.description}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quick Info Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-xs font-bold text-emerald-300">
                           <Building className="w-3.5 h-3.5" />
                           In-person
@@ -391,6 +667,7 @@ export default function BriefPage() {
                         </span>
                       </div>
 
+                      {/* Visit Website Button */}
                       {source.website && (
                         <motion.a
                           whileHover={{ scale: 1.02, y: -2 }}
@@ -398,23 +675,11 @@ export default function BriefPage() {
                           href={source.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r ${accent.bg} text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all relative overflow-hidden group/btn`}
+                          className={`w-full flex items-center justify-center gap-3 py-3 bg-gradient-to-r ${accent.bg} text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all relative overflow-hidden`}
                         >
-                          <motion.div
-                            className="absolute inset-0 bg-white/20"
-                            initial={{ x: '-100%' }}
-                            whileHover={{ x: '100%' }}
-                            transition={{ duration: 0.5 }}
-                          />
-                          <Globe className="w-5 h-5 relative z-10" />
-                          <span className="relative z-10">Visit Website</span>
-                          <motion.span
-                            className="relative z-10"
-                            animate={{ x: [0, 4, 0] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            →
-                          </motion.span>
+                          <Globe className="w-5 h-5" />
+                          <span>Visit Website</span>
+                          <ExternalLink className="w-4 h-4" />
                         </motion.a>
                       )}
                     </div>

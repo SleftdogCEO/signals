@@ -1,9 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { ArrowRight, ArrowLeft, Building2, MapPin, Users, UserPlus, Check, Sparkles } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowLeft,
+  Building2,
+  MapPin,
+  Users,
+  Check,
+  Stethoscope,
+  Loader2,
+  Sparkles
+} from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { createClient } from "@supabase/supabase-js"
 import { toast } from "sonner"
@@ -13,41 +23,65 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// Simplified partner categories - broad, easy to understand
+const PARTNER_CATEGORIES = [
+  {
+    id: "primary_care",
+    label: "Primary Care",
+    description: "Family medicine, internal medicine, pediatrics",
+    icon: "🏥"
+  },
+  {
+    id: "specialists",
+    label: "Medical Specialists",
+    description: "Cardiology, dermatology, gastroenterology, etc.",
+    icon: "🩺"
+  },
+  {
+    id: "mental_health",
+    label: "Mental Health",
+    description: "Psychiatry, psychology, counseling, therapy",
+    icon: "🧠"
+  },
+  {
+    id: "physical_rehab",
+    label: "Physical & Rehab",
+    description: "PT, OT, chiropractic, sports medicine",
+    icon: "💪"
+  },
+  {
+    id: "dental_vision",
+    label: "Dental & Vision",
+    description: "Dentistry, orthodontics, optometry, ophthalmology",
+    icon: "😁"
+  },
+  {
+    id: "wellness_aesthetic",
+    label: "Wellness & Aesthetic",
+    description: "Med spas, functional medicine, nutrition, acupuncture",
+    icon: "✨"
+  }
+]
+
 const SPECIALTIES = [
   "Primary Care",
   "Family Medicine",
   "Internal Medicine",
   "Pediatrics",
-  "Orthopedic Surgery",
   "Physical Therapy",
-  "Occupational Therapy",
   "Chiropractic",
-  "Sports Medicine",
+  "Orthopedics",
   "Pain Management",
-  "Neurology",
-  "Cardiology",
   "Dermatology",
   "Psychiatry",
   "Psychology",
-  "Counseling",
   "Dentistry",
-  "Orthodontics",
-  "Oral Surgery",
-  "Optometry",
-  "Ophthalmology",
-  "OB/GYN",
-  "Urology",
-  "Gastroenterology",
-  "Pulmonology",
-  "Endocrinology",
-  "Rheumatology",
+  "Med Spa",
   "Plastic Surgery",
-  "ENT",
-  "Podiatry",
-  "Acupuncture",
-  "Massage Therapy",
-  "Nutrition/Dietetics",
+  "Cardiology",
+  "OB/GYN",
   "Urgent Care",
+  "Functional Medicine",
   "Other"
 ]
 
@@ -55,17 +89,13 @@ interface FormData {
   practiceName: string
   specialty: string
   location: string
-  patientsIWant: string[]
-  patientsIRefer: string[]
-  phone: string
+  partnerInterests: string[]
   email: string
-  website: string
-  bio: string
 }
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -73,26 +103,27 @@ export default function OnboardingPage() {
     practiceName: "",
     specialty: "",
     location: "",
-    patientsIWant: [],
-    patientsIRefer: [],
-    phone: "",
-    email: user?.email || "",
-    website: "",
-    bio: ""
+    partnerInterests: [],
+    email: ""
   })
 
-  const totalSteps = 4
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/auth?redirect=/onboarding")
+    }
+    if (user?.email && !formData.email) {
+      setFormData(prev => ({ ...prev, email: user.email || "" }))
+    }
+  }, [user, authLoading, router, formData.email])
+
+  const totalSteps = 2
 
   const canProceed = () => {
     switch (step) {
       case 1:
         return formData.practiceName && formData.specialty && formData.location
       case 2:
-        return formData.patientsIWant.length > 0
-      case 3:
-        return formData.patientsIRefer.length > 0
-      case 4:
-        return formData.email
+        return formData.partnerInterests.length > 0
       default:
         return false
     }
@@ -110,13 +141,13 @@ export default function OnboardingPage() {
     }
   }
 
-  const toggleSpecialty = (specialty: string, field: "patientsIWant" | "patientsIRefer") => {
+  const togglePartnerInterest = (categoryId: string) => {
     setFormData(prev => {
-      const current = prev[field]
-      if (current.includes(specialty)) {
-        return { ...prev, [field]: current.filter(s => s !== specialty) }
+      const current = prev.partnerInterests
+      if (current.includes(categoryId)) {
+        return { ...prev, partnerInterests: current.filter(c => c !== categoryId) }
       } else {
-        return { ...prev, [field]: [...current, specialty] }
+        return { ...prev, partnerInterests: [...current, categoryId] }
       }
     })
   }
@@ -131,28 +162,48 @@ export default function OnboardingPage() {
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.from("providers").insert({
-        user_id: user.id,
-        practice_name: formData.practiceName,
-        specialty: formData.specialty,
-        location: formData.location,
-        patients_i_want: formData.patientsIWant,
-        patients_i_refer: formData.patientsIRefer,
-        phone: formData.phone || null,
-        email: formData.email,
-        website: formData.website || null,
-        bio: formData.bio || null,
-        subscription_status: "trial"
-      })
+      // Check if provider already exists
+      const { data: existing } = await supabase
+        .from("providers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
 
-      if (error) {
-        console.error("Error creating provider:", error)
-        toast.error("Failed to create profile. Please try again.")
-        return
+      if (existing) {
+        // Update existing provider
+        const { error } = await supabase
+          .from("providers")
+          .update({
+            practice_name: formData.practiceName,
+            specialty: formData.specialty,
+            location: formData.location,
+            patients_i_want: formData.partnerInterests,
+            email: formData.email,
+            network_opted_in: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id)
+
+        if (error) throw error
+      } else {
+        // Create new provider
+        const { error } = await supabase.from("providers").insert({
+          user_id: user.id,
+          practice_name: formData.practiceName,
+          specialty: formData.specialty,
+          location: formData.location,
+          patients_i_want: formData.partnerInterests,
+          patients_i_refer: [],
+          email: formData.email,
+          subscription_status: "trial",
+          network_opted_in: true
+        })
+
+        if (error) throw error
       }
 
-      toast.success("Welcome to the network!")
-      router.push("/dashboard/network")
+      // Redirect to welcome experience
+      router.push("/welcome")
     } catch (error) {
       console.error("Error:", error)
       toast.error("Something went wrong. Please try again.")
@@ -161,31 +212,48 @@ export default function OnboardingPage() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50">
+    <div className="min-h-screen bg-slate-950">
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-800 z-50">
         <motion.div
-          className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-600"
+          className="h-full bg-gradient-to-r from-blue-500 to-cyan-400"
           initial={{ width: 0 }}
           animate={{ width: `${(step / totalSteps) * 100}%` }}
           transition={{ duration: 0.3 }}
         />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 text-violet-700 rounded-full text-sm font-medium mb-4"
-          >
-            <Sparkles className="w-4 h-4" />
+      {/* Header */}
+      <header className="relative z-40 px-6 py-6">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
+              <Stethoscope className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg font-bold text-white">Sleft Health</span>
+          </div>
+          <span className="px-3 py-1.5 bg-slate-800 rounded-full text-sm text-slate-400">
             Step {step} of {totalSteps}
-          </motion.div>
+          </span>
         </div>
+      </header>
 
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-8">
         <AnimatePresence mode="wait">
           {/* Step 1: Practice Info */}
           {step === 1 && (
@@ -197,18 +265,20 @@ export default function OnboardingPage() {
               className="space-y-8"
             >
               <div className="text-center">
-                <Building2 className="w-12 h-12 text-violet-600 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Tell us about your practice
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <Building2 className="w-10 h-10 text-blue-400" />
+                </div>
+                <h1 className="text-4xl font-black text-white mb-3">
+                  Let's Get You Set Up
                 </h1>
-                <p className="text-gray-600">
-                  This helps us match you with the right referral partners
+                <p className="text-xl text-slate-400">
+                  Tell us about your practice so we can find the right partners
                 </p>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Practice Name
                   </label>
                   <input
@@ -216,18 +286,18 @@ export default function OnboardingPage() {
                     value={formData.practiceName}
                     onChange={(e) => setFormData({ ...formData, practiceName: e.target.value })}
                     placeholder="e.g., Summit Physical Therapy"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Your Specialty
                   </label>
                   <select
                     value={formData.specialty}
                     onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
                   >
                     <option value="">Select your specialty</option>
                     {SPECIALTIES.map(s => (
@@ -237,7 +307,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     <MapPin className="w-4 h-4 inline mr-1" />
                     Location
                   </label>
@@ -246,14 +316,14 @@ export default function OnboardingPage() {
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Austin, TX"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   />
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* Step 2: Patients I Want */}
+          {/* Step 2: Partner Interests */}
           {step === 2 && (
             <motion.div
               key="step2"
@@ -263,172 +333,51 @@ export default function OnboardingPage() {
               className="space-y-8"
             >
               <div className="text-center">
-                <UserPlus className="w-12 h-12 text-violet-600 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  What patients do you want more of?
+                <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <Users className="w-10 h-10 text-emerald-400" />
+                </div>
+                <h1 className="text-4xl font-black text-white mb-3">
+                  Who Do You Want to Connect With?
                 </h1>
-                <p className="text-gray-600">
-                  Select the specialties you want referrals FROM
+                <p className="text-xl text-slate-400">
+                  We'll help you build relationships with these providers
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {SPECIALTIES.filter(s => s !== formData.specialty).map(specialty => (
+              <div className="grid gap-4">
+                {PARTNER_CATEGORIES.map(category => (
                   <button
-                    key={specialty}
-                    onClick={() => toggleSpecialty(specialty, "patientsIWant")}
-                    className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      formData.patientsIWant.includes(specialty)
-                        ? "border-violet-600 bg-violet-50 text-violet-700"
-                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    key={category.id}
+                    onClick={() => togglePartnerInterest(category.id)}
+                    className={`flex items-center gap-4 p-5 rounded-2xl text-left transition-all ${
+                      formData.partnerInterests.includes(category.id)
+                        ? "bg-emerald-500/10 border-2 border-emerald-500 ring-2 ring-emerald-500/20"
+                        : "bg-slate-900 border-2 border-slate-800 hover:border-slate-700"
                     }`}
                   >
-                    {formData.patientsIWant.includes(specialty) && (
-                      <Check className="w-4 h-4 inline mr-1" />
-                    )}
-                    {specialty}
+                    <div className="text-3xl">{category.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-lg ${
+                          formData.partnerInterests.includes(category.id) ? "text-emerald-400" : "text-white"
+                        }`}>
+                          {category.label}
+                        </h3>
+                        {formData.partnerInterests.includes(category.id) && (
+                          <Check className="w-5 h-5 text-emerald-400" />
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm">{category.description}</p>
+                    </div>
                   </button>
                 ))}
               </div>
 
-              {formData.patientsIWant.length > 0 && (
-                <p className="text-center text-sm text-gray-500">
-                  {formData.patientsIWant.length} selected
+              {formData.partnerInterests.length > 0 && (
+                <p className="text-center text-sm text-slate-500">
+                  {formData.partnerInterests.length} selected
                 </p>
               )}
-            </motion.div>
-          )}
-
-          {/* Step 3: Patients I Refer */}
-          {step === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
-            >
-              <div className="text-center">
-                <Users className="w-12 h-12 text-violet-600 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  What patients do you typically refer out?
-                </h1>
-                <p className="text-gray-600">
-                  Select the specialties you refer patients TO
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {SPECIALTIES.filter(s => s !== formData.specialty).map(specialty => (
-                  <button
-                    key={specialty}
-                    onClick={() => toggleSpecialty(specialty, "patientsIRefer")}
-                    className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      formData.patientsIRefer.includes(specialty)
-                        ? "border-fuchsia-600 bg-fuchsia-50 text-fuchsia-700"
-                        : "border-gray-200 hover:border-gray-300 text-gray-700"
-                    }`}
-                  >
-                    {formData.patientsIRefer.includes(specialty) && (
-                      <Check className="w-4 h-4 inline mr-1" />
-                    )}
-                    {specialty}
-                  </button>
-                ))}
-              </div>
-
-              {formData.patientsIRefer.length > 0 && (
-                <p className="text-center text-sm text-gray-500">
-                  {formData.patientsIRefer.length} selected
-                </p>
-              )}
-            </motion.div>
-          )}
-
-          {/* Step 4: Contact Info */}
-          {step === 4 && (
-            <motion.div
-              key="step4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
-            >
-              <div className="text-center">
-                <Sparkles className="w-12 h-12 text-violet-600 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Almost done! Add your contact info
-                </h1>
-                <p className="text-gray-600">
-                  This is shared with providers who connect with you
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="you@practice.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone (optional)
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="(555) 123-4567"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Website (optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://yourpractice.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Short Bio (optional)
-                  </label>
-                  <textarea
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Tell other providers about your practice and ideal referral partnerships..."
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="p-6 bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl border border-violet-100">
-                <h3 className="font-semibold text-gray-900 mb-3">Your Profile Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <p><span className="text-gray-500">Practice:</span> {formData.practiceName}</p>
-                  <p><span className="text-gray-500">Specialty:</span> {formData.specialty}</p>
-                  <p><span className="text-gray-500">Location:</span> {formData.location}</p>
-                  <p><span className="text-gray-500">Want referrals from:</span> {formData.patientsIWant.join(", ")}</p>
-                  <p><span className="text-gray-500">Refer patients to:</span> {formData.patientsIRefer.join(", ")}</p>
-                </div>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -441,7 +390,7 @@ export default function OnboardingPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
               step === 1
                 ? "opacity-0 pointer-events-none"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
             }`}
           >
             <ArrowLeft className="w-5 h-5" />
@@ -452,10 +401,10 @@ export default function OnboardingPage() {
             <button
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all ${
+              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all ${
                 canProceed()
-                  ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-700 hover:to-fuchsia-700 shadow-lg shadow-violet-500/25"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-400 text-white hover:opacity-90 shadow-lg shadow-blue-500/25"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed"
               }`}
             >
               Continue
@@ -465,20 +414,20 @@ export default function OnboardingPage() {
             <button
               onClick={handleSubmit}
               disabled={!canProceed() || isSubmitting}
-              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all ${
+              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all ${
                 canProceed() && !isSubmitting
-                  ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-700 hover:to-fuchsia-700 shadow-lg shadow-violet-500/25"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-400 text-white hover:opacity-90 shadow-lg shadow-blue-500/25"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed"
               }`}
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating Profile...
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Setting up...
                 </>
               ) : (
                 <>
-                  Join the Network
+                  Continue
                   <Sparkles className="w-5 h-5" />
                 </>
               )}
