@@ -115,8 +115,8 @@ export default function AuthPage() {
       </nav>
 
       {/* Main */}
-      <div className="relative z-10 min-h-[calc(100vh-100px)] flex items-center justify-center p-6">
-        <div className="w-full max-w-lg">
+      <div className="relative z-10 py-8 px-6">
+        <div className="max-w-6xl mx-auto">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -148,49 +148,66 @@ export default function AuthPage() {
             </p>
           </motion.div>
 
-          {/* Value props */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-3 mb-8"
-          >
-            {[
-              { icon: UserPlus, label: "Smart Matching", color: "text-violet-600", bg: "bg-violet-50 border-violet-200" },
-              { icon: Users, label: "500+ Providers", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
-              { icon: Heart, label: "Warm Intros", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.1 }}
-                className={`flex items-center gap-2 px-4 py-2 ${item.bg} border rounded-full`}
-              >
-                <item.icon className={`w-4 h-4 ${item.color}`} />
-                <span className={`text-sm font-medium ${item.color}`}>{item.label}</span>
-              </motion.div>
-            ))}
-          </motion.div>
+          {/* Two column layout: Video + Auth */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* VSL Video */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="order-2 lg:order-1"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-200 bg-black">
+                <video
+                  controls
+                  playsInline
+                  className="w-full aspect-video"
+                >
+                  <source src="/videos/vsl.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <p className="text-center text-sm text-gray-500 mt-3">
+                Watch: How Sleft Health helps you grow your practice
+              </p>
+            </motion.div>
 
-          {/* Auth Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <AuthCard />
-          </motion.div>
+            {/* Right side: Auth */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+              className="order-1 lg:order-2"
+            >
+              {/* Value props */}
+              <div className="flex flex-wrap justify-center gap-3 mb-6">
+                {[
+                  { icon: UserPlus, label: "Smart Matching", color: "text-violet-600", bg: "bg-violet-50 border-violet-200" },
+                  { icon: Users, label: "500+ Providers", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+                  { icon: Heart, label: "Warm Intros", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    className={`flex items-center gap-2 px-4 py-2 ${item.bg} border rounded-full`}
+                  >
+                    <item.icon className={`w-4 h-4 ${item.color}`} />
+                    <span className={`text-sm font-medium ${item.color}`}>{item.label}</span>
+                  </motion.div>
+                ))}
+              </div>
 
-          {/* Trust badge */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-center text-sm text-gray-500 mt-6 font-medium"
-          >
-            14-day free trial. $450/month after.
-          </motion.p>
+              {/* Auth Card */}
+              <AuthCard />
+
+              {/* Trust badge */}
+              <p className="text-center text-sm text-gray-500 mt-6 font-medium">
+                14-day free trial. $250/month after.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>
