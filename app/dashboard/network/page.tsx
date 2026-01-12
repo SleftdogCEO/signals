@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -57,7 +57,7 @@ interface DiscoverResponse {
   }
 }
 
-export default function NetworkPage() {
+function NetworkPageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -445,5 +445,26 @@ export default function NetworkPage() {
         )}
       </main>
     </div>
+  )
+}
+
+export default function NetworkPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2">Loading Network</h2>
+            <p className="text-slate-400">Please wait...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <NetworkPageContent />
+    </Suspense>
   )
 }
