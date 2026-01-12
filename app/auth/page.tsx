@@ -155,21 +155,23 @@ export default function AuthPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="order-2 lg:order-1"
+              className="order-2 lg:order-1 flex justify-center"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-200 bg-black">
-                <video
-                  controls
-                  playsInline
-                  className="w-full aspect-video"
-                >
-                  <source src="/videos/vsl.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+              <div className="w-full max-w-[280px]">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-200 bg-black">
+                  <video
+                    controls
+                    playsInline
+                    className="w-full aspect-[9/16]"
+                  >
+                    <source src="/videos/vsl.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                <p className="text-center text-sm text-gray-500 mt-3">
+                  Watch: How Sleft Health helps you grow your practice
+                </p>
               </div>
-              <p className="text-center text-sm text-gray-500 mt-3">
-                Watch: How Sleft Health helps you grow your practice
-              </p>
             </motion.div>
 
             {/* Right side: Auth */}
