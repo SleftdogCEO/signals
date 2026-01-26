@@ -76,6 +76,7 @@ const SPECIALTIES = [
   "Psychiatry",
   "Psychology",
   "Dentistry",
+  "Optometry/Ophthalmology",
   "Med Spa",
   "Plastic Surgery",
   "Cardiology",
@@ -292,7 +293,7 @@ export default function OnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Your Specialty
+                    your specialty
                   </label>
                   <select
                     value={formData.specialty}

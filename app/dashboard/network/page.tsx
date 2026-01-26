@@ -23,10 +23,36 @@ import {
   Shield,
   Star,
   MessageSquare,
-  Lightbulb
+  Lightbulb,
+  Map as MapIcon,
+  List,
+  X
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api"
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+
+const mapContainerStyle = {
+  width: "100%",
+  height: "100%"
+}
+
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1e3a2f" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#475569" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+]
 
 interface MatchedProvider {
   id: string
@@ -40,6 +66,7 @@ interface MatchedProvider {
   match_score: number
   why_match: string[]
   is_verified: boolean
+  coordinates?: { lat: number; lng: number }
 }
 
 interface DiscoverResponse {
@@ -55,6 +82,181 @@ interface DiscoverResponse {
     specialty: string
     location: string
   }
+  center_coordinates?: { lat: number; lng: number }
+}
+
+interface NetworkMapProps {
+  matches: MatchedProvider[]
+  centerCoordinates?: { lat: number; lng: number }
+  canSeeDetails: boolean
+  accents: { bg: string; light: string }[]
+}
+
+function NetworkMap({ matches, centerCoordinates, canSeeDetails, accents }: NetworkMapProps) {
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY
+  })
+
+  const [selectedProvider, setSelectedProvider] = useState<MatchedProvider | null>(null)
+  const [map, setMap] = useState<google.maps.Map | null>(null)
+
+  const center = centerCoordinates || { lat: 39.8283, lng: -98.5795 }
+
+  const matchesWithCoords = matches.filter((m) => m.coordinates)
+
+  // Fit map bounds to show all markers
+  useEffect(() => {
+    if (map && matchesWithCoords.length > 0) {
+      const bounds = new google.maps.LatLngBounds()
+      matchesWithCoords.forEach((match) => {
+        if (match.coordinates) {
+          bounds.extend({ lat: match.coordinates.lat, lng: match.coordinates.lng })
+        }
+      })
+      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 })
+
+      // Don't zoom in too much if markers are close together
+      const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+        const currentZoom = map.getZoom()
+        if (currentZoom && currentZoom > 14) {
+          map.setZoom(14)
+        }
+      })
+    }
+  }, [map, matchesWithCoords])
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center mb-8"
+      >
+        <MapIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-white mb-2">Map View Coming Soon</h3>
+        <p className="text-slate-400">
+          The interactive map is being configured. Please use list view for now.
+        </p>
+      </motion.div>
+    )
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="rounded-2xl border border-slate-700 bg-slate-800/50 h-[600px] flex items-center justify-center mb-8">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="rounded-2xl overflow-hidden border border-slate-700 mb-8"
+      style={{ height: "600px" }}
+    >
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={center}
+        zoom={12}
+        onLoad={(mapInstance) => setMap(mapInstance)}
+        options={{
+          styles: darkMapStyle,
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: true
+        }}
+      >
+        {matchesWithCoords.map((match, index) => (
+          <Marker
+            key={match.id}
+            position={{ lat: match.coordinates!.lat, lng: match.coordinates!.lng }}
+            onClick={() => setSelectedProvider(match)}
+            icon={{
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 12,
+              fillColor: index % 6 === 0 ? "#3b82f6" : index % 6 === 1 ? "#8b5cf6" : index % 6 === 2 ? "#10b981" : index % 6 === 3 ? "#f43f5e" : index % 6 === 4 ? "#f59e0b" : "#6366f1",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 3
+            }}
+          />
+        ))}
+
+        {selectedProvider && selectedProvider.coordinates && (
+          <InfoWindow
+            position={{ lat: selectedProvider.coordinates.lat, lng: selectedProvider.coordinates.lng }}
+            onCloseClick={() => setSelectedProvider(null)}
+          >
+            <div className="bg-slate-800 rounded-xl p-4 min-w-[280px]">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-bold text-lg text-white">
+                  {selectedProvider.practice_name}
+                </h3>
+              </div>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 mb-3">
+                {selectedProvider.specialty}
+              </span>
+
+              <div className="flex items-center gap-2 mb-3 text-slate-300 text-sm">
+                <MapPin className="w-4 h-4 text-slate-400" />
+                {selectedProvider.location}
+              </div>
+
+              {canSeeDetails ? (
+                <div className="space-y-2 pt-2 border-t border-slate-700">
+                  {selectedProvider.email && (
+                    <a
+                      href={`mailto:${selectedProvider.email}`}
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-blue-400"
+                    >
+                      <Mail className="w-4 h-4" />
+                      {selectedProvider.email}
+                    </a>
+                  )}
+                  {selectedProvider.phone && (
+                    <a
+                      href={`tel:${selectedProvider.phone}`}
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-emerald-400"
+                    >
+                      <Phone className="w-4 h-4" />
+                      {selectedProvider.phone}
+                    </a>
+                  )}
+                  {selectedProvider.website && (
+                    <a
+                      href={selectedProvider.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-violet-400"
+                    >
+                      <Globe className="w-4 h-4" />
+                      Visit Website
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-slate-700">
+                  <Link
+                    href="/dashboard/network/upgrade"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Unlock Contact Info
+                  </Link>
+                </div>
+              )}
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+    </motion.div>
+  )
 }
 
 function NetworkPageContent() {
@@ -65,6 +267,7 @@ function NetworkPageContent() {
   const [data, setData] = useState<DiscoverResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [viewMode, setViewMode] = useState<"list" | "map">("list")
 
   // Check for success from Stripe checkout
   useEffect(() => {
@@ -306,8 +509,51 @@ function NetworkPageContent() {
           </motion.div>
         )}
 
-        {/* Matches Grid */}
+        {/* View Toggle */}
         {data.total > 0 && (
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-slate-400 text-sm">
+              Showing {data.matches.length} providers
+            </p>
+            <div className="flex bg-slate-800 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === "list"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <List className="w-4 h-4" />
+                List
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === "map"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <MapIcon className="w-4 h-4" />
+                Map
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Map View */}
+        {data.total > 0 && viewMode === "map" && (
+          <NetworkMap
+            matches={data.matches}
+            centerCoordinates={data.center_coordinates}
+            canSeeDetails={canSeeDetails}
+            accents={accents}
+          />
+        )}
+
+        {/* Matches Grid */}
+        {data.total > 0 && viewMode === "list" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -31,6 +31,33 @@ interface MatchResult {
   website?: string
   rating?: number
   review_count?: number
+  coordinates?: { lat: number; lng: number }
+}
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
+// Geocode an address to coordinates using Google Maps
+async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  if (!GOOGLE_MAPS_API_KEY || !address) return null
+
+  try {
+    const encodedAddress = encodeURIComponent(address)
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_MAPS_API_KEY}`
+    )
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    if (data.results && data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location
+      return { lat, lng }
+    }
+    return null
+  } catch (error) {
+    console.error('Geocoding error:', error)
+    return null
+  }
 }
 
 // Category mapping for search queries
@@ -128,6 +155,10 @@ async function searchLocalPartners(location: string, searchTerms: string[]): Pro
         if (place.website) score += 3
         if (place.phoneNumber) score += 2
 
+        // Geocode the address to get coordinates
+        const addressToGeocode = place.address || location
+        const coordinates = await geocodeAddress(addressToGeocode)
+
         results.push({
           id: place.cid || `serper-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           practice_name: place.title,
@@ -143,7 +174,8 @@ async function searchLocalPartners(location: string, searchTerms: string[]): Pro
           phone: place.phoneNumber,
           website: place.website,
           rating: place.rating,
-          review_count: place.ratingCount
+          review_count: place.ratingCount,
+          coordinates
         })
       }
     } catch (error) {
@@ -214,15 +246,19 @@ export async function GET(request: NextRequest) {
     // Limit results
     matches = matches.slice(0, 12)
 
-    // If no access, hide contact info
+    // If no access, hide contact info (but keep coordinates for map)
     if (!hasAccess) {
       matches = matches.map(m => ({
         ...m,
         phone: undefined,
         website: undefined,
         address: m.address ? m.address.split(',').slice(-2).join(',').trim() : undefined // Show only city/state
+        // Keep coordinates for map display
       }))
     }
+
+    // Geocode the user's location for map centering
+    const centerCoordinates = await geocodeAddress(userLocation)
 
     return NextResponse.json({
       matches,
@@ -235,7 +271,8 @@ export async function GET(request: NextRequest) {
         practice_name: currentProvider.practice_name,
         specialty: currentProvider.specialty,
         location: currentProvider.location
-      }
+      },
+      center_coordinates: centerCoordinates
     })
   } catch (error) {
     console.error('Discover error:', error)

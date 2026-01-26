@@ -122,10 +122,23 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Stripe checkout error:', error)
+
+    // Extract detailed Stripe error message
+    let errorMessage = 'Failed to create checkout session'
+    if (error && typeof error === 'object' && 'message' in error) {
+      const stripeError = error as { message: string; type?: string }
+      errorMessage = stripeError.message
+
+      // Provide more helpful guidance for common errors
+      if (errorMessage.includes('account or business name')) {
+        errorMessage = 'Stripe account not fully configured. Please complete your Stripe account setup at https://dashboard.stripe.com/settings/account and ensure you have set a business name.'
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

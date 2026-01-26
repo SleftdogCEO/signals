@@ -355,6 +355,31 @@ body {
   }
 }
 
+/* Mapbox popup customization for network map */
+.network-popup .mapboxgl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.75rem;
+}
+
+.network-popup .mapboxgl-popup-tip {
+  border-top-color: rgb(30 41 59) !important;
+}
+
+.network-popup .mapboxgl-popup-close-button {
+  color: rgb(148 163 184);
+  font-size: 20px;
+  padding: 4px 8px;
+  right: 4px;
+  top: 4px;
+}
+
+.network-popup .mapboxgl-popup-close-button:hover {
+  background: transparent;
+  color: white;
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);

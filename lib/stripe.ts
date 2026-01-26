@@ -16,7 +16,7 @@ export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || ''
 export const PLANS = {
   warmIntros: {
     name: 'Warm Introductions',
-    price: 250,
+    price: 120,
     interval: 'month' as const,
     features: [
       'We reach out to partners on your behalf',

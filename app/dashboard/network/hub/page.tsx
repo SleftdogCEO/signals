@@ -34,10 +34,37 @@ import {
   BookOpen,
   Globe,
   Bot,
-  LogOut
+  LogOut,
+  Map as MapIcon,
+  List,
+  Mail,
+  Phone
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api"
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+
+const mapContainerStyle = {
+  width: "100%",
+  height: "100%"
+}
+
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1e3a2f" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#475569" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+]
 
 // Types
 interface Post {
@@ -105,8 +132,10 @@ interface PartnerMatch {
   address?: string
   phone?: string
   website?: string
+  email?: string
   rating?: number
   review_count?: number
+  coordinates?: { lat: number; lng: number }
 }
 
 // Category config with better icons
@@ -126,6 +155,170 @@ const TAB_ITEMS = [
   { id: 'insights', label: 'Your Insights', icon: BookOpen, gradient: 'from-emerald-500 to-teal-400', description: 'Curated tips for your specialty' },
   { id: 'consulting', label: 'AI Growth Consulting', icon: Zap, gradient: 'from-amber-500 to-orange-400', description: 'We build tools for your practice' },
 ]
+
+// Network Map Component for Hub
+function HubNetworkMap({
+  matches,
+  centerCoordinates,
+  hasAccess
+}: {
+  matches: PartnerMatch[]
+  centerCoordinates: { lat: number; lng: number } | null
+  hasAccess: boolean
+}) {
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY
+  })
+
+  const [selectedProvider, setSelectedProvider] = useState<PartnerMatch | null>(null)
+  const [map, setMap] = useState<google.maps.Map | null>(null)
+
+  const center = centerCoordinates || { lat: 39.8283, lng: -98.5795 }
+  const matchesWithCoords = matches.filter((m) => m.coordinates)
+
+  useEffect(() => {
+    if (map && matchesWithCoords.length > 0) {
+      const bounds = new google.maps.LatLngBounds()
+      matchesWithCoords.forEach((match) => {
+        if (match.coordinates) {
+          bounds.extend({ lat: match.coordinates.lat, lng: match.coordinates.lng })
+        }
+      })
+      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 })
+      const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+        const currentZoom = map.getZoom()
+        if (currentZoom && currentZoom > 14) {
+          map.setZoom(14)
+        }
+      })
+    }
+  }, [map, matchesWithCoords])
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
+        <MapIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-white mb-2">Map View Coming Soon</h3>
+        <p className="text-slate-400">The interactive map is being configured.</p>
+      </div>
+    )
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="rounded-2xl border border-slate-700 bg-slate-800/50 h-[700px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden border border-slate-700"
+      style={{ height: "700px" }}
+    >
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={center}
+        zoom={12}
+        onLoad={(mapInstance) => setMap(mapInstance)}
+        options={{
+          styles: darkMapStyle,
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: true
+        }}
+      >
+        {matchesWithCoords.map((match, index) => (
+          <Marker
+            key={match.id}
+            position={{ lat: match.coordinates!.lat, lng: match.coordinates!.lng }}
+            onClick={() => setSelectedProvider(match)}
+            icon={{
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 12,
+              fillColor: index % 6 === 0 ? "#3b82f6" : index % 6 === 1 ? "#8b5cf6" : index % 6 === 2 ? "#10b981" : index % 6 === 3 ? "#f43f5e" : index % 6 === 4 ? "#f59e0b" : "#6366f1",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 3
+            }}
+          />
+        ))}
+
+        {selectedProvider && selectedProvider.coordinates && (
+          <InfoWindow
+            position={{ lat: selectedProvider.coordinates.lat, lng: selectedProvider.coordinates.lng }}
+            onCloseClick={() => setSelectedProvider(null)}
+          >
+            <div className="bg-slate-800 rounded-xl p-4 min-w-[300px]">
+              <h3 className="font-bold text-lg text-white mb-1">
+                {selectedProvider.practice_name}
+              </h3>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-medium rounded">
+                  {selectedProvider.specialty}
+                </span>
+                {selectedProvider.rating && (
+                  <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                    {selectedProvider.rating}
+                  </span>
+                )}
+              </div>
+
+              {selectedProvider.address && (
+                <div className="flex items-center gap-2 mb-3 text-slate-300 text-sm">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  {selectedProvider.address}
+                </div>
+              )}
+
+              {hasAccess ? (
+                <div className="space-y-2 pt-2 border-t border-slate-700">
+                  {selectedProvider.phone && (
+                    <a
+                      href={`tel:${selectedProvider.phone}`}
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-emerald-400"
+                    >
+                      <Phone className="w-4 h-4" />
+                      {selectedProvider.phone}
+                    </a>
+                  )}
+                  {selectedProvider.website && (
+                    <a
+                      href={selectedProvider.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-blue-400"
+                    >
+                      <Globe className="w-4 h-4" />
+                      Visit Website
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-slate-700">
+                  <Link
+                    href="/dashboard/network/upgrade"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Unlock Contact Info
+                  </Link>
+                </div>
+              )}
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+    </motion.div>
+  )
+}
 
 function NetworkHubContent() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -164,6 +357,8 @@ function NetworkHubContent() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [showCreatePost, setShowCreatePost] = useState(false)
+  const [viewMode, setViewMode] = useState<"list" | "map">("list")
+  const [centerCoordinates, setCenterCoordinates] = useState<{ lat: number; lng: number } | null>(null)
 
   const isSubscribed = provider?.subscription_status === 'active'
   const isTrial = provider?.subscription_status === 'trial'
@@ -196,6 +391,9 @@ function NetworkHubContent() {
       if (matchesRes.ok) {
         const matchesData = await matchesRes.json()
         setPartnerMatches(matchesData.matches || [])
+        if (matchesData.center_coordinates) {
+          setCenterCoordinates(matchesData.center_coordinates)
+        }
       }
 
       // Load all data in parallel
@@ -375,6 +573,36 @@ function NetworkHubContent() {
                 </div>
               </div>
 
+              {/* View Toggle */}
+              {partnerMatches.length > 0 && (
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <div className="flex bg-slate-800 rounded-xl p-1.5">
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                        viewMode === "list"
+                          ? "bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-lg"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <List className="w-4 h-4" />
+                      List View
+                    </button>
+                    <button
+                      onClick={() => setViewMode("map")}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                        viewMode === "map"
+                          ? "bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-lg"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <MapIcon className="w-4 h-4" />
+                      Map View
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Warm Intros CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -396,13 +624,13 @@ function NetworkHubContent() {
                     href="/dashboard/network/upgrade"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 whitespace-nowrap"
                   >
-                    Get Warm Intros — $250/mo
+                    Get Warm Intros — $120/mo
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </motion.div>
 
-              {/* Partner Cards */}
+              {/* Partner Cards / Map */}
               {partnerMatches.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -413,6 +641,12 @@ function NetworkHubContent() {
                     We're finding healthcare practices in your area. This may take a moment.
                   </p>
                 </div>
+              ) : viewMode === "map" ? (
+                <HubNetworkMap
+                  matches={partnerMatches}
+                  centerCoordinates={centerCoordinates}
+                  hasAccess={hasAccess}
+                />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {partnerMatches.slice(0, 6).map((match, index) => (
@@ -439,9 +673,6 @@ function NetworkHubContent() {
                               </span>
                             )}
                           </div>
-                        </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-black text-white">{match.match_score}</span>
                         </div>
                       </div>
 
