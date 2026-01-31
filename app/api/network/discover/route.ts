@@ -227,9 +227,33 @@ export async function GET(request: NextRequest) {
       searchTerms.push(...terms)
     }
 
-    // If no specific interests, search for general healthcare partners
+    // If no specific interests, search for complementary specialties based on user's specialty
     if (searchTerms.length === 0) {
-      searchTerms.push('medical clinic', 'healthcare practice', 'doctor office')
+      const userSpecialty = (currentProvider.specialty || '').toLowerCase()
+
+      // Map user specialty to complementary partner types to avoid returning competitors
+      if (userSpecialty.includes('family') || userSpecialty.includes('primary') || userSpecialty.includes('internal')) {
+        // Primary care should partner with specialists and ancillary services
+        searchTerms.push('physical therapy clinic', 'chiropractor', 'mental health counselor', 'cardiologist', 'dermatologist', 'orthopedic surgeon')
+      } else if (userSpecialty.includes('physical therapy') || userSpecialty.includes('chiropract')) {
+        // Rehab should partner with PCPs and orthopedics
+        searchTerms.push('family medicine clinic', 'orthopedic surgeon', 'sports medicine', 'pain management')
+      } else if (userSpecialty.includes('mental') || userSpecialty.includes('psych')) {
+        // Mental health should partner with PCPs and wellness
+        searchTerms.push('family medicine clinic', 'primary care doctor', 'wellness clinic', 'life coach')
+      } else if (userSpecialty.includes('dental') || userSpecialty.includes('orthodont')) {
+        // Dental should partner with other dental specialties and PCPs
+        searchTerms.push('family medicine clinic', 'oral surgeon', 'periodontist', 'pediatric dentist')
+      } else if (userSpecialty.includes('cardio')) {
+        searchTerms.push('family medicine clinic', 'internal medicine', 'cardiac rehabilitation', 'vascular surgeon')
+      } else if (userSpecialty.includes('derma')) {
+        searchTerms.push('family medicine clinic', 'plastic surgeon', 'med spa', 'allergy specialist')
+      } else if (userSpecialty.includes('orthopedic')) {
+        searchTerms.push('physical therapy clinic', 'pain management', 'sports medicine', 'chiropractor')
+      } else {
+        // Default: search for a variety of complementary practices
+        searchTerms.push('physical therapy clinic', 'mental health counselor', 'chiropractor', 'family medicine clinic', 'specialist doctor')
+      }
     }
 
     // Search for real local partners using Serper

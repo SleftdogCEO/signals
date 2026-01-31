@@ -33,7 +33,7 @@ export async function GET(
 
     // Fetch from Supabase
     const { data: brief, error } = await supabase
-      .from('briefs')
+      .from('user_briefs')
       .select('*')
       .eq('id', briefId)
       .single()
@@ -72,7 +72,7 @@ export async function DELETE(
     }
 
     const { error } = await supabase
-      .from('briefs')
+      .from('user_briefs')
       .delete()
       .eq('id', briefId)
 

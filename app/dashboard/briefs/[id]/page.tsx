@@ -199,23 +199,26 @@ export default function BriefPage({ params }: BriefPageProps) {
       if (data.error) {
         setError(data.error)
       } else if (data.id || data.success) {
-        // Handle both direct Supabase response and wrapped response
+        // Handle both direct Supabase response (snake_case) and wrapped response (camelCase)
         const briefData = data.brief || data
         setBrief({
           id: briefData.id || id,
           businessName: briefData.business_name || briefData.businessName,
           metadata: {
-            industry: briefData.industry || briefData.metadata?.industry,
-            location: briefData.location || briefData.metadata?.location
+            industry: briefData.metadata?.industry || briefData.industry,
+            location: briefData.metadata?.location || briefData.location
           },
           businessData: {
-            leads: briefData.leads || briefData.businessData?.leads || []
+            // Handle snake_case from Supabase: business_data.leads
+            leads: briefData.business_data?.leads || briefData.businessData?.leads || briefData.leads || []
           },
           newsData: {
-            articles: briefData.news || briefData.newsData?.articles || []
+            // Handle snake_case from Supabase: news_data.articles
+            articles: briefData.news_data?.articles || briefData.newsData?.articles || briefData.news || []
           },
           meetupData: {
-            events: briefData.events || briefData.meetupData?.events || []
+            // Handle snake_case from Supabase: meetup_data.events
+            events: briefData.meetup_data?.events || briefData.meetupData?.events || briefData.events || []
           }
         })
       } else {
