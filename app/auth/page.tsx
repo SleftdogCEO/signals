@@ -53,36 +53,11 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
+    <div className="min-h-screen bg-slate-950 overflow-hidden">
       {/* Background gradients */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            x: [0, 80, 40, 0],
-            y: [0, 40, 80, 0],
-            scale: [1, 1.2, 1.1, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-violet-400/40 via-fuchsia-400/30 to-pink-300/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            x: [0, -60, -30, 0],
-            y: [0, 60, 30, 0],
-            scale: [1, 1.15, 1.2, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-10 -right-20 w-[450px] h-[450px] bg-gradient-to-bl from-cyan-400/40 via-teal-400/30 to-emerald-300/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            x: [0, 50, -50, 0],
-            y: [0, -30, 30, 0],
-            scale: [1, 1.1, 1.2, 1],
-          }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-gradient-to-t from-violet-400/30 via-purple-400/20 to-indigo-300/10 rounded-full blur-3xl"
-        />
+        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Nav */}
@@ -93,10 +68,10 @@ export default function AuthPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
-            <div className="w-11 h-11 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Sleft Health</span>
+            <span className="text-xl font-bold text-white">Sleft Health</span>
           </motion.div>
         </Link>
 
@@ -106,7 +81,7 @@ export default function AuthPage() {
         >
           <Link
             href="/"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-400 hover:text-white bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -124,9 +99,9 @@ export default function AuthPage() {
             transition={{ delay: 0.1 }}
             className="flex justify-center mb-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 border border-teal-200 rounded-full shadow-sm">
-              <Shield className="w-4 h-4 text-teal-600" />
-              <span className="text-sm text-teal-700 font-semibold">Join the healthcare referral network</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full">
+              <Shield className="w-4 h-4 text-blue-400" />
+              <span className="text-sm text-blue-400 font-semibold">Join the healthcare referral network</span>
             </div>
           </motion.div>
 
@@ -138,12 +113,12 @@ export default function AuthPage() {
             className="text-center mb-8"
           >
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              <span className="text-gray-900">Get matched with </span>
-              <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent">
+              <span className="text-white">Get matched with </span>
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
                 referral partners
               </span>
             </h1>
-            <p className="text-lg text-gray-600 max-w-md mx-auto">
+            <p className="text-lg text-slate-400 max-w-md mx-auto">
               Connect with healthcare providers who need your patients—and have patients for you.
             </p>
           </motion.div>
@@ -158,7 +133,7 @@ export default function AuthPage() {
               className="order-2 lg:order-1 flex justify-center"
             >
               <div className="w-full max-w-[280px]">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-200 bg-black">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/20 border border-slate-800 bg-black">
                   <video
                     controls
                     playsInline
@@ -168,7 +143,7 @@ export default function AuthPage() {
                     Your browser does not support the video tag.
                   </video>
                 </div>
-                <p className="text-center text-sm text-gray-500 mt-3">
+                <p className="text-center text-sm text-slate-500 mt-3">
                   Watch: How Sleft Health helps you grow your practice
                 </p>
               </div>
@@ -184,9 +159,9 @@ export default function AuthPage() {
               {/* Value props */}
               <div className="flex flex-wrap justify-center gap-3 mb-6">
                 {[
-                  { icon: UserPlus, label: "Smart Matching", color: "text-violet-600", bg: "bg-violet-50 border-violet-200" },
-                  { icon: Users, label: "500+ Providers", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
-                  { icon: Heart, label: "Warm Intros", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
+                  { icon: UserPlus, label: "Smart Matching", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
+                  { icon: Users, label: "500+ Providers", color: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/20" },
+                  { icon: Heart, label: "Two-Way Matches", color: "text-teal-400", bg: "bg-teal-500/10 border-teal-500/20" },
                 ].map((item, i) => (
                   <motion.div
                     key={i}
@@ -205,7 +180,7 @@ export default function AuthPage() {
               <AuthCard />
 
               {/* Trust badge */}
-              <p className="text-center text-sm text-gray-500 mt-6 font-medium">
+              <p className="text-center text-sm text-slate-500 mt-6 font-medium">
                 Free to get started. No credit card required.
               </p>
             </motion.div>
