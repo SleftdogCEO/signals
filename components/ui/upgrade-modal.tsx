@@ -43,21 +43,21 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
   const plans: Record<'monthly' | 'yearly' | 'custom', Plan> = {
     monthly: {
       price: 0,
-      period: 'forever',
+      period: 'month',
       popular: true,
-      features: ['Partner Matching', 'Community Insights', 'AI-Curated Intelligence', 'Product Reviews', 'Full Platform Access']
+      features: ['Partner Matching', 'Community Insights', 'AI-Curated Intelligence', 'Product Reviews', 'Platform Access']
     },
     yearly: {
       price: 0,
-      period: 'forever',
-      savings: 'Always Free',
+      period: 'month',
+      savings: 'Get Started Free',
       popular: true,
-      features: ['Everything Included', 'No Hidden Fees', 'No Credit Card', 'Unlimited Access', 'All Future Features']
+      features: ['All Features Included', 'No Credit Card Required', 'Community Access', 'Match with Partners', 'AI Insights']
     },
     custom: {
-      price: '$0',
-      period: 'forever',
-      features: ['100% Free Platform', 'No Premium Tiers', 'No Paywalls', 'Full Feature Access', 'Forever']
+      price: 'Free',
+      period: 'to start',
+      features: ['Full Platform Access', 'Partner Network', 'Community Forum', 'Smart Matching', 'Get Started Today']
     }
   }
 
@@ -84,11 +84,11 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
               <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
             </motion.div>
           </div>
-          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            Everything's Already Free!
+          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            Welcome to Sleft Health
           </DialogTitle>
           <DialogDescription className="text-gray-300 text-base sm:text-lg px-2 sm:px-0">
-            You already have full access to all features. No payment required, ever.
+            You have access to partner matching, community insights, and AI-powered intelligence.
           </DialogDescription>
         </DialogHeader>
 
@@ -198,7 +198,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
         {/* Footer */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-700">
           <p className="text-gray-400 text-xs sm:text-sm text-center">
-            100% Free Forever • No Payment Required • All Features Included
+            No credit card required to get started
           </p>
         </div>
       </DialogContent>

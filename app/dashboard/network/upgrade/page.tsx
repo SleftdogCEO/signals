@@ -25,22 +25,22 @@ const FEATURES = [
   {
     icon: Handshake,
     title: "Partner Matching",
-    description: "Connect with local healthcare providers who want to exchange referrals with you. Two-way matches only, 100% free."
+    description: "Connect with local healthcare providers who want to exchange referrals with you. Two-way matches only."
   },
   {
     icon: Target,
     title: "Community Intelligence",
-    description: "Real insights from real practices. What software works, what doesn't, how to grow. All free, all the time."
+    description: "Real insights from real practices. What software works, what doesn't, and how to grow your practice."
   },
   {
     icon: Users,
     title: "AI-Curated Insights",
-    description: "Get personalized intelligence tailored to your specialty and location. No cost, ever."
+    description: "Get personalized intelligence tailored to your specialty, location, and interests."
   },
   {
     icon: MessageSquare,
     title: "Reviews & Discussions",
-    description: "See what other practices say about vendors, software, and strategies. Free access to everything."
+    description: "See what other practices say about vendors, software, and growth strategies."
   }
 ]
 
@@ -169,9 +169,9 @@ function UpgradeContent() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-4 leading-[1.1]"
           >
-            Everything You Need
+            Connect With
             <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              100% Free Forever
+              Your Perfect Partners
             </span>
           </motion.h1>
           <motion.p
@@ -181,7 +181,7 @@ function UpgradeContent() {
             className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto"
           >
             Partner matching, community insights, and AI-powered intelligence.
-            No payments. No subscriptions. No credit card required.
+            Get started at no cost.
           </motion.p>
         </div>
 
@@ -197,18 +197,17 @@ function UpgradeContent() {
 
           <div className="relative bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
             {/* Badge */}
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2.5 text-center">
-              <span className="text-sm font-bold text-white tracking-wide">EVERYTHING INCLUDED • NO COST</span>
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-2.5 text-center">
+              <span className="text-sm font-bold text-white tracking-wide">GET STARTED</span>
             </div>
 
             <div className="p-8">
               {/* Price */}
               <div className="text-center mb-8">
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-black text-white">$0</span>
-                  <span className="text-xl text-slate-400">/forever</span>
+                  <span className="text-5xl font-black text-white">Free</span>
                 </div>
-                <p className="text-slate-500 mt-2">No credit card • No hidden fees • No catches</p>
+                <p className="text-slate-500 mt-2">No credit card required</p>
               </div>
 
               {/* Features */}
@@ -242,11 +241,11 @@ function UpgradeContent() {
               <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-slate-800">
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                   <Shield className="w-4 h-4" />
-                  100% Free
+                  Secure platform
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                   <Check className="w-4 h-4" />
-                  No payment needed
+                  Get started free
                 </div>
               </div>
             </div>
@@ -292,24 +291,23 @@ function UpgradeContent() {
           <h2 className="text-2xl font-bold text-white mb-6">Common Questions</h2>
           <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-white mb-2">Is this really completely free?</h3>
+              <h3 className="font-bold text-white mb-2">How does partner matching work?</h3>
               <p className="text-slate-400 text-sm">
-                Yes! Sleft Health is 100% free. No credit card required, no hidden fees, no premium tiers.
-                We believe healthcare providers should have free access to the connections and insights they need to grow.
+                We identify local practices that would be a good fit for referral partnerships with you.
+                You can browse matches, see compatibility scores, and connect directly with providers who want to exchange referrals.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-white mb-2">What features do I get for free?</h3>
+              <h3 className="font-bold text-white mb-2">What features are included?</h3>
               <p className="text-slate-400 text-sm">
-                Everything! Partner matching, community discussions, AI-curated insights, product reviews,
-                and all future features. There are no paid upgrades or premium features.
+                Partner matching, community discussions, AI-curated insights specific to your specialty,
+                and product reviews from real practices. Get started at no cost.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-white mb-2">Will this always be free?</h3>
+              <h3 className="font-bold text-white mb-2">Do I need a credit card to sign up?</h3>
               <p className="text-slate-400 text-sm">
-                Yes. Sleft Health is committed to remaining 100% free for all healthcare providers.
-                Our mission is to help practices grow without adding to their overhead costs.
+                No. You can create an account and start exploring partner matches without entering any payment information.
               </p>
             </div>
           </div>

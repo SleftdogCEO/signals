@@ -105,7 +105,7 @@ export default function HomePage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
                 <Zap className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-400 font-medium">100% Free • Always</span>
+                <span className="text-sm text-blue-400 font-medium">The network for healthcare growth</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
@@ -277,8 +277,8 @@ export default function HomePage() {
                 </div>
                 <div className="text-center">
                   <div className="inline-block bg-slate-900/80 border border-slate-700 rounded-2xl p-8">
-                    <div className="text-6xl font-black text-white mb-2">100% Free</div>
-                    <div className="text-slate-400 mb-6">Forever. No credit card required.</div>
+                    <div className="text-6xl font-black text-white mb-2">Free</div>
+                    <div className="text-slate-400 mb-6">No credit card required</div>
                     <Link
                       href="/auth?signup=true"
                       className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
@@ -287,7 +287,7 @@ export default function HomePage() {
                       <ArrowRight className="w-5 h-5" />
                     </Link>
                     <p className="text-sm text-slate-500 mt-4">
-                      Everything included. Zero cost. Always.
+                      See your matches instantly
                     </p>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
               href="/auth?signup=true"
               className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
             >
-              Get Started — 100% Free
+              Get Started Free
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>

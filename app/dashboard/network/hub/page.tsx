@@ -344,7 +344,7 @@ function NetworkHubContent() {
     const isTest = searchParams.get('test')
     if (success === 'true') {
       setShowSuccessMessage(true)
-      toast.success('Welcome to Sleft Health! Full access unlocked — 100% free.')
+      toast.success('Welcome to Sleft Health! You're all set.')
       // Clear the URL params
       window.history.replaceState({}, '', '/dashboard/network/hub')
     }
@@ -479,7 +479,7 @@ function NetworkHubContent() {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm font-medium text-emerald-400">
                 <CheckCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Free Access</span>
+                <span className="hidden sm:inline">Member</span>
               </span>
               <button
                 onClick={handleLogout}
@@ -593,28 +593,28 @@ function NetworkHubContent() {
                 </div>
               )}
 
-              {/* Free Access Banner */}
+              {/* Network CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-6 lg:p-8"
+                className="bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 border border-blue-500/20 rounded-2xl p-6 lg:p-8"
               >
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/30 flex-shrink-0">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 flex-shrink-0">
                     <Handshake className="w-8 h-8 text-white" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-xl font-bold text-white mb-2">Everything You Need — 100% Free</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">Start Building Your Network</h3>
                     <p className="text-slate-400">
-                      Connect with local partners, access community insights, and grow your practice. All features included at no cost.
+                      Connect with local partners, share insights with the community, and grow your practice together.
                     </p>
                   </div>
                   <Link
                     href="/dashboard/network/hub"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-emerald-500/25 whitespace-nowrap"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 whitespace-nowrap"
                   >
-                    Explore Partners
+                    Explore Network
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

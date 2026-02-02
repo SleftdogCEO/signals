@@ -427,7 +427,7 @@ function NetworkPageContent() {
           <div className="flex items-center gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
               <CheckCircle className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm text-emerald-400 font-semibold">Free Member • Full Access</span>
+              <span className="text-sm text-emerald-400 font-semibold">Network Member</span>
             </div>
           </div>
 

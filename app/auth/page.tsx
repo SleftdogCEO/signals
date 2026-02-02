@@ -206,7 +206,7 @@ export default function AuthPage() {
 
               {/* Trust badge */}
               <p className="text-center text-sm text-gray-500 mt-6 font-medium">
-                100% Free Forever. No Credit Card Required.
+                Free to get started. No credit card required.
               </p>
             </motion.div>
           </div>

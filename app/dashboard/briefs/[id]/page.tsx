@@ -428,7 +428,7 @@ export default function BriefPage({ params }: BriefPageProps) {
               </button>
               <span className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 text-sm font-medium">
                 <CheckCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Free Access</span>
+                <span className="hidden sm:inline">Active</span>
               </span>
             </div>
           </div>
@@ -774,10 +774,10 @@ export default function BriefPage({ params }: BriefPageProps) {
                 <Check className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h3>
-              <p className="text-gray-500 mb-6">Your feedback helps us build a better product. Enjoy unlimited free access to all briefs!</p>
+              <p className="text-gray-500 mb-6">Your feedback helps us build a better product.</p>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/25"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-xl font-medium hover:opacity-90 transition-all shadow-lg shadow-blue-500/25"
               >
                 <CheckCircle className="w-5 h-5" />
                 Back to Dashboard
