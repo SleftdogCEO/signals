@@ -979,14 +979,14 @@ export default function DashboardSnapshotPage() {
           className="bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 rounded-2xl p-8 text-center"
         >
           <Zap className="w-12 h-12 text-white/90 mx-auto mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">Want More Partners?</h2>
+          <h2 className="text-2xl font-black text-white mb-2">Everything's Free!</h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto font-medium">
-            Upgrade for unlimited searches, real-time updates, and warm introductions.
+            Unlimited partner searches, real-time updates, and full platform access — all at zero cost.
           </p>
           <button
             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-xl text-lg"
           >
-            Coming Soon
+            Explore Network
           </button>
         </motion.div>
       </main>

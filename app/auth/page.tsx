@@ -206,7 +206,7 @@ export default function AuthPage() {
 
               {/* Trust badge */}
               <p className="text-center text-sm text-gray-500 mt-6 font-medium">
-                14-day free trial. $250/month after.
+                100% Free Forever. No Credit Card Required.
               </p>
             </motion.div>
           </div>

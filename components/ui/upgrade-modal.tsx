@@ -41,24 +41,23 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
   }
 
   const plans: Record<'monthly' | 'yearly' | 'custom', Plan> = {
-    monthly: { 
-      price: 49, 
-      originalPrice: 69, 
-      period: 'month',
-      features: ['AI Lead Generation', 'Business Networking', 'Market Intelligence', 'Basic Support']
-    },
-    yearly: { 
-      price: 39, 
-      originalPrice: 49, 
-      period: 'month', 
-      savings: 'Save 20%', 
+    monthly: {
+      price: 0,
+      period: 'forever',
       popular: true,
-      features: ['Everything in Monthly', 'Advanced Analytics', 'Priority Support', 'API Access']
+      features: ['Partner Matching', 'Community Insights', 'AI-Curated Intelligence', 'Product Reviews', 'Full Platform Access']
     },
-    custom: { 
-      price: 'Contact Us', 
-      period: 'custom',
-      features: ['SSO SAML Integration', 'Dedicated Support', 'Custom Integrations', 'Advanced Security', 'White-label Options']
+    yearly: {
+      price: 0,
+      period: 'forever',
+      savings: 'Always Free',
+      popular: true,
+      features: ['Everything Included', 'No Hidden Fees', 'No Credit Card', 'Unlimited Access', 'All Future Features']
+    },
+    custom: {
+      price: '$0',
+      period: 'forever',
+      features: ['100% Free Platform', 'No Premium Tiers', 'No Paywalls', 'Full Feature Access', 'Forever']
     }
   }
 
@@ -85,11 +84,11 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
               <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
             </motion.div>
           </div>
-          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-            Upgrade to Sleft Pro
+          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            Everything's Already Free!
           </DialogTitle>
           <DialogDescription className="text-gray-300 text-base sm:text-lg px-2 sm:px-0">
-            Unlock advanced AI business intelligence and premium networking features
+            You already have full access to all features. No payment required, ever.
           </DialogDescription>
         </DialogHeader>
 
@@ -199,11 +198,8 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
         {/* Footer */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-700">
           <p className="text-gray-400 text-xs sm:text-sm text-center">
-            14-day free trial • Cancel anytime • 30-day money back
+            100% Free Forever • No Payment Required • All Features Included
           </p>
-          <button className="text-yellow-400 hover:text-yellow-300 text-xs sm:text-sm underline">
-            Need help choosing?
-          </button>
         </div>
       </DialogContent>
     </Dialog>

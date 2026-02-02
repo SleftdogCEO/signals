@@ -344,7 +344,7 @@ function NetworkHubContent() {
     const isTest = searchParams.get('test')
     if (success === 'true') {
       setShowSuccessMessage(true)
-      toast.success(isTest ? 'Test subscription activated!' : 'Subscription activated! Welcome to Warm Introductions.')
+      toast.success('Welcome to Sleft Health! Full access unlocked — 100% free.')
       // Clear the URL params
       window.history.replaceState({}, '', '/dashboard/network/hub')
     }
@@ -362,7 +362,7 @@ function NetworkHubContent() {
 
   const isSubscribed = provider?.subscription_status === 'active'
   const isTrial = provider?.subscription_status === 'trial'
-  const hasAccess = isSubscribed || isTrial
+  const hasAccess = true // Everything is free - full access for everyone
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -477,20 +477,10 @@ function NetworkHubContent() {
             </Link>
 
             <div className="flex items-center gap-3">
-              {hasAccess ? (
-                <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm font-medium text-emerald-400">
-                  <Crown className="w-4 h-4" />
-                  <span className="hidden sm:inline">{isSubscribed ? 'Pro' : 'Trial'}</span>
-                </span>
-              ) : (
-                <Link
-                  href="/dashboard/network/upgrade"
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span className="hidden sm:inline">Unlock</span>
-                </Link>
-              )}
+              <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm font-medium text-emerald-400">
+                <CheckCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Free Access</span>
+              </span>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-400 hover:text-white transition-colors"
@@ -603,28 +593,28 @@ function NetworkHubContent() {
                 </div>
               )}
 
-              {/* Warm Intros CTA */}
+              {/* Free Access Banner */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 border border-blue-500/20 rounded-2xl p-6 lg:p-8"
+                className="bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-6 lg:p-8"
               >
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 flex-shrink-0">
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/30 flex-shrink-0">
                     <Handshake className="w-8 h-8 text-white" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-xl font-bold text-white mb-2">Ready for us to introduce you?</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">Everything You Need — 100% Free</h3>
                     <p className="text-slate-400">
-                      We'll reach out to partners on your behalf, schedule meetings, and make sure it's a mutual fit. No cold outreach needed.
+                      Connect with local partners, access community insights, and grow your practice. All features included at no cost.
                     </p>
                   </div>
                   <Link
-                    href="/dashboard/network/upgrade"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 whitespace-nowrap"
+                    href="/dashboard/network/hub"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-emerald-500/25 whitespace-nowrap"
                   >
-                    Get Warm Intros — $120/mo
+                    Explore Partners
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

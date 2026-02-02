@@ -13,7 +13,7 @@ import {
   Zap,
   Building2,
   MessageSquare,
-  Lock,
+  Sparkles,
   TrendingUp
 } from "lucide-react"
 
@@ -105,7 +105,7 @@ export default function HomePage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
                 <Zap className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-400 font-medium">The network for healthcare growth</span>
+                <span className="text-sm text-blue-400 font-medium">100% Free • Always</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
@@ -146,21 +146,21 @@ export default function HomePage() {
             className="max-w-4xl mx-auto mb-32"
           >
             <div className="relative bg-slate-900/80 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm">
-              {/* Lock overlay */}
+              {/* Sign up overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent rounded-2xl flex items-end justify-center pb-12 z-10">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                    <Lock className="w-8 h-8 text-slate-500" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/30">
+                    <Sparkles className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">Your Partner Matches Are Waiting</h3>
                   <p className="text-slate-400 mb-6 max-w-md">
-                    Sign up to see providers in your area who want to exchange referrals with you.
+                    Sign up free to see providers in your area who want to exchange referrals with you.
                   </p>
                   <Link
                     href="/auth?signup=true"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-colors"
                   >
-                    Unlock Your Matches
+                    Get Started Free
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
@@ -277,8 +277,8 @@ export default function HomePage() {
                 </div>
                 <div className="text-center">
                   <div className="inline-block bg-slate-900/80 border border-slate-700 rounded-2xl p-8">
-                    <div className="text-6xl font-black text-white mb-2">Free</div>
-                    <div className="text-slate-400 mb-6">to get started</div>
+                    <div className="text-6xl font-black text-white mb-2">100% Free</div>
+                    <div className="text-slate-400 mb-6">Forever. No credit card required.</div>
                     <Link
                       href="/auth?signup=true"
                       className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
@@ -287,7 +287,7 @@ export default function HomePage() {
                       <ArrowRight className="w-5 h-5" />
                     </Link>
                     <p className="text-sm text-slate-500 mt-4">
-                      See your matches instantly. Upgrade anytime.
+                      Everything included. Zero cost. Always.
                     </p>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
               href="/auth?signup=true"
               className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
             >
-              Get Started Free
+              Get Started — 100% Free
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>

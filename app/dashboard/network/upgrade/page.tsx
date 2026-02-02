@@ -24,23 +24,23 @@ import { toast } from "sonner"
 const FEATURES = [
   {
     icon: Handshake,
-    title: "We Make The Introductions",
-    description: "No cold outreach needed. We personally reach out to partners on your behalf, explain the mutual benefits, and schedule meetings."
+    title: "Partner Matching",
+    description: "Connect with local healthcare providers who want to exchange referrals with you. Two-way matches only, 100% free."
   },
   {
     icon: Target,
-    title: "Pre-Qualified Partners",
-    description: "We vet every connection to ensure it's a good fit. Both practices benefit - no one-sided relationships."
+    title: "Community Intelligence",
+    description: "Real insights from real practices. What software works, what doesn't, how to grow. All free, all the time."
   },
   {
     icon: Users,
-    title: "Scheduled Meetings",
-    description: "We don't just send names. We book actual meetings between you and partners who want to work with you."
+    title: "AI-Curated Insights",
+    description: "Get personalized intelligence tailored to your specialty and location. No cost, ever."
   },
   {
     icon: MessageSquare,
-    title: "Ongoing Relationship Support",
-    description: "We help facilitate the first few referrals to make sure the partnership gets off to a strong start."
+    title: "Reviews & Discussions",
+    description: "See what other practices say about vendors, software, and strategies. Free access to everything."
   }
 ]
 
@@ -169,9 +169,9 @@ function UpgradeContent() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-4 leading-[1.1]"
           >
-            We'll Introduce You to
+            Everything You Need
             <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Your Perfect Partners
+              100% Free Forever
             </span>
           </motion.h1>
           <motion.p
@@ -180,12 +180,12 @@ function UpgradeContent() {
             transition={{ delay: 0.1 }}
             className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto"
           >
-            No cold outreach. No awkward emails. We personally reach out to local practices,
-            explain the mutual benefits, and schedule meetings on your behalf.
+            Partner matching, community insights, and AI-powered intelligence.
+            No payments. No subscriptions. No credit card required.
           </motion.p>
         </div>
 
-        {/* Pricing Card */}
+        {/* Free Access Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,28 +197,28 @@ function UpgradeContent() {
 
           <div className="relative bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
             {/* Badge */}
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-2.5 text-center">
-              <span className="text-sm font-bold text-white tracking-wide">WARM INTRODUCTIONS SERVICE</span>
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2.5 text-center">
+              <span className="text-sm font-bold text-white tracking-wide">EVERYTHING INCLUDED • NO COST</span>
             </div>
 
             <div className="p-8">
               {/* Price */}
               <div className="text-center mb-8">
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-black text-white">$120</span>
-                  <span className="text-xl text-slate-400">/month</span>
+                  <span className="text-5xl font-black text-white">$0</span>
+                  <span className="text-xl text-slate-400">/forever</span>
                 </div>
-                <p className="text-slate-500 mt-2">Cancel anytime • Typically 3-5 intros/month</p>
+                <p className="text-slate-500 mt-2">No credit card • No hidden fees • No catches</p>
               </div>
 
               {/* Features */}
               <ul className="space-y-4 mb-8">
                 {[
-                  "We reach out to partners on your behalf",
-                  "Meetings scheduled for you",
-                  "Pre-qualified, mutual-fit partners only",
-                  "Relationship facilitation support",
-                  "Access to community & insights"
+                  "Partner matching with local providers",
+                  "Community insights and discussions",
+                  "AI-curated intelligence for your specialty",
+                  "Product reviews from real practices",
+                  "Full access to all features"
                 ].map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -230,33 +230,23 @@ function UpgradeContent() {
               </ul>
 
               {/* CTA */}
-              <button
-                onClick={handleSubscribe}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold text-lg rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              <Link
+                href="/dashboard/network/hub"
+                className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold text-lg rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/25"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Redirecting to Checkout...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5" />
-                    Subscribe Now
-                  </>
-                )}
-              </button>
+                <Zap className="w-5 h-5" />
+                Get Started Now
+              </Link>
 
               {/* Trust badges */}
               <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-slate-800">
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                   <Shield className="w-4 h-4" />
-                  Secure checkout
+                  100% Free
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                   <Check className="w-4 h-4" />
-                  Cancel anytime
+                  No payment needed
                 </div>
               </div>
             </div>
@@ -302,25 +292,24 @@ function UpgradeContent() {
           <h2 className="text-2xl font-bold text-white mb-6">Common Questions</h2>
           <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-white mb-2">How does the intro process work?</h3>
+              <h3 className="font-bold text-white mb-2">Is this really completely free?</h3>
               <p className="text-slate-400 text-sm">
-                We identify local practices that would benefit from a partnership with you.
-                We reach out on your behalf, explain the mutual value, and if they're interested,
-                we schedule a meeting between you. No cold calling on your end.
+                Yes! Sleft Health is 100% free. No credit card required, no hidden fees, no premium tiers.
+                We believe healthcare providers should have free access to the connections and insights they need to grow.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-white mb-2">How many intros can I expect?</h3>
+              <h3 className="font-bold text-white mb-2">What features do I get for free?</h3>
               <p className="text-slate-400 text-sm">
-                Most members receive 3-5 warm introductions per month, depending on your specialty
-                and location. Quality over quantity — every intro is someone who wants to meet you.
+                Everything! Partner matching, community discussions, AI-curated insights, product reviews,
+                and all future features. There are no paid upgrades or premium features.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-white mb-2">Can I cancel anytime?</h3>
+              <h3 className="font-bold text-white mb-2">Will this always be free?</h3>
               <p className="text-slate-400 text-sm">
-                Yes! Cancel anytime from your account settings. You'll keep access until
-                the end of your billing period.
+                Yes. Sleft Health is committed to remaining 100% free for all healthcare providers.
+                Our mission is to help practices grow without adding to their overhead costs.
               </p>
             </div>
           </div>

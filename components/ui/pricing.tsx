@@ -28,8 +28,8 @@ interface PricingProps {
 
 export function Pricing({
   plans,
-  title = "Simple, Transparent Pricing",
-  description = "Choose the plan that works for you. All plans include access to our AI-powered platform and dedicated support.",
+  title = "100% Free Forever",
+  description = "Everything you need to grow your practice. No payment required. No credit card. Zero cost.",
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true)
 

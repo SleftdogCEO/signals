@@ -370,7 +370,7 @@ function NetworkPageContent() {
     )
   }
 
-  const canSeeDetails = data.is_subscribed || data.is_trialing
+  const canSeeDetails = true // Everything is free - full access for everyone
   const trialDaysLeft = data.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(data.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0
@@ -425,22 +425,10 @@ function NetworkPageContent() {
           className="mb-8"
         >
           <div className="flex items-center gap-3 mb-4">
-            {data.is_subscribed ? (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
-                <Crown className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm text-emerald-400 font-semibold">Network Member</span>
-              </div>
-            ) : data.is_trialing ? (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-sm text-amber-400 font-semibold">Trial - {trialDaysLeft} days left</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 border border-slate-600 rounded-full">
-                <Lock className="w-4 h-4 text-slate-400" />
-                <span className="text-sm text-slate-400 font-semibold">Upgrade to Connect</span>
-              </div>
-            )}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm text-emerald-400 font-semibold">Free Member • Full Access</span>
+            </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-black text-white mb-3">

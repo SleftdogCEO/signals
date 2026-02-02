@@ -426,15 +426,10 @@ export default function BriefPage({ params }: BriefPageProps) {
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export</span>
               </button>
-              <a
-                href={STRIPE_PAYMENT_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white rounded-xl hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25 text-sm font-medium"
-              >
-                <Crown className="w-4 h-4" />
-                <span className="hidden sm:inline">Upgrade</span>
-              </a>
+              <span className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 text-sm font-medium">
+                <CheckCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Free Access</span>
+              </span>
             </div>
           </div>
         </div>
@@ -779,16 +774,14 @@ export default function BriefPage({ params }: BriefPageProps) {
                 <Check className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h3>
-              <p className="text-gray-500 mb-6">Your feedback helps us build a better product.</p>
-              <a
-                href={STRIPE_PAYMENT_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white rounded-xl font-medium hover:from-violet-700 hover:via-fuchsia-700 hover:to-rose-600 transition-all shadow-lg shadow-fuchsia-500/25"
+              <p className="text-gray-500 mb-6">Your feedback helps us build a better product. Enjoy unlimited free access to all briefs!</p>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/25"
               >
-                <Crown className="w-5 h-5" />
-                Upgrade for Unlimited Briefs
-              </a>
+                <CheckCircle className="w-5 h-5" />
+                Back to Dashboard
+              </Link>
             </motion.div>
           ) : (
             <div className="space-y-4">
