@@ -344,7 +344,7 @@ function NetworkHubContent() {
     const isTest = searchParams.get('test')
     if (success === 'true') {
       setShowSuccessMessage(true)
-      toast.success('Welcome to Sleft Health! You're all set.')
+      toast.success('Welcome to Sleft Health! You are all set.')
       // Clear the URL params
       window.history.replaceState({}, '', '/dashboard/network/hub')
     }
