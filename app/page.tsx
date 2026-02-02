@@ -109,15 +109,15 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
-                Grow Your Practice With
+                Build Your Referral Network
                 <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                  People Who Get It
+                  The Smart Way
                 </span>
               </h1>
 
               <p className="text-xl md:text-2xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Partner connections that make sense. Intelligence that actually helps.
-                Everything you need to grow — without outsourcing your entire operation.
+                Get matched with local healthcare providers looking to exchange referrals.
+                No cold outreach. Just mutual-fit partnerships.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
