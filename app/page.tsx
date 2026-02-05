@@ -7,13 +7,13 @@ import {
   ArrowRight,
   Stethoscope,
   Users,
-  Lightbulb,
-  Star,
+  MapPin,
   CheckCircle,
   Zap,
-  Building2,
-  MessageSquare,
-  Sparkles,
+  DollarSign,
+  Search,
+  Handshake,
+  XCircle,
   TrendingUp
 } from "lucide-react"
 
@@ -22,34 +22,32 @@ export default function HomePage() {
 
   const features = [
     {
-      icon: Users,
-      title: "Partner Matches",
-      description: "Connect with local providers who actually want to exchange referrals with you. Two-way matches only.",
+      icon: Search,
+      title: "We Find Them For You",
+      description: "We scrape and verify local providers in complementary specialties. You just show up and connect.",
       color: "blue"
     },
     {
-      icon: MessageSquare,
-      title: "Community Intelligence",
-      description: "Real insights from real practices. What software works, what doesn't, how to grow.",
+      icon: MapPin,
+      title: "Hyper-Local Matches",
+      description: "Providers within 5-10 miles of your practice. Same community, same patients, easy referrals.",
       color: "emerald"
     },
     {
-      icon: Lightbulb,
-      title: "Curated Insights",
-      description: "AI-powered intelligence tailored to your specialty, location, and interests.",
+      icon: Handshake,
+      title: "Mutual-Fit Only",
+      description: "A chiropractor needs PTs. A PT needs orthopedic surgeons. We match specialties that actually refer to each other.",
       color: "amber"
     }
   ]
 
-  const practiceTypes = [
-    "Private Practices",
-    "Med Spas",
-    "Chiropractic",
-    "Physical Therapy",
-    "Dental",
-    "Mental Health",
-    "Primary Care",
-    "Specialty Clinics"
+  const partnerships = [
+    { from: "Chiropractor", to: "Physical Therapist" },
+    { from: "Dentist", to: "Orthodontist" },
+    { from: "Primary Care", to: "Specialist" },
+    { from: "Med Spa", to: "Dermatologist" },
+    { from: "Mental Health", to: "Primary Care" },
+    { from: "Orthopedic", to: "Pain Management" },
   ]
 
   return (
@@ -68,7 +66,7 @@ export default function HomePage() {
           className="flex items-center gap-3"
         >
           <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Stethoscope className="w-5 h-5 text-white" />
+            <Zap className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-white">Sleft Signals</span>
         </motion.div>
@@ -103,21 +101,21 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
-                <Zap className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-400 font-medium">The network for healthcare growth</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
+                <DollarSign className="w-4 h-4 text-red-400" />
+                <span className="text-sm text-red-400 font-medium">Stop paying agencies $3k/month for garbage leads</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
-                Build Your Referral Network
+                Your Best Referrals Are
                 <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                  The Smart Way
+                  Down The Street
                 </span>
               </h1>
 
               <p className="text-xl md:text-2xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Get matched with local healthcare providers looking to exchange referrals.
-                No cold outreach. Just mutual-fit partnerships.
+                We find local healthcare providers who can send you patients.
+                No ads. No agencies. Just partnerships with your neighbors.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -125,71 +123,88 @@ export default function HomePage() {
                   href="/auth?signup=true"
                   className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold text-lg rounded-xl hover:opacity-90 transition-all shadow-xl shadow-blue-500/25"
                 >
-                  Find Your Partners
+                  See Who's Near You
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   href="#how-it-works"
                   className="flex items-center gap-2 px-8 py-4 text-slate-400 hover:text-white font-medium transition-colors"
                 >
-                  See How It Works
+                  How It Works
                 </Link>
               </div>
             </motion.div>
           </div>
 
-          {/* Preview Card */}
+          {/* The Problem */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="max-w-4xl mx-auto mb-32"
           >
-            <div className="relative bg-slate-900/80 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm">
-              {/* Sign up overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent rounded-2xl flex items-end justify-center pb-12 z-10">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/30">
-                    <Sparkles className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Your Partner Matches Are Waiting</h3>
-                  <p className="text-slate-400 mb-6 max-w-md">
-                    Sign up free to see providers in your area who want to exchange referrals with you.
-                  </p>
-                  <Link
-                    href="/auth?signup=true"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-colors"
-                  >
-                    Get Started Free
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+                The Problem With Healthcare Marketing
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-red-400 flex items-center gap-2">
+                    <XCircle className="w-5 h-5" />
+                    What Agencies Do
+                  </h3>
+                  <ul className="space-y-3 text-slate-400">
+                    <li className="flex items-start gap-3">
+                      <span className="text-red-400 mt-1">•</span>
+                      Charge $2-5k/month for Facebook ads
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-red-400 mt-1">•</span>
+                      Send you tire-kickers who ghost
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-red-400 mt-1">•</span>
+                      Zero integration with your community
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-red-400 mt-1">•</span>
+                      You're competing with every practice in your city
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    What Actually Works
+                  </h3>
+                  <ul className="space-y-3 text-slate-400">
+                    <li className="flex items-start gap-3">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      Referrals from other providers
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      Patients who already trust someone
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      Local relationships that compound
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      Zero ad spend required
+                    </li>
+                  </ul>
                 </div>
               </div>
-
-              {/* Blurred preview content */}
-              <div className="blur-sm pointer-events-none select-none">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-white">Partner Matches in Austin, TX</h3>
-                  <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
-                    12 matches
-                  </span>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="h-5 w-40 bg-slate-700 rounded mb-2" />
-                          <div className="h-4 w-24 bg-slate-700/50 rounded" />
-                        </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
-                          <span className="font-bold text-white">92</span>
-                        </div>
-                      </div>
-                      <div className="h-16 bg-slate-700/30 rounded-lg" />
-                    </div>
-                  ))}
-                </div>
+              
+              <div className="mt-8 pt-8 border-t border-slate-700 text-center">
+                <p className="text-xl text-white font-medium">
+                  The orthopedic surgeon 2 miles away could send you 10 patients a month.
+                  <span className="text-slate-400 block mt-1">Do you even know their name?</span>
+                </p>
               </div>
             </div>
           </motion.div>
@@ -203,10 +218,10 @@ export default function HomePage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Everything Your Practice Needs
+                We Do The Work For You
               </h2>
               <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                Real connections, real intelligence, real growth — from people who understand healthcare.
+                No networking events. No cold calls. We find the providers, you make the connection.
               </p>
             </motion.div>
 
@@ -247,72 +262,48 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* What You Get */}
+          {/* Partnership Examples */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mb-32"
           >
-            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                    What You Get Access To
-                  </h2>
-                  <ul className="space-y-4">
-                    {[
-                      "Partner matches with providers who want YOUR referrals",
-                      "Community insights on software, marketing, and operations",
-                      "AI-curated intelligence specific to your specialty",
-                      "Reviews from real practices on what actually works",
-                      "Direct introductions to potential partners"
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-lg text-slate-300">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="text-center">
-                  <div className="inline-block bg-slate-900/80 border border-slate-700 rounded-2xl p-8">
-                    <div className="text-6xl font-black text-white mb-2">Free</div>
-                    <div className="text-slate-400 mb-6">No credit card required</div>
-                    <Link
-                      href="/auth?signup=true"
-                      className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
-                    >
-                      Create Your Profile
-                      <ArrowRight className="w-5 h-5" />
-                    </Link>
-                    <p className="text-sm text-slate-500 mt-4">
-                      See your matches instantly
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Referrals That Make Sense
+              </h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                We match specialties that naturally refer to each other. Your patients become their patients, and vice versa.
+              </p>
             </div>
-          </motion.div>
-
-          {/* Practice Types */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-32"
-          >
-            <p className="text-slate-500 font-medium mb-6">Built for all types of healthcare practices</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {practiceTypes.map((type, i) => (
-                <div
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {partnerships.map((p, i) => (
+                <motion.div
                   key={i}
-                  className="px-5 py-2.5 bg-slate-900/50 border border-slate-800 rounded-full text-slate-400"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex items-center gap-4"
                 >
-                  {type}
-                </div>
+                  <div className="flex-1 text-right">
+                    <span className="text-white font-medium">{p.from}</span>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <ArrowRight className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-white font-medium">{p.to}</span>
+                  </div>
+                </motion.div>
               ))}
             </div>
+            
+            <p className="text-center text-slate-500 mt-6">
+              And dozens more specialty combinations
+            </p>
           </motion.div>
 
           {/* CTA */}
@@ -320,35 +311,55 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center"
+            className="mb-32"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to Grow Your Practice?
-            </h2>
-            <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto">
-              Join the network of healthcare providers who are growing smarter together.
+            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16 text-center">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                See Who's In Your Area
+              </h2>
+              <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto">
+                Enter your practice details and we'll show you providers nearby who could become referral partners.
+              </p>
+              <Link
+                href="/auth?signup=true"
+                className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
+              >
+                Get Started Free
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <p className="text-sm text-slate-500 mt-4">
+                Free to join. No credit card required.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Bottom line */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <p className="text-2xl md:text-3xl text-white font-medium leading-relaxed">
+              Stop paying agencies to burn your budget.
+              <span className="block text-slate-400 mt-2">
+                Start building relationships with the providers next door.
+              </span>
             </p>
-            <Link
-              href="/auth?signup=true"
-              className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
-            >
-              Get Started Free
-              <ArrowRight className="w-5 h-5" />
-            </Link>
           </motion.div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-12 border-t border-slate-800">
+      <footer className="relative z-10 px-6 py-12 border-t border-slate-800 mt-20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-              <Stethoscope className="w-4 h-4 text-white" />
+              <Zap className="w-4 h-4 text-white" />
             </div>
             <span className="font-semibold text-white">Sleft Signals</span>
           </div>
-          <span className="text-sm text-slate-500">The network for healthcare growth</span>
+          <span className="text-sm text-slate-500">Local referral intelligence for healthcare practices</span>
         </div>
       </footer>
     </div>
