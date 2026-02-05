@@ -344,7 +344,7 @@ function NetworkHubContent() {
     const isTest = searchParams.get('test')
     if (success === 'true') {
       setShowSuccessMessage(true)
-      toast.success('Welcome to Sleft Health! You are all set.')
+      toast.success('Welcome to Sleft Signals! You are all set.')
       // Clear the URL params
       window.history.replaceState({}, '', '/dashboard/network/hub')
     }
@@ -473,7 +473,7 @@ function NetworkHubContent() {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-lg font-bold text-white hidden sm:block">Sleft Health</h1>
+              <h1 className="text-lg font-bold text-white hidden sm:block">Sleft Signals</h1>
             </Link>
 
             <div className="flex items-center gap-3">
@@ -892,7 +892,7 @@ function NetworkHubContent() {
                       <h4 className="text-base font-bold text-white mb-2 line-clamp-2">{item.title}</h4>
                       <p className="text-sm text-slate-400 line-clamp-3">{item.summary}</p>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
-                        <span className="text-xs text-slate-500">{item.source_name || 'Sleft Health'}</span>
+                        <span className="text-xs text-slate-500">{item.source_name || 'Sleft Signals'}</span>
                         {item.source_url && (
                           <a
                             href={item.source_url}

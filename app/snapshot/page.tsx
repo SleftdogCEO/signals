@@ -147,7 +147,7 @@ export default function SnapshotPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">Sleft Health</span>
+            <span className="text-lg font-bold text-gray-900">Sleft Signals</span>
           </div>
           <Link
             href="/"
@@ -371,7 +371,7 @@ export default function SnapshotPage() {
         >
           <h2 className="text-2xl font-bold mb-2">Want Warm Introductions?</h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto">
-            Join the Sleft Health Network to get introduced directly to these providers—no cold calling required.
+            Join the Sleft Signals Network to get introduced directly to these providers—no cold calling required.
           </p>
           <Link
             href="/auth"

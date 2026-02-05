@@ -20,7 +20,7 @@ import { useAuth } from "@/context/AuthContext"
 const WELCOME_SECTIONS = [
   {
     id: "intro",
-    badge: "Welcome to Sleft Health",
+    badge: "Welcome to Sleft Signals",
     title: "We're Not Another Directory",
     subtitle: "Sure, you could find partners with ChatGPT. But who has time to chase down contact info, send cold emails, and hope someone responds?",
     description: "We do the heavy lifting. Real intros. Booked meetings. Partners who actually want to work with you.",
@@ -156,7 +156,7 @@ export default function WelcomePage() {
         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
           <Stethoscope className="w-5 h-5 text-white" />
         </div>
-        <span className="text-lg font-bold text-white">Sleft Health</span>
+        <span className="text-lg font-bold text-white">Sleft Signals</span>
       </div>
 
       {/* Main content */}

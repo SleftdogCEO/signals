@@ -9,7 +9,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sleft Health - Find Referral Partners",
+  title: "Sleft Signals - Find Referral Partners",
   description:
     "Find healthcare referral partners who share your patient population. Get a free snapshot of nearby practices.",
 }

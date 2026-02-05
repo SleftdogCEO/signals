@@ -325,7 +325,7 @@ export default function BriefPage() {
               </div>
             </motion.div>
             <div className="flex flex-col">
-              <span className="text-xl font-black text-white group-hover:text-cyan-300 transition-colors">Sleft Health</span>
+              <span className="text-xl font-black text-white group-hover:text-cyan-300 transition-colors">Sleft Signals</span>
               <span className="text-xs text-slate-400 font-medium">Referral Intelligence</span>
             </div>
           </Link>

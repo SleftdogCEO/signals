@@ -116,7 +116,7 @@ function UpgradeContent() {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-lg font-bold text-white hidden sm:block">Sleft Health</h1>
+              <h1 className="text-lg font-bold text-white hidden sm:block">Sleft Signals</h1>
             </Link>
 
             <div className="flex items-center gap-3">

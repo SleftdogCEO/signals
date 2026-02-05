@@ -70,7 +70,7 @@ export default function HomePage() {
           <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
             <Stethoscope className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">Sleft Health</span>
+          <span className="text-xl font-bold text-white">Sleft Signals</span>
         </motion.div>
 
         <motion.div
@@ -346,7 +346,7 @@ export default function HomePage() {
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
               <Stethoscope className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-white">Sleft Health</span>
+            <span className="font-semibold text-white">Sleft Signals</span>
           </div>
           <span className="text-sm text-slate-500">The network for healthcare growth</span>
         </div>

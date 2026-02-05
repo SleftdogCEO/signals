@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
         summary: insight.summary,
         category: insight.category,
         source_url: null,
-        source_name: 'Sleft Health',
+        source_name: 'Sleft Signals',
         relevance_score: insight.relevance_score,
         created_at: new Date().toISOString()
       })
@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
             summary: `For your ${interest.replace('_', ' ')} partners: ${insight.summary}`,
             category: insight.category,
             source_url: null,
-            source_name: 'Sleft Health',
+            source_name: 'Sleft Signals',
             relevance_score: insight.relevance_score - 5, // Slightly lower since it's for partners
             created_at: new Date().toISOString()
           })
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
         summary: insight.summary,
         category: insight.category,
         source_url: null,
-        source_name: 'Sleft Health',
+        source_name: 'Sleft Signals',
         relevance_score: insight.relevance_score,
         created_at: new Date().toISOString()
       })
@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
         location: location || null,
         specialty: specialty || null,
         source_url: sourceUrl || null,
-        source_name: sourceName || 'Sleft Health',
+        source_name: sourceName || 'Sleft Signals',
         relevance_score: 90,
         ai_generated: true
       })

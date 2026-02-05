@@ -85,7 +85,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
             </motion.div>
           </div>
           <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-            Welcome to Sleft Health
+            Welcome to Sleft Signals
           </DialogTitle>
           <DialogDescription className="text-gray-300 text-base sm:text-lg px-2 sm:px-0">
             You have access to partner matching, community insights, and AI-powered intelligence.

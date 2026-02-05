@@ -71,7 +71,7 @@ export default function AuthPage() {
             <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">Sleft Health</span>
+            <span className="text-xl font-bold text-white">Sleft Signals</span>
           </motion.div>
         </Link>
 
@@ -144,7 +144,7 @@ export default function AuthPage() {
                   </video>
                 </div>
                 <p className="text-center text-sm text-slate-500 mt-3">
-                  Watch: How Sleft Health helps you grow your practice
+                  Watch: How Sleft Signals helps you grow your practice
                 </p>
               </div>
             </motion.div>

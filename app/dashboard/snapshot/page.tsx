@@ -345,7 +345,7 @@ export default function DashboardSnapshotPage() {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Sleft Health</span>
+              <span className="text-lg font-bold text-white">Sleft Signals</span>
             </Link>
             {savedSearches.length > 0 && (
               <button
@@ -487,7 +487,7 @@ export default function DashboardSnapshotPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">Sleft Health</span>
+            <span className="text-lg font-bold text-white">Sleft Signals</span>
           </Link>
           <div className="flex items-center gap-3">
             {/* Search selector */}

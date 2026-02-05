@@ -600,7 +600,7 @@ export default function ConsultingPage() {
               <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-white">Sleft Health AI</span>
+              <span className="font-bold text-white">Sleft Signals AI</span>
             </div>
             <p className="text-sm text-slate-500">
               AI-powered solutions for healthcare practice growth

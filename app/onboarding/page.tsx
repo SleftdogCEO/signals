@@ -246,7 +246,7 @@ export default function OnboardingPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">Sleft Health</span>
+            <span className="text-lg font-bold text-white">Sleft Signals</span>
           </div>
           <span className="px-3 py-1.5 bg-slate-800 rounded-full text-sm text-slate-400">
             Step {step} of {totalSteps}

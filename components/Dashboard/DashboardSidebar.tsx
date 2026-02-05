@@ -137,7 +137,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, setIsOpen }
             </div>
             {isOpen && (
               <div className="flex flex-col">
-                <span className="text-gray-900 font-bold text-lg tracking-tight">Sleft Health</span>
+                <span className="text-gray-900 font-bold text-lg tracking-tight">Sleft Signals</span>
                 <span className="text-gray-500 text-xs">Referral Intelligence</span>
               </div>
             )}
