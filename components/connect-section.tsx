@@ -144,7 +144,7 @@ export function Connect() {
                     
                     {/* Buttons */}
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 w-full">
-                      <Link href="#" className="w-full sm:w-auto">
+                      <Link href="https://calendly.com/sleft" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                         <Button className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold">
                           <Calendar className="w-4 h-4 mr-2" />
                           Book a Strategy Call
@@ -153,7 +153,7 @@ export function Connect() {
                       
                       <div className="flex gap-2 sm:gap-3">
                         <Link
-                          href="mailto:hello@sleftsignals.com"
+                          href="mailto:grant@sleftpayments.com"
                           className={cn(
                             buttonVariants({ variant: "outline" }),
                             "border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10"
@@ -164,7 +164,9 @@ export function Connect() {
                         </Link>
                         
                         <Link
-                          href="#"
+                          href="https://calendly.com/sleft"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className={cn(
                             buttonVariants({ variant: "outline", size: "icon" }),
                             "border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10"

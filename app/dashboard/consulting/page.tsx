@@ -143,12 +143,31 @@ export default function ConsultingPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    try {
+      const res = await fetch("/api/consulting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          practiceName: formData.practiceName,
+          projectType: formData.projectType,
+          budget: formData.budget,
+          description: formData.description,
+        }),
+      })
 
-    setIsSubmitting(false)
-    setSubmitted(true)
-    toast.success("Request submitted! We'll be in touch within 24 hours.")
+      if (!res.ok) throw new Error("Submission failed")
+
+      setSubmitted(true)
+      toast.success("Request submitted! We'll be in touch within 24 hours.")
+    } catch (err) {
+      console.error("Form submission error:", err)
+      toast.error("Something went wrong. Please try again or email grant@sleftpayments.com directly.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
