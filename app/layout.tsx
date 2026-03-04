@@ -12,6 +12,15 @@ export const metadata: Metadata = {
   title: "Sleft Signals - Find Referral Partners",
   description:
     "Find healthcare referral partners who share your patient population. Get a free snapshot of nearby practices.",
+  metadataBase: new URL("https://sleftsignals.com"),
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Sleft Signals - Find Referral Partners",
+    description: "Find healthcare referral partners who share your patient population.",
+    url: "https://sleftsignals.com",
+    siteName: "Sleft Signals",
+    type: "website",
+  },
 }
 
 export default function RootLayout({
