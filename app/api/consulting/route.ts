@@ -60,7 +60,8 @@ export async function POST(request: Request) {
           email,
           phone: phone || "",
           businessName: practiceName || "Sleft Signals Consulting",
-          conversationSummary: `New Consulting Request from sleftsignals.com\nProject Type: ${projectType}\nBudget: ${budget || "N/A"}\nDescription: ${description}`,
+          source: "sleftsignals.com",
+          conversationSummary: `Project Type: ${projectType}\nBudget: ${budget || "N/A"}\nDescription: ${description}`,
         }),
       })
     } catch (emailErr) {
