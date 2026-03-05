@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllBlogPosts } from "@/lib/blog-posts";
+import { specialties, cities } from "@/lib/seo-data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://sleftsignals.com";
@@ -11,6 +12,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
+
+  const specialtyRoutes = specialties.map((s) => ({
+    url: `${baseUrl}/find-referral-partners/${s.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  const specialtyCityRoutes = specialties.flatMap((s) =>
+    cities.map((c) => ({
+      url: `${baseUrl}/find-referral-partners/${s.slug}/${c.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }))
+  );
 
   return [
     {
@@ -38,5 +55,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     ...blogRoutes,
+    ...specialtyRoutes,
+    ...specialtyCityRoutes,
   ];
 }
