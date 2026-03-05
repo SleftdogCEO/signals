@@ -77,6 +77,12 @@ export default function HomePage() {
           className="flex items-center gap-4"
         >
           <Link
+            href="/blog"
+            className="text-slate-400 hover:text-white transition-colors font-medium"
+          >
+            Blog
+          </Link>
+          <Link
             href="/auth"
             className="text-slate-400 hover:text-white transition-colors font-medium"
           >
