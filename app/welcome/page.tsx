@@ -57,7 +57,7 @@ const WELCOME_SECTIONS = [
     id: "ai",
     badge: "AI-Powered Growth",
     title: "Your Practice Growth Partner",
-    subtitle: "Get personalized guidance on using AI to grow your practice — marketing, patient engagement, operations.",
+    subtitle: "Get personalized guidance on using AI to grow your practice - marketing, patient engagement, operations.",
     description: "Led by Grant Denmark, helping practices implement what actually works. Not theory. Results.",
     icon: Zap,
     gradient: "from-amber-500 to-orange-400"

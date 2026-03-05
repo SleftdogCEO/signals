@@ -46,7 +46,7 @@ const SERVICES = [
   {
     icon: Bot,
     title: "AI Patient Engagement",
-    description: "24/7 AI assistants that answer patient questions, schedule appointments, and handle intake — without adding staff.",
+    description: "24/7 AI assistants that answer patient questions, schedule appointments, and handle intake - without adding staff.",
     features: ["Custom trained on your services", "Integrates with your EHR", "Multi-language support", "HIPAA compliant"],
     gradient: "from-violet-500 to-purple-400"
   },
@@ -84,7 +84,7 @@ const PROCESS_STEPS = [
   {
     step: "01",
     title: "Discovery Call",
-    description: "We learn about your practice, goals, and current challenges. No sales pitch — just understanding."
+    description: "We learn about your practice, goals, and current challenges. No sales pitch - just understanding."
   },
   {
     step: "02",
@@ -94,7 +94,7 @@ const PROCESS_STEPS = [
   {
     step: "03",
     title: "Build & Launch",
-    description: "We handle everything — development, testing, integration. You focus on patients."
+    description: "We handle everything - development, testing, integration. You focus on patients."
   },
   {
     step: "04",
@@ -221,7 +221,7 @@ export default function ConsultingPage() {
 
             <p className="text-xl lg:text-2xl text-slate-400 mb-10 max-w-3xl mx-auto leading-relaxed">
               We're a team of AI engineers, healthcare marketers, and developers who build the tools that
-              help practices grow. Websites, funnels, automation, AI — we build it all.
+              help practices grow. Websites, funnels, automation, AI - we build it all.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -597,7 +597,7 @@ export default function ConsultingPage() {
             Ready to Grow Your Practice?
           </h2>
           <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto">
-            Let's talk about what's possible. No obligation, no pressure — just a conversation about your practice.
+            Let's talk about what's possible. No obligation, no pressure - just a conversation about your practice.
           </p>
           <a
             href="https://calendly.com/sleft"

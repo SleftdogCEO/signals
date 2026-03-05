@@ -119,7 +119,7 @@ export default function AuthPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-md mx-auto">
-              Connect with healthcare providers who need your patients—and have patients for you.
+              Connect with healthcare providers who need your patients - and have patients for you.
             </p>
           </motion.div>
 

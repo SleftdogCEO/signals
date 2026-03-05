@@ -126,7 +126,7 @@ function generateMatchInsight(source: ReferralSource, userSpecialty: string): Ma
   }
 
   if (isVeryClose) {
-    reasons.push(`Only ${source.distance} away — easy for patients to follow through on referrals`)
+    reasons.push(`Only ${source.distance} away - easy for patients to follow through on referrals`)
   } else if (isClose) {
     reasons.push(`Convenient ${source.distance} proximity for patient referrals`)
   }
@@ -205,8 +205,8 @@ function generateIntro(source: ReferralSource, userSpecialty: string, practiceNa
   const practiceIntro = practiceName ? `I'm with ${practiceName}, a ${userSpecialty} practice` : `I run a ${userSpecialty} practice`
 
   const templates = [
-    `Hi! ${practiceIntro} in the area and I came across ${source.name}. I'm always looking to connect with other healthcare providers — would you have a few minutes for a quick call? I'd love to learn more about your practice and see if there might be ways we could help each other's patients.`,
-    `Hello! ${practiceIntro} nearby. I found ${source.name} while researching ${source.specialty} providers in the area and your practice stood out. I'm curious to learn more about the work you do — would you be open to a brief intro call sometime?`,
+    `Hi! ${practiceIntro} in the area and I came across ${source.name}. I'm always looking to connect with other healthcare providers - would you have a few minutes for a quick call? I'd love to learn more about your practice and see if there might be ways we could help each other's patients.`,
+    `Hello! ${practiceIntro} nearby. I found ${source.name} while researching ${source.specialty} providers in the area and your practice stood out. I'm curious to learn more about the work you do - would you be open to a brief intro call sometime?`,
     `Hi there! ${practiceIntro} and I'm reaching out to connect with other quality providers in our area. I'd love to learn more about ${source.name} and how you serve your patients. Would you have 10 minutes to chat? Always great to know who's doing good work nearby.`
   ]
   return templates[Math.floor(Math.random() * templates.length)]
@@ -416,7 +416,7 @@ export default function BriefPage() {
             <div className="bg-slate-900/70 rounded-xl p-6 border border-slate-600 mb-6">
               <p className="text-lg text-slate-200 leading-relaxed">
                 These <span className="text-emerald-400 font-bold">{data.summary.totalSources} {data.specialty} practices</span> near {data.location} are potential partners who could send you clients.
-                The key to getting referrals? <span className="text-amber-300 font-semibold">Start a genuine conversation</span> — not a sales pitch.
+                The key to getting referrals? <span className="text-amber-300 font-semibold">Start a genuine conversation</span> - not a sales pitch.
               </p>
             </div>
 
@@ -431,7 +431,7 @@ export default function BriefPage() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">Introduce yourself</strong> — who you are, what you do, where you're located</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">Introduce yourself</strong> - who you are, what you do, where you're located</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
@@ -454,7 +454,7 @@ export default function BriefPage() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                    <span className="text-slate-200"><strong className="text-white font-semibold">No pressure</strong> — you're exploring mutual fit, not asking for favors</span>
+                    <span className="text-slate-200"><strong className="text-white font-semibold">No pressure</strong> - you're exploring mutual fit, not asking for favors</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
@@ -477,7 +477,7 @@ export default function BriefPage() {
               <p className="text-base text-slate-200 text-center font-medium leading-relaxed">
                 <Gift className="w-5 h-5 inline mr-2 text-emerald-400" />
                 <strong className="text-emerald-300">The best partnerships start with curiosity.</strong>{" "}
-                Click "Start a Conversation" on any card below — we've written an opener that focuses on connection, not commitment.
+                Click "Start a Conversation" on any card below - we've written an opener that focuses on connection, not commitment.
               </p>
             </motion.div>
           </div>

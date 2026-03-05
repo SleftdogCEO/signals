@@ -371,7 +371,7 @@ export default function SnapshotPage() {
         >
           <h2 className="text-2xl font-bold mb-2">Want Warm Introductions?</h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto">
-            Join the Sleft Signals Network to get introduced directly to these providers—no cold calling required.
+            Join the Sleft Signals Network to get introduced directly to these providers - no cold calling required.
           </p>
           <Link
             href="/auth"

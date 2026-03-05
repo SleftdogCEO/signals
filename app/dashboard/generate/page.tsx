@@ -312,7 +312,7 @@ export default function GeneratePage() {
                                       <div>
                                         <span className="font-medium text-gray-800">{lead.type}</span>
                                         {lead.reason && (
-                                          <span className="text-gray-500 text-sm"> — {lead.reason}</span>
+                                          <span className="text-gray-500 text-sm"> - {lead.reason}</span>
                                         )}
                                       </div>
                                     </div>
@@ -478,7 +478,7 @@ export default function GeneratePage() {
                         <div>
                           <span className="text-gray-800">{lead.type}</span>
                           {lead.reason && (
-                            <span className="text-gray-500 text-sm"> — {lead.reason}</span>
+                            <span className="text-gray-500 text-sm"> - {lead.reason}</span>
                           )}
                         </div>
                       </div>
