@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "cobe": "^0.6.4",
     "framer-motion": "^12.23.12",
+    "googleapis": "^171.4.0",
     "leaflet": "^1.9.4",
     "livekit-client": "^2.15.5",
     "lucide-react": "^0.525.0",
