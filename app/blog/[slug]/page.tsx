@@ -18,8 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: "Post Not Found" }
 
   return {
-    title: `${post.title} | Sleft Signals Blog`,
+    title: post.title,
     description: post.metaDescription,
+    alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       title: post.title,
       description: post.metaDescription,
@@ -141,22 +142,34 @@ export default async function BlogPostPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            headline: post.title,
-            description: post.metaDescription,
-            datePublished: post.date,
-            author: {
-              "@type": "Organization",
-              name: "Sleft Signals",
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "Article",
+              headline: post.title,
+              description: post.metaDescription,
+              datePublished: post.date,
+              author: {
+                "@type": "Person",
+                name: "Grant Denmark",
+                url: "https://sleftsignals.com",
+              },
+              publisher: {
+                "@type": "Organization",
+                name: "Sleft Signals",
+                url: "https://sleftsignals.com",
+              },
             },
-            publisher: {
-              "@type": "Organization",
-              name: "Sleft Signals",
-              url: "https://sleftsignals.com",
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://sleftsignals.com" },
+                { "@type": "ListItem", position: 2, name: "Blog", item: "https://sleftsignals.com/blog" },
+                { "@type": "ListItem", position: 3, name: post.title, item: `https://sleftsignals.com/blog/${post.slug}` },
+              ],
             },
-          }),
+          ]),
         }}
       />
     </div>

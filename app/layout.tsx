@@ -9,17 +9,36 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sleft Signals - Find Referral Partners",
+  title: {
+    default: "Sleft Signals - Healthcare Referral Partner Matching (2026)",
+    template: "%s | Sleft Signals",
+  },
   description:
-    "Find healthcare referral partners who share your patient population. Get a free snapshot of nearby practices.",
+    "Stop paying agencies $3k/month. Find local healthcare providers who send you patients through referral partnerships. Free for providers.",
   metadataBase: new URL("https://sleftsignals.com"),
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Sleft Signals - Find Referral Partners",
-    description: "Find healthcare referral partners who share your patient population.",
+    title: "Sleft Signals - Healthcare Referral Partner Matching",
+    description: "Find local healthcare providers who send you patients. No ads. No agencies. Just partnerships with your neighbors.",
     url: "https://sleftsignals.com",
     siteName: "Sleft Signals",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sleft Signals - Healthcare Referral Partner Matching",
+    description: "Find local healthcare providers who send you patients. No ads. No agencies.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 }
 

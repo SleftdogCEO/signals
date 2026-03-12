@@ -24,12 +24,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = getCity(citySlug)
   if (!spec || !city) return { title: "Not Found" }
 
-  const title = `Referral Partners for ${spec.plural} in ${city.name}, ${city.stateAbbr} | Sleft Signals`
-  const description = `Find ${spec.plural.toLowerCase()} referral partners in ${city.name}, ${city.state}. Connect with ${spec.refersTo.slice(0, 2).join(" and ")} near your ${city.name} practice.`
+  const title = `${spec.plural} in ${city.name}, ${city.stateAbbr} - Find Referral Partners (2026)`
+  const description = `${spec.plural} in ${city.name}: find ${spec.refersTo[0]} & ${spec.refersTo[1]} nearby who send patients. Zero ad spend. See who's near your practice.`
 
   return {
     title,
     description,
+    alternates: { canonical: `/find-referral-partners/${spec.slug}/${city.slug}` },
     openGraph: {
       title,
       description,
@@ -241,23 +242,34 @@ export default async function SpecialtyCityPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-            name: `Referral Partner Matching for ${spec.plural} in ${city.name}, ${city.stateAbbr}`,
-            description: `Find referral partners for ${spec.plural.toLowerCase()} in ${city.name}, ${city.state}.`,
-            provider: {
-              "@type": "Organization",
-              name: "Sleft Signals",
-              url: "https://sleftsignals.com",
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "Service",
+              name: `Referral Partner Matching for ${spec.plural} in ${city.name}, ${city.stateAbbr}`,
+              description: `Find referral partners for ${spec.plural.toLowerCase()} in ${city.name}, ${city.state}.`,
+              provider: {
+                "@type": "Organization",
+                name: "Sleft Signals",
+                url: "https://sleftsignals.com",
+              },
+              areaServed: {
+                "@type": "City",
+                name: city.name,
+                containedInPlace: { "@type": "State", name: city.state },
+              },
+              serviceType: "Healthcare Referral Intelligence",
             },
-            areaServed: {
-              "@type": "City",
-              name: city.name,
-              containedInPlace: { "@type": "State", name: city.state },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://sleftsignals.com" },
+                { "@type": "ListItem", position: 2, name: spec.plural, item: `https://sleftsignals.com/find-referral-partners/${spec.slug}` },
+                { "@type": "ListItem", position: 3, name: `${city.name}, ${city.stateAbbr}`, item: `https://sleftsignals.com/find-referral-partners/${spec.slug}/${city.slug}` },
+              ],
             },
-            serviceType: "Healthcare Referral Intelligence",
-          }),
+          ]),
         }}
       />
     </div>

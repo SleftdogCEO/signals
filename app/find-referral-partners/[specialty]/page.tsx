@@ -17,12 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const spec = getSpecialty(slug)
   if (!spec) return { title: "Not Found" }
 
-  const title = `Find Referral Partners for ${spec.plural} | Sleft Signals`
-  const description = `Find local healthcare providers who refer patients to ${spec.plural.toLowerCase()}. Build referral partnerships with ${spec.refersTo.slice(0, 3).join(", ")} near your practice.`
+  const title = `${spec.plural} Referral Partners - Get 5-15 Patients/Month (2026)`
+  const description = `Find ${spec.refersTo.slice(0, 2).join(" & ")} near your practice who send patients to ${spec.plural.toLowerCase()}. Zero ad spend. Free to join.`
 
   return {
     title,
     description,
+    alternates: { canonical: `/find-referral-partners/${spec.slug}` },
     openGraph: {
       title,
       description,
@@ -178,6 +179,42 @@ export default async function SpecialtyPage({ params }: Props) {
             </div>
           </div>
 
+          {/* FAQ Section */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12 mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">
+              Frequently Asked Questions About {spec.name} Referrals
+            </h2>
+            <div className="space-y-6">
+              {[
+                {
+                  q: `How do ${spec.plural.toLowerCase()} get more patient referrals?`,
+                  a: `The most effective way for ${spec.plural.toLowerCase()} to get more referrals is by building direct relationships with complementary providers nearby -- specifically ${spec.refersTo.slice(0, 3).join(", ")}. These providers see patients who need your services and will refer them if they know and trust you.`,
+                },
+                {
+                  q: `Who refers the most patients to ${spec.plural.toLowerCase()}?`,
+                  a: `${spec.refersTo[0]} are typically the top referral source for ${spec.plural.toLowerCase()}, followed by ${spec.refersTo[1]} and ${spec.refersTo[2]}. Building relationships with 10-15 nearby providers in these specialties can generate 5-15 new patients per month.`,
+                },
+                {
+                  q: `How much does Sleft Signals cost for ${spec.plural.toLowerCase()}?`,
+                  a: `Sleft Signals is free to join. We show you which providers near your practice are most likely to refer patients to ${spec.plural.toLowerCase()}, so you can focus your outreach on the relationships that matter most.`,
+                },
+                {
+                  q: `Are referral partnerships better than ads for ${spec.plural.toLowerCase()}?`,
+                  a: `Yes. Referred patients convert at 3-5x the rate of ad-driven leads, show up more consistently, and have higher lifetime value. A single strong referral relationship can replace $2-5k/month in ad spend.`,
+                },
+                {
+                  q: `How quickly can I start getting referrals?`,
+                  a: `Most ${spec.plural.toLowerCase()} who use Sleft Signals identify and connect with potential referral partners within the first week. It typically takes 2-4 weeks to establish a relationship and begin seeing patient referrals flow.`,
+                },
+              ].map((faq, i) => (
+                <div key={i} className="border-b border-slate-700 pb-6 last:border-0 last:pb-0">
+                  <h3 className="text-lg font-semibold text-white mb-2">{faq.q}</h3>
+                  <p className="text-slate-400 leading-relaxed">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* CTA */}
           <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16 text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -250,19 +287,60 @@ export default async function SpecialtyPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-            name: `Referral Partner Matching for ${spec.plural}`,
-            description: spec.description,
-            provider: {
-              "@type": "Organization",
-              name: "Sleft Signals",
-              url: "https://sleftsignals.com",
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "Service",
+              name: `Referral Partner Matching for ${spec.plural}`,
+              description: spec.description,
+              provider: {
+                "@type": "Organization",
+                name: "Sleft Signals",
+                url: "https://sleftsignals.com",
+              },
+              areaServed: { "@type": "Country", name: "United States" },
+              serviceType: "Healthcare Referral Intelligence",
             },
-            areaServed: { "@type": "Country", name: "United States" },
-            serviceType: "Healthcare Referral Intelligence",
-          }),
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://sleftsignals.com" },
+                { "@type": "ListItem", position: 2, name: spec.plural, item: `https://sleftsignals.com/find-referral-partners/${spec.slug}` },
+              ],
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                {
+                  "@type": "Question",
+                  name: `How do ${spec.plural.toLowerCase()} get more patient referrals?`,
+                  acceptedAnswer: { "@type": "Answer", text: `The most effective way for ${spec.plural.toLowerCase()} to get more referrals is by building direct relationships with complementary providers nearby -- specifically ${spec.refersTo.slice(0, 3).join(", ")}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `Who refers the most patients to ${spec.plural.toLowerCase()}?`,
+                  acceptedAnswer: { "@type": "Answer", text: `${spec.refersTo[0]} are typically the top referral source for ${spec.plural.toLowerCase()}, followed by ${spec.refersTo[1]} and ${spec.refersTo[2]}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `How much does Sleft Signals cost for ${spec.plural.toLowerCase()}?`,
+                  acceptedAnswer: { "@type": "Answer", text: `Sleft Signals is free to join. We show you which providers near your practice are most likely to refer patients to ${spec.plural.toLowerCase()}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `Are referral partnerships better than ads for ${spec.plural.toLowerCase()}?`,
+                  acceptedAnswer: { "@type": "Answer", text: "Yes. Referred patients convert at 3-5x the rate of ad-driven leads, show up more consistently, and have higher lifetime value." },
+                },
+                {
+                  "@type": "Question",
+                  name: "How quickly can I start getting referrals?",
+                  acceptedAnswer: { "@type": "Answer", text: `Most ${spec.plural.toLowerCase()} identify and connect with potential referral partners within the first week. It typically takes 2-4 weeks to begin seeing patient referrals flow.` },
+                },
+              ],
+            },
+          ]),
         }}
       />
     </div>

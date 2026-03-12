@@ -3,11 +3,12 @@ import Link from "next/link"
 import { getAllBlogPosts } from "@/lib/blog-posts"
 
 export const metadata: Metadata = {
-  title: "Blog - Sleft Signals",
+  title: "Healthcare Referral Blog - Practice Growth Strategies (2026)",
   description:
-    "Referral intelligence, practice growth strategies, and local market analysis for healthcare providers.",
+    "Data-driven referral strategies for healthcare providers. NPI analysis, CMS referral data, local market intelligence. Grow your practice without ads.",
+  alternates: { canonical: "/blog" },
   openGraph: {
-    title: "Blog - Sleft Signals",
+    title: "Healthcare Referral Blog - Sleft Signals",
     description:
       "Referral intelligence, practice growth strategies, and local market analysis for healthcare providers.",
     url: "https://sleftsignals.com/blog",

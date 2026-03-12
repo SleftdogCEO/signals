@@ -15,10 +15,12 @@ const specialties = [
   'pediatricians','optometrists','podiatrists','oral-surgeons','cardiologists',
 ];
 
-const topCities = [
-  'miami-fl','tampa-fl','orlando-fl','houston-tx','dallas-tx','austin-tx',
-  'los-angeles-ca','phoenix-az','atlanta-ga','new-york-ny','chicago-il',
-  'denver-co','seattle-wa','nashville-tn','boston-ma',
+const cities = [
+  'miami-fl','tampa-fl','orlando-fl','jacksonville-fl',
+  'houston-tx','dallas-tx','austin-tx','san-antonio-tx',
+  'los-angeles-ca','san-diego-ca','phoenix-az','atlanta-ga',
+  'charlotte-nc','new-york-ny','chicago-il','philadelphia-pa',
+  'denver-co','seattle-wa','boston-ma','nashville-tn',
 ];
 
 const urls = [
@@ -34,9 +36,9 @@ const urls = [
   `${BASE}/welcome`,
   // 15 Specialty pages
   ...specialties.map(s => `${BASE}/find-referral-partners/${s}`),
-  // Top specialty+city combos (highest value)
-  ...specialties.slice(0, 8).flatMap(s =>
-    topCities.slice(0, 6).map(c => `${BASE}/find-referral-partners/${s}/${c}`)
+  // ALL specialty+city combos (15 * 20 = 300 -- under 200/day quota with the 23 above = need batching)
+  ...specialties.flatMap(s =>
+    cities.map(c => `${BASE}/find-referral-partners/${s}/${c}`)
   ),
 ];
 
