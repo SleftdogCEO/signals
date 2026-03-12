@@ -29,45 +29,47 @@ const BLOG_POSTS = [
   `${BASE}/blog/private-practice-marketing-referrals-vs-ads-2026`,
 ];
 
-// 15 specialty pages
+// 22 specialty pages
 const SPECIALTIES = [
   'chiropractors', 'physical-therapists', 'dentists', 'orthodontists',
   'dermatologists', 'primary-care', 'orthopedic-surgeons', 'pain-management',
   'mental-health', 'med-spas', 'pediatricians', 'optometrists',
-  'podiatrists', 'oral-surgeons', 'cardiologists',
+  'podiatrists', 'oral-surgeons', 'cardiologists', 'ent-doctors',
+  'allergists', 'urologists', 'psychiatrists', 'sports-medicine',
+  'plastic-surgeons', 'endocrinologists',
 ];
 
 const SPECIALTY_PAGES = SPECIALTIES.map(s => `${BASE}/find-referral-partners/${s}`);
 
-// 20 cities
+// 35 cities
 const CITIES = [
   'miami-fl', 'tampa-fl', 'orlando-fl', 'jacksonville-fl',
   'houston-tx', 'dallas-tx', 'austin-tx', 'san-antonio-tx',
   'los-angeles-ca', 'san-diego-ca', 'phoenix-az', 'atlanta-ga',
   'charlotte-nc', 'new-york-ny', 'chicago-il', 'philadelphia-pa',
   'denver-co', 'seattle-wa', 'boston-ma', 'nashville-tn',
+  'west-palm-beach-fl', 'palm-beach-gardens-fl', 'jupiter-fl',
+  'boca-raton-fl', 'fort-lauderdale-fl', 'st-petersburg-fl', 'naples-fl',
+  'san-francisco-ca', 'portland-or', 'minneapolis-mn', 'detroit-mi',
+  'las-vegas-nv', 'raleigh-nc', 'indianapolis-in', 'columbus-oh',
 ];
 
-// Specialty+City combos (15 x 20 = 300 pages) — submit top priority ones first
-// We'll submit ALL specialty pages + blog posts + top city combos (stay under 200/day)
-const TOP_CITY_COMBOS = [];
+// 22 x 35 = 770 city combos — need to batch across multiple days (200/day quota)
+// Build all combos then split into day batches
+const ALL_COMBOS = [];
 for (const spec of SPECIALTIES) {
-  // Submit top 5 cities per specialty = 75 URLs
-  for (const city of CITIES.slice(0, 5)) {
-    TOP_CITY_COMBOS.push(`${BASE}/find-referral-partners/${spec}/${city}`);
+  for (const city of CITIES) {
+    ALL_COMBOS.push(`${BASE}/find-referral-partners/${spec}/${city}`);
   }
 }
 
-// Day 1: Static + Blog + Specialty + top city combos
-const DAY1_URLS = [...STATIC_PAGES, ...BLOG_POSTS, ...SPECIALTY_PAGES, ...TOP_CITY_COMBOS];
+// Day 1: Static + Blog + Specialty pages + first batch of combos (fill to 200)
+const PRIORITY_URLS = [...STATIC_PAGES, ...BLOG_POSTS, ...SPECIALTY_PAGES];
+const DAY1_COMBO_BUDGET = 200 - PRIORITY_URLS.length;
+const DAY1_URLS = [...PRIORITY_URLS, ...ALL_COMBOS.slice(0, DAY1_COMBO_BUDGET)];
 
-// Remaining city combos for day 2 push
-const REMAINING_COMBOS = [];
-for (const spec of SPECIALTIES) {
-  for (const city of CITIES.slice(5)) {
-    REMAINING_COMBOS.push(`${BASE}/find-referral-partners/${spec}/${city}`);
-  }
-}
+// Remaining combos split into day 2, 3, 4, etc.
+const REMAINING_COMBOS = ALL_COMBOS.slice(DAY1_COMBO_BUDGET);
 
 const SITE_PROPERTIES = [
   'sc-domain:sleftsignals.com',
@@ -75,11 +77,22 @@ const SITE_PROPERTIES = [
 ];
 
 async function main() {
-  const day2 = process.argv.includes('--day2');
-  const urls = day2 ? REMAINING_COMBOS : DAY1_URLS;
+  // Support --day2, --day3, --day4 etc. for batching remaining combos
+  const dayArg = process.argv.find(a => a.startsWith('--day'));
+  const dayNum = dayArg ? parseInt(dayArg.replace('--day', '')) : 1;
 
-  console.log(`=== sleftsignals.com GSC Indexing Push ${day2 ? '(Day 2 - Remaining Cities)' : '(Day 1 - Priority URLs)'} ===`);
-  console.log(`URLs to submit: ${urls.length}`);
+  let urls;
+  if (dayNum === 1) {
+    urls = DAY1_URLS;
+  } else {
+    const offset = (dayNum - 2) * 200;
+    urls = REMAINING_COMBOS.slice(offset, offset + 200);
+  }
+
+  const totalDays = 1 + Math.ceil(REMAINING_COMBOS.length / 200);
+  console.log(`=== sleftsignals.com GSC Indexing Push (Day ${dayNum}/${totalDays}) ===`);
+  console.log(`Total pages: ${PRIORITY_URLS.length + ALL_COMBOS.length} (${SPECIALTIES.length} specialties x ${CITIES.length} cities + ${PRIORITY_URLS.length} priority)`);
+  console.log(`URLs to submit today: ${urls.length}`);
   if (urls.length > 200) {
     console.log(`WARNING: ${urls.length} URLs exceeds 200/day quota. Only first 200 will be submitted.`);
   }
@@ -116,7 +129,7 @@ async function main() {
   console.log(`\nIndexing: ${success}/${submitUrls.length} succeeded, ${failed} failed`);
 
   // Sitemap submission (only on day 1)
-  if (!day2) {
+  if (dayNum === 1) {
     console.log('\n--- Sitemap Submission ---\n');
 
     const creds = JSON.parse(fs.readFileSync(CRED_PATH, 'utf8'));
@@ -151,9 +164,10 @@ async function main() {
   // Summary
   console.log('\n=== SUMMARY ===');
   console.log(`Indexing API: ${success}/${submitUrls.length} URLs submitted`);
-  if (!day2 && REMAINING_COMBOS.length > 0) {
-    console.log(`\nRemaining: ${REMAINING_COMBOS.length} city combo URLs for day 2.`);
-    console.log(`Run: node gsc-indexing-push.mjs --day2`);
+  if (dayNum < totalDays) {
+    const remaining = PRIORITY_URLS.length + ALL_COMBOS.length - (dayNum === 1 ? DAY1_URLS.length : DAY1_URLS.length + (dayNum - 1) * 200);
+    console.log(`\nRemaining: ~${Math.max(0, remaining)} URLs across ${totalDays - dayNum} more day(s).`);
+    console.log(`Run: node gsc-indexing-push.mjs --day${dayNum + 1}`);
   }
 
   if (failures.length > 0) {

@@ -119,6 +119,55 @@ export const specialties: Specialty[] = [
     refersTo: ["Primary Care Physicians", "Endocrinologists", "Pulmonologists", "Cardiac Surgeons"],
     description: "Cardiologists receive the majority of referrals from primary care physicians who detect heart-related symptoms. Building relationships with high-volume PCP practices is the fastest path to growth.",
   },
+  {
+    slug: "ent-doctors",
+    name: "ENT Doctor",
+    plural: "ENT Doctors",
+    refersTo: ["Primary Care Physicians", "Allergists", "Pediatricians", "Audiologists"],
+    description: "ENT doctors (otolaryngologists) receive most referrals from primary care physicians and pediatricians for chronic ear infections, sinus issues, and hearing loss. Allergists are a key bidirectional referral partner for patients with overlapping sinus and allergy conditions.",
+  },
+  {
+    slug: "allergists",
+    name: "Allergist",
+    plural: "Allergists",
+    refersTo: ["Primary Care Physicians", "ENT Doctors", "Pediatricians", "Dermatologists"],
+    description: "Allergists receive heavy referral volume from primary care and pediatrics for patients with chronic allergies, asthma, and immune disorders. ENT doctors are a natural cross-referral partner for sinus and upper respiratory cases.",
+  },
+  {
+    slug: "urologists",
+    name: "Urologist",
+    plural: "Urologists",
+    refersTo: ["Primary Care Physicians", "OB-GYNs", "Nephrologists", "Oncologists"],
+    description: "Urologists depend on primary care referrals for prostate screening, kidney stones, and urinary issues. OB-GYNs refer frequently for pelvic floor and incontinence cases. Building these two referral channels covers most urology patient acquisition.",
+  },
+  {
+    slug: "psychiatrists",
+    name: "Psychiatrist",
+    plural: "Psychiatrists",
+    refersTo: ["Primary Care Physicians", "Therapists", "Neurologists", "Pediatricians"],
+    description: "Psychiatrists receive referrals from primary care physicians who need medication management for patients with depression, anxiety, ADHD, and bipolar disorder. Therapists are a critical bidirectional partner -- they refer patients who need meds, and psychiatrists refer patients who need talk therapy.",
+  },
+  {
+    slug: "sports-medicine",
+    name: "Sports Medicine Doctor",
+    plural: "Sports Medicine Doctors",
+    refersTo: ["Orthopedic Surgeons", "Physical Therapists", "Primary Care Physicians", "Chiropractors"],
+    description: "Sports medicine doctors sit between primary care and orthopedic surgery. They receive referrals from PCPs for musculoskeletal injuries and from orthopedic surgeons for non-surgical management. Physical therapists and chiropractors are key bidirectional partners.",
+  },
+  {
+    slug: "plastic-surgeons",
+    name: "Plastic Surgeon",
+    plural: "Plastic Surgeons",
+    refersTo: ["Dermatologists", "Med Spas", "OB-GYNs", "Primary Care Physicians"],
+    description: "Plastic surgeons receive cosmetic referrals from dermatologists and med spas, and reconstructive referrals from primary care and OB-GYNs. The practices that build relationships in both channels have the most diversified patient pipeline.",
+  },
+  {
+    slug: "endocrinologists",
+    name: "Endocrinologist",
+    plural: "Endocrinologists",
+    refersTo: ["Primary Care Physicians", "OB-GYNs", "Cardiologists", "Podiatrists"],
+    description: "Endocrinologists receive the vast majority of referrals from primary care for diabetes, thyroid disorders, and hormone imbalances. OB-GYNs refer for PCOS and fertility-related hormonal issues. Podiatrists and cardiologists create a bidirectional referral loop for diabetic patients.",
+  },
 ]
 
 export const cities: City[] = [
@@ -142,6 +191,21 @@ export const cities: City[] = [
   { slug: "seattle-wa", name: "Seattle", state: "Washington", stateAbbr: "WA" },
   { slug: "boston-ma", name: "Boston", state: "Massachusetts", stateAbbr: "MA" },
   { slug: "nashville-tn", name: "Nashville", state: "Tennessee", stateAbbr: "TN" },
+  { slug: "west-palm-beach-fl", name: "West Palm Beach", state: "Florida", stateAbbr: "FL" },
+  { slug: "palm-beach-gardens-fl", name: "Palm Beach Gardens", state: "Florida", stateAbbr: "FL" },
+  { slug: "jupiter-fl", name: "Jupiter", state: "Florida", stateAbbr: "FL" },
+  { slug: "boca-raton-fl", name: "Boca Raton", state: "Florida", stateAbbr: "FL" },
+  { slug: "fort-lauderdale-fl", name: "Fort Lauderdale", state: "Florida", stateAbbr: "FL" },
+  { slug: "st-petersburg-fl", name: "St. Petersburg", state: "Florida", stateAbbr: "FL" },
+  { slug: "naples-fl", name: "Naples", state: "Florida", stateAbbr: "FL" },
+  { slug: "san-francisco-ca", name: "San Francisco", state: "California", stateAbbr: "CA" },
+  { slug: "portland-or", name: "Portland", state: "Oregon", stateAbbr: "OR" },
+  { slug: "minneapolis-mn", name: "Minneapolis", state: "Minnesota", stateAbbr: "MN" },
+  { slug: "detroit-mi", name: "Detroit", state: "Michigan", stateAbbr: "MI" },
+  { slug: "las-vegas-nv", name: "Las Vegas", state: "Nevada", stateAbbr: "NV" },
+  { slug: "raleigh-nc", name: "Raleigh", state: "North Carolina", stateAbbr: "NC" },
+  { slug: "indianapolis-in", name: "Indianapolis", state: "Indiana", stateAbbr: "IN" },
+  { slug: "columbus-oh", name: "Columbus", state: "Ohio", stateAbbr: "OH" },
 ]
 
 export function getSpecialty(slug: string): Specialty | undefined {
