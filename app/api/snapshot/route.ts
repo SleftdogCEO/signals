@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdjacentSpecialties, calculateFitScore } from "@/lib/adjacency-map"
+import { sendSnapshotEmail, sendLeadNotification } from "@/lib/email"
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
@@ -299,6 +300,11 @@ export async function POST(request: NextRequest) {
       sourcesCount: sources.length,
       avgFitScore
     })
+
+    // Send automated emails (non-blocking)
+    const firstName = (practiceName || email.split("@")[0]).split(" ")[0]
+    sendSnapshotEmail(email, firstName, specialty, location, sources.length, topSpecialty).catch(() => {})
+    sendLeadNotification(email, practiceName || "", specialty, location, sources.length).catch(() => {})
 
     console.log(`📊 Snapshot generated: ${sources.length} sources for ${email}`)
 

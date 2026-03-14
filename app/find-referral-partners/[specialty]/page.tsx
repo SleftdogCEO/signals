@@ -215,22 +215,22 @@ export default async function SpecialtyPage({ params }: Props) {
             </div>
           </div>
 
-          {/* CTA */}
+          {/* CTA - Snapshot */}
           <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16 text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Find {spec.name} Referral Partners Near You
             </h2>
             <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto">
-              See which providers in your area already refer to {spec.plural.toLowerCase()} -- and which ones you should be connecting with.
+              Get a free snapshot showing which {spec.refersTo[0].toLowerCase()} and other providers near you could send patients. Takes 30 seconds.
             </p>
             <Link
-              href="/auth?signup=true"
+              href="/snapshot"
               className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold text-lg rounded-xl hover:opacity-90 transition-all shadow-xl shadow-blue-500/25"
             >
-              Get Started Free
+              Get Your Free Snapshot
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <p className="text-sm text-slate-500 mt-4">Free to join. No credit card required.</p>
+            <p className="text-sm text-slate-500 mt-4">No signup required. Just enter your specialty and location.</p>
           </div>
 
           {/* City links */}
