@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getBlogPost, getAllBlogPosts } from "@/lib/blog-posts"
+import { specialties } from "@/lib/seo-data"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -109,6 +110,27 @@ export default async function BlogPostPage({ params }: Props) {
             >
               Get Your Free Snapshot
             </Link>
+          </div>
+
+          {/* Related Specialties */}
+          <div className="mt-12">
+            <h3 className="text-xl font-bold text-white mb-4">Find Referral Partners by Specialty</h3>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {specialties.slice(0, 9).map((s) => (
+                <Link
+                  key={s.slug}
+                  href={`/find-referral-partners/${s.slug}`}
+                  className="px-4 py-3 bg-slate-900/50 border border-slate-800 rounded-lg text-slate-300 hover:text-white hover:border-blue-500/50 transition-all text-sm font-medium"
+                >
+                  {s.plural} Referral Partners
+                </Link>
+              ))}
+            </div>
+            <p className="mt-4">
+              <Link href="/find-referral-partners" className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                Browse all {specialties.length} specialties →
+              </Link>
+            </p>
           </div>
         </article>
       </main>

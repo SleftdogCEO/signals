@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getAllBlogPosts } from "@/lib/blog-posts"
+import { specialties } from "@/lib/seo-data"
 
 export const metadata: Metadata = {
   title: "Healthcare Referral Blog - Practice Growth Strategies (2026)",
@@ -99,6 +100,21 @@ export default function BlogPage() {
               ))}
             </div>
           )}
+          {/* Specialty Links */}
+          <div className="mt-16 pt-12 border-t border-slate-800">
+            <h2 className="text-2xl font-bold text-white mb-6">Find Referral Partners by Specialty</h2>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {specialties.map((s) => (
+                <Link
+                  key={s.slug}
+                  href={`/find-referral-partners/${s.slug}`}
+                  className="px-4 py-3 bg-slate-900/50 border border-slate-800 rounded-lg text-slate-300 hover:text-white hover:border-blue-500/50 transition-all text-sm font-medium"
+                >
+                  {s.plural}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </main>
 
