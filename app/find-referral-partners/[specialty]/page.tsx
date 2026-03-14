@@ -38,7 +38,7 @@ export default async function SpecialtyPage({ params }: Props) {
   const spec = getSpecialty(slug)
   if (!spec) notFound()
 
-  const otherSpecialties = specialties.filter((s) => s.slug !== slug).slice(0, 6)
+  const otherSpecialties = specialties.filter((s) => s.slug !== slug)
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">

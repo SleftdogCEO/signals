@@ -46,8 +46,8 @@ export default async function SpecialtyCityPage({ params }: Props) {
   const city = getCity(citySlug)
   if (!spec || !city) notFound()
 
-  const otherCities = cities.filter((c) => c.slug !== city.slug).slice(0, 8)
-  const otherSpecialties = specialties.filter((s) => s.slug !== spec.slug).slice(0, 6)
+  const otherCities = cities.filter((c) => c.slug !== city.slug)
+  const otherSpecialties = specialties.filter((s) => s.slug !== spec.slug)
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -170,6 +170,38 @@ export default async function SpecialtyCityPage({ params }: Props) {
             </div>
           </div>
 
+          {/* FAQ Section */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12 mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">
+              FAQs: {spec.name} Referrals in {city.name}
+            </h2>
+            <div className="space-y-6">
+              {[
+                {
+                  q: `How do ${spec.plural.toLowerCase()} in ${city.name} get more referrals?`,
+                  a: `The fastest way for ${spec.plural.toLowerCase()} in ${city.name} to grow is by building referral relationships with nearby ${spec.refersTo[0].toLowerCase()} and ${spec.refersTo[1].toLowerCase()}. These providers see patients who need your services daily and will refer if they know your practice.`,
+                },
+                {
+                  q: `Who sends the most patients to ${spec.plural.toLowerCase()} in ${city.name}, ${city.stateAbbr}?`,
+                  a: `In the ${city.name} market, ${spec.refersTo[0]} are typically the #1 referral source for ${spec.plural.toLowerCase()}, followed by ${spec.refersTo[1]}. Practices with 10+ active referral relationships in ${city.name} see 30-60% of new patients from referrals.`,
+                },
+                {
+                  q: `Is Sleft Signals free for ${spec.plural.toLowerCase()} in ${city.name}?`,
+                  a: `Yes. Sleft Signals is free to join for all healthcare providers in ${city.name}. We identify ${spec.refersTo.join(", ").toLowerCase()} near your practice who are likely referral partners.`,
+                },
+                {
+                  q: `How many ${spec.plural.toLowerCase()} are in ${city.name}?`,
+                  a: `${city.name}, ${city.state} has a competitive healthcare market with many ${spec.plural.toLowerCase()} practices. Standing out requires more than ads -- it requires trusted referral relationships with nearby providers who send patients your way consistently.`,
+                },
+              ].map((faq, i) => (
+                <div key={i} className="border-b border-slate-700 pb-6 last:border-0 last:pb-0">
+                  <h3 className="text-lg font-semibold text-white mb-2">{faq.q}</h3>
+                  <p className="text-slate-400 leading-relaxed">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* CTA */}
           <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16 text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -267,6 +299,32 @@ export default async function SpecialtyCityPage({ params }: Props) {
                 { "@type": "ListItem", position: 1, name: "Home", item: "https://sleftsignals.com" },
                 { "@type": "ListItem", position: 2, name: spec.plural, item: `https://sleftsignals.com/find-referral-partners/${spec.slug}` },
                 { "@type": "ListItem", position: 3, name: `${city.name}, ${city.stateAbbr}`, item: `https://sleftsignals.com/find-referral-partners/${spec.slug}/${city.slug}` },
+              ],
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                {
+                  "@type": "Question",
+                  name: `How do ${spec.plural.toLowerCase()} in ${city.name} get more referrals?`,
+                  acceptedAnswer: { "@type": "Answer", text: `The fastest way for ${spec.plural.toLowerCase()} in ${city.name} to grow is by building referral relationships with nearby ${spec.refersTo[0].toLowerCase()} and ${spec.refersTo[1].toLowerCase()}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `Who sends the most patients to ${spec.plural.toLowerCase()} in ${city.name}, ${city.stateAbbr}?`,
+                  acceptedAnswer: { "@type": "Answer", text: `${spec.refersTo[0]} are typically the #1 referral source for ${spec.plural.toLowerCase()} in ${city.name}, followed by ${spec.refersTo[1]}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `Is Sleft Signals free for ${spec.plural.toLowerCase()} in ${city.name}?`,
+                  acceptedAnswer: { "@type": "Answer", text: `Yes. Sleft Signals is free to join for all healthcare providers in ${city.name}.` },
+                },
+                {
+                  "@type": "Question",
+                  name: `How many ${spec.plural.toLowerCase()} are in ${city.name}?`,
+                  acceptedAnswer: { "@type": "Answer", text: `${city.name}, ${city.state} has a competitive healthcare market with many ${spec.plural.toLowerCase()} practices. Standing out requires trusted referral relationships with nearby providers.` },
+                },
               ],
             },
           ]),
