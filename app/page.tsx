@@ -257,7 +257,9 @@ export default function HomePage() {
             </div>
 
             <p className="text-center text-slate-500 mt-6">
-              And dozens more specialty combinations
+              <Link href="/find-referral-partners" className="text-blue-400 hover:text-blue-300 transition-colors">
+                Browse all {specialties.length} specialties across 35+ cities →
+              </Link>
             </p>
           </div>
 
@@ -298,7 +300,12 @@ export default function HomePage() {
       {/* Find Referral Partners - SEO internal links */}
       <section className="relative z-10 px-6 lg:px-12 py-16 border-t border-slate-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-white mb-8">Find Referral Partners by Specialty</h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-white">Find Referral Partners by Specialty</h2>
+            <Link href="/find-referral-partners" className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
+              View all specialties & cities →
+            </Link>
+          </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {specialties.map((s) => (
               <Link
