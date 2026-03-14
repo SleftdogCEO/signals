@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdjacentSpecialties, calculateFitScore } from "@/lib/adjacency-map"
 import { sendSnapshotEmail, sendLeadNotification } from "@/lib/email"
+import { sendViralOutreach } from "@/lib/viral-outreach"
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
@@ -305,6 +306,18 @@ export async function POST(request: NextRequest) {
     const firstName = (practiceName || email.split("@")[0]).split(" ")[0]
     sendSnapshotEmail(email, firstName, specialty, location, sources.length, topSpecialty).catch(() => {})
     sendLeadNotification(email, practiceName || "", specialty, location, sources.length).catch(() => {})
+
+    // Viral outreach: email found providers telling them someone nearby wants to refer to them
+    // Only email top 3 highest-fit providers to avoid spam
+    for (const source of sources.slice(0, 3)) {
+      if (source.website) {
+        sendViralOutreach(
+          { name: source.name, specialty: source.specialty, address: source.address, website: source.website, phone: source.phone },
+          specialty,
+          location
+        ).catch(() => {})
+      }
+    }
 
     console.log(`📊 Snapshot generated: ${sources.length} sources for ${email}`)
 
