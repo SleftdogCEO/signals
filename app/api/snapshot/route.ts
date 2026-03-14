@@ -226,7 +226,7 @@ function generateDemoSource(specialty: string, location: string, index: number):
     distance: `${(1 + Math.random() * 8).toFixed(1)} mi`,
     rating: parseFloat((4.0 + Math.random() * 0.9).toFixed(1)),
     reviewCount: 15 + Math.floor(Math.random() * 250),
-    website: `https://www.${name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20)}.com`,
+    website: null, // Demo data — no real website, prevents viral outreach
     phone: `(${areaCode}) ${phoneNum}`,
     fitScore: 0
   }
