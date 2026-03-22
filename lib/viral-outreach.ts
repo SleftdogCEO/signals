@@ -1,16 +1,4 @@
-import nodemailer from "nodemailer"
-
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: process.env.EMAIL_SECURE === "true",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-})
-
-const fromAddress = `"${process.env.EMAIL_FROM_NAME || "Sleft Signals"}" <${process.env.EMAIL_FROM || "grant@sleftpayments.com"}>`
+import { Resend } from "resend"
 
 interface FoundProvider {
   name: string
@@ -27,16 +15,22 @@ export async function sendViralOutreach(
   referringSpecialty: string,
   referringLocation: string
 ) {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_PASSWORD) return
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.log("RESEND_API_KEY not set, skipping viral outreach")
+    return
+  }
   if (!foundProvider.website) return
 
   // Extract likely email from website domain
   const email = extractPracticeEmail(foundProvider.website)
   if (!email) return
 
+  const resend = new Resend(apiKey)
+
   try {
-    await transporter.sendMail({
-      from: fromAddress,
+    await resend.emails.send({
+      from: "Sleft Signals <grant@sleftpayments.com>",
       to: email,
       subject: `A ${referringSpecialty.toLowerCase()} near ${referringLocation} wants to send you referral patients`,
       html: buildViralEmail(foundProvider, referringSpecialty, referringLocation),

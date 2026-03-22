@@ -1,17 +1,9 @@
-import nodemailer from "nodemailer"
+import { Resend } from "resend"
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: process.env.EMAIL_SECURE === "true",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-})
-
-const fromAddress = `"${process.env.EMAIL_FROM_NAME || "Sleft Signals"}" <${process.env.EMAIL_FROM || "grant@sleftpayments.com"}>`
-
+/**
+ * Send the snapshot results email TO the user who submitted the form.
+ * Uses Resend (via RESEND_API_KEY env var) so we don't depend on SMTP.
+ */
 export async function sendSnapshotEmail(
   to: string,
   firstName: string,
@@ -20,14 +12,17 @@ export async function sendSnapshotEmail(
   sourcesCount: number,
   topSpecialty: string
 ) {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_PASSWORD) {
-    console.log("Email not configured, skipping snapshot email")
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.log("RESEND_API_KEY not set, skipping snapshot email to user")
     return
   }
 
+  const resend = new Resend(apiKey)
+
   try {
-    await transporter.sendMail({
-      from: fromAddress,
+    await resend.emails.send({
+      from: "Grant Denmark - Sleft Signals <grant@sleftpayments.com>",
       to,
       subject: `Your referral snapshot: ${sourcesCount} providers near your ${location} practice`,
       html: buildSnapshotEmail(firstName, specialty, location, sourcesCount, topSpecialty),
@@ -38,6 +33,10 @@ export async function sendSnapshotEmail(
   }
 }
 
+/**
+ * Notify Grant about a new snapshot lead via the sleftpayments lead-capture API.
+ * This replaces the old nodemailer-based notification that required SMTP env vars.
+ */
 export async function sendLeadNotification(
   email: string,
   practiceName: string,
@@ -45,26 +44,30 @@ export async function sendLeadNotification(
   location: string,
   sourcesCount: number
 ) {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_PASSWORD) return
-
   try {
-    await transporter.sendMail({
-      from: fromAddress,
-      to: "grant@sleftpayments.com",
-      subject: `New Sleft Signals lead: ${practiceName || email} (${specialty}, ${location})`,
-      html: `
-        <h2>New Snapshot Lead</h2>
-        <ul>
-          <li><strong>Email:</strong> ${email}</li>
-          <li><strong>Practice:</strong> ${practiceName || "Not provided"}</li>
-          <li><strong>Specialty:</strong> ${specialty}</li>
-          <li><strong>Location:</strong> ${location}</li>
-          <li><strong>Sources Found:</strong> ${sourcesCount}</li>
-          <li><strong>Time:</strong> ${new Date().toLocaleString()}</li>
-        </ul>
-        <p><a href="https://sleftsignals.com/auth">Open Dashboard</a></p>
-      `,
+    const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        name: practiceName || "",
+        businessName: practiceName || "Sleft Signals Snapshot",
+        source: "sleftsignals.com",
+        conversationSummary: [
+          `Snapshot Lead`,
+          `Specialty: ${specialty}`,
+          `Location: ${location}`,
+          `Sources Found: ${sourcesCount}`,
+          `Time: ${new Date().toLocaleString()}`,
+        ].join("\n"),
+      }),
     })
+
+    if (!res.ok) {
+      console.error("Lead notification failed:", res.status, await res.text())
+    } else {
+      console.log("Lead notification sent via sleftpayments lead-capture API")
+    }
   } catch (err) {
     console.error("Failed to send lead notification:", err)
   }
