@@ -85,10 +85,10 @@ export default async function BlogPostPage({ params }: Props) {
               <span className="text-sm text-slate-500">{post.date}</span>
               <span className="text-sm text-slate-500">{post.readTime}</span>
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight mb-4 bg-gradient-to-r from-white via-blue-200 to-cyan-400 bg-clip-text text-transparent">
               {post.title}
             </h1>
-            <p className="text-xl text-slate-400">{post.excerpt}</p>
+            <p className="text-lg text-slate-400">{post.excerpt}</p>
           </div>
 
           <div
