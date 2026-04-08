@@ -1,13 +1,14 @@
 import Link from "next/link"
+import Image from "next/image"
 import {
   ArrowRight,
   Zap,
-  DollarSign,
   Search,
   MapPin,
   Handshake,
-  XCircle,
-  CheckCircle,
+  Stethoscope,
+  Activity,
+  Users,
 } from "lucide-react"
 import { specialties } from "@/lib/seo-data"
 
@@ -50,10 +51,11 @@ const colorMap = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl" />
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-200px] left-[10%] w-[600px] h-[600px] bg-blue-500/[0.07] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "8s" }} />
+        <div className="absolute top-[20%] right-[5%] w-[500px] h-[500px] bg-cyan-500/[0.06] rounded-full blur-[140px] animate-pulse" style={{ animationDuration: "12s" }} />
+        <div className="absolute bottom-[-100px] left-[30%] w-[700px] h-[700px] bg-blue-600/[0.05] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "10s" }} />
       </div>
 
       {/* Nav */}
@@ -73,6 +75,12 @@ export default function HomePage() {
             Blog
           </Link>
           <Link
+            href="/referral-lookup"
+            className="text-slate-400 hover:text-white transition-colors font-medium"
+          >
+            Find Partners
+          </Link>
+          <Link
             href="/auth"
             className="text-slate-400 hover:text-white transition-colors font-medium"
           >
@@ -87,109 +95,102 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* Hero - Two Column Layout */}
       <main className="relative z-20 px-6 lg:px-12 pt-16 lg:pt-24 pb-20">
         <div className="max-w-7xl mx-auto">
-          {/* Hero Content */}
-          <div className="max-w-4xl mx-auto text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
-              <DollarSign className="w-4 h-4 text-red-400" />
-              <span className="text-sm text-red-400 font-medium">Stop paying agencies $3k/month for garbage leads</span>
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 mb-24">
+            {/* Left - Text Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-500/[0.08] border border-blue-500/30 rounded-full mb-6 backdrop-blur-sm">
+                <Activity className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-blue-400 font-medium">Referral intelligence for healthcare</span>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-6">
+                <span className="bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent">
+                  Your Best Referrals Are Down The Street.
+                </span>
+                <span className="block text-2xl md:text-3xl lg:text-4xl font-bold text-slate-300 mt-3">
+                  We Help You Find Them.
+                </span>
+              </h1>
+
+              <p className="text-lg md:text-xl text-slate-300 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0 font-medium">
+                We match your practice with <span className="text-blue-400">complementary providers in your zip code</span> who can send you patients. No ads. No agencies. Just the referral network you should have built years ago.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <Link
+                  href="/referral-lookup"
+                  className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-blue-400 hover:to-cyan-400 transition-all shadow-xl shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]"
+                >
+                  See Your Referral Partners
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="#how-it-works"
+                  className="flex items-center gap-2 px-6 py-3.5 text-sm font-semibold text-slate-400 border border-white/10 bg-white/[0.03] rounded-lg backdrop-blur-sm hover:border-blue-500/20 hover:bg-blue-500/[0.04] hover:text-white transition-all"
+                >
+                  How It Works
+                </Link>
+              </div>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
-              Your Best Referrals Are
-              <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                Down The Street
-              </span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              We find local healthcare providers who can send you patients.
-              No ads. No agencies. Just partnerships with your neighbors.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/auth?signup=true"
-                className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold text-lg rounded-xl hover:opacity-90 transition-all shadow-xl shadow-blue-500/25"
-              >
-                See Who&apos;s Near You
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="#how-it-works"
-                className="flex items-center gap-2 px-8 py-4 text-slate-400 hover:text-white font-medium transition-colors"
-              >
-                How It Works
-              </Link>
+            {/* Right - Founder Image */}
+            <div className="relative flex-shrink-0">
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 blur-lg" />
+                <Image
+                  src="/grant-headshot.png"
+                  alt="Grant Denmark, founder of Sleft Signals"
+                  width={320}
+                  height={320}
+                  className="relative h-64 w-64 md:h-80 md:w-80 rounded-2xl object-cover object-top border-2 border-white/10 shadow-2xl"
+                  priority
+                />
+                {/* Badge overlay */}
+                <div className="absolute -bottom-3 -right-3 rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 backdrop-blur-sm">
+                  <p className="text-xs font-bold text-blue-400">Grant Denmark</p>
+                  <p className="text-[10px] text-slate-400">Medical Student + Agentic Engineer</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* The Problem */}
+          {/* Built by a Clinician callout */}
+          <div className="max-w-3xl mx-auto mb-24 text-center">
+            <div className="inline-flex items-center gap-2 mb-4">
+              <Stethoscope className="w-5 h-5 text-blue-400" />
+              <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">Built by a Clinician</span>
+            </div>
+            <p className="text-xl md:text-2xl text-slate-300 leading-relaxed font-medium">
+              I built Sleft Signals because I watched attending physicians struggle to grow their practices while
+              paying agencies thousands for leads that never converted. The answer was always the same:
+              <span className="text-white font-bold"> the best patients come from other providers who trust you.</span>
+            </p>
+          </div>
+
+          {/* The Problem - Condensed */}
           <div className="max-w-4xl mx-auto mb-32">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
-                The Problem With Healthcare Marketing
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 md:p-10">
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                Agencies Burn Your Budget. Referrals Compound.
               </h2>
 
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-red-400 flex items-center gap-2">
-                    <XCircle className="w-5 h-5" />
-                    What Agencies Do
-                  </h3>
-                  <ul className="space-y-3 text-slate-400">
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-400 mt-1">•</span>
-                      Charge $2-5k/month for Facebook ads
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-400 mt-1">•</span>
-                      Send you tire-kickers who ghost
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-400 mt-1">•</span>
-                      Zero integration with your community
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-400 mt-1">•</span>
-                      You&apos;re competing with every practice in your city
-                    </li>
-                  </ul>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-red-500/[0.04] border border-red-500/10 rounded-xl p-5">
+                  <p className="text-sm font-semibold text-red-400 mb-3">Marketing Agencies</p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    $2-5k/month for Facebook ads that send tire-kickers who ghost after the first visit. Zero integration with your local community. You compete with every practice in your city.
+                  </p>
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    What Actually Works
-                  </h3>
-                  <ul className="space-y-3 text-slate-400">
-                    <li className="flex items-start gap-3">
-                      <span className="text-emerald-400 mt-1">•</span>
-                      Referrals from other providers
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-emerald-400 mt-1">•</span>
-                      Patients who already trust someone
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-emerald-400 mt-1">•</span>
-                      Local relationships that compound
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-emerald-400 mt-1">•</span>
-                      Zero ad spend required
-                    </li>
-                  </ul>
+                <div className="bg-emerald-500/[0.04] border border-emerald-500/10 rounded-xl p-5">
+                  <p className="text-sm font-semibold text-emerald-400 mb-3">Provider Referrals</p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Patients arrive pre-qualified and trusting. The ortho 2 miles away sends you 10 post-ops a month. The PCP down the street refers every MSK complaint. Zero ad spend. Relationships that compound.
+                  </p>
                 </div>
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-slate-700 text-center">
-                <p className="text-xl text-white font-medium">
-                  The orthopedic surgeon 2 miles away could send you 10 patients a month.
-                  <span className="text-slate-400 block mt-1">Do you even know their name?</span>
-                </p>
               </div>
             </div>
           </div>
@@ -263,25 +264,49 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* CTA */}
+          {/* Referral Lookup CTA */}
           <div className="mb-32">
-            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16 text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                See Who&apos;s In Your Area
-              </h2>
-              <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto">
-                Enter your practice details and we&apos;ll show you providers nearby who could become referral partners.
-              </p>
-              <Link
-                href="/auth?signup=true"
-                className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <p className="text-sm text-slate-500 mt-4">
-                Free to join. No credit card required.
-              </p>
+            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-10 md:p-16">
+              <div className="flex flex-col md:flex-row items-center gap-10">
+                <div className="flex-1 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-blue-400" />
+                    <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">Free Tool</span>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    See Your Referral Partners Instantly
+                  </h2>
+                  <p className="text-lg text-slate-400 mb-8 max-w-xl">
+                    Enter your specialty and zip code. We show you every complementary provider within 10 miles who could be sending you patients right now.
+                  </p>
+                  <Link
+                    href="/referral-lookup"
+                    className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 font-semibold text-lg rounded-xl hover:bg-slate-100 transition-colors"
+                  >
+                    Find My Referral Partners
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  <p className="text-sm text-slate-500 mt-4">
+                    No signup required. Results in seconds.
+                  </p>
+                </div>
+                <div className="flex-shrink-0 hidden md:block">
+                  <div className="w-64 h-64 bg-slate-900/80 border border-slate-700 rounded-2xl p-6 flex flex-col gap-3">
+                    <div className="text-xs text-slate-500 font-mono mb-2">SAMPLE RESULTS</div>
+                    {[
+                      { name: "Tampa Bay PT & Rehab", score: 97 },
+                      { name: "Coastal Orthopedics", score: 94 },
+                      { name: "Bay Area Pain Mgmt", score: 91 },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
+                        <span className="text-sm text-slate-300 truncate">{item.name}</span>
+                        <span className="text-xs font-bold text-emerald-400 ml-2">{item.score}%</span>
+                      </div>
+                    ))}
+                    <div className="text-xs text-slate-600 mt-auto text-center">+ 12 more matches</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -341,7 +366,12 @@ export default function HomePage() {
             "@type": "Organization",
             name: "Sleft Signals",
             url: "https://sleftsignals.com",
-            description: "Find healthcare referral partners who share your patient population. Get a free snapshot of nearby practices.",
+            founder: {
+              "@type": "Person",
+              name: "Grant Denmark",
+              jobTitle: "Medical Student & Agentic Engineer",
+            },
+            description: "Find healthcare referral partners who share your patient population. Built by a medical student who understands how referral networks actually work.",
             serviceType: "Healthcare Referral Intelligence",
           }),
         }}
