@@ -199,12 +199,83 @@ export default async function BlogPostPage({ params }: Props) {
 }
 
 function renderContent(content: string): string {
-  return content
+  // First, extract and replace custom tables with placeholders
+  const tables: string[] = []
+  const withPlaceholders = content.replace(
+    /\[TABLE\]\n([\s\S]*?)\[\/TABLE\]/g,
+    (_, tableContent: string) => {
+      const lines = tableContent.trim().split("\n")
+      let html = '<div class="signals-table-wrap"><table class="signals-table"><thead>'
+
+      for (const line of lines) {
+        if (line.startsWith("[HEADER]") && line.endsWith("[/HEADER]")) {
+          const cells = line.slice(8, -9).split("|")
+          html += "<tr>"
+          for (const cell of cells) {
+            html += `<th>${cell.trim()}</th>`
+          }
+          html += "</tr></thead><tbody>"
+        } else if (line.startsWith("[ROW]") && line.endsWith("[/ROW]")) {
+          const cells = line.slice(5, -6).split("|")
+          html += "<tr>"
+          for (const cell of cells) {
+            html += `<td>${cell.trim()}</td>`
+          }
+          html += "</tr>"
+        }
+      }
+
+      html += "</tbody></table></div>"
+      const idx = tables.length
+      tables.push(html)
+      return `__TABLE_PLACEHOLDER_${idx}__`
+    }
+  )
+
+  // Also handle markdown tables (| Header | Header | format) from existing posts
+  const withMdTables = withPlaceholders.replace(
+    /((?:^\|.+\|$\n?){2,})/gm,
+    (block: string) => {
+      const rows = block.trim().split("\n").filter((r) => r.trim())
+      // Skip separator rows like |---|---|
+      const dataRows = rows.filter((r) => !/^\|[\s\-:|]+\|$/.test(r))
+      if (dataRows.length < 1) return block
+
+      let html = '<div class="signals-table-wrap"><table class="signals-table"><thead>'
+      const headerCells = dataRows[0].split("|").filter((c) => c.trim())
+      html += "<tr>"
+      for (const cell of headerCells) {
+        html += `<th>${cell.trim()}</th>`
+      }
+      html += "</tr></thead><tbody>"
+
+      for (let i = 1; i < dataRows.length; i++) {
+        const cells = dataRows[i].split("|").filter((c) => c.trim())
+        html += "<tr>"
+        for (const cell of cells) {
+          html += `<td>${cell.trim()}</td>`
+        }
+        html += "</tr>"
+      }
+
+      html += "</tbody></table></div>"
+      const idx = tables.length
+      tables.push(html)
+      return `__TABLE_PLACEHOLDER_${idx}__`
+    }
+  )
+
+  // Now process line by line
+  const rendered = withMdTables
     .split("\n")
     .map((line) => {
+      // Check for table placeholder
+      const placeholderMatch = line.match(/^__TABLE_PLACEHOLDER_(\d+)__$/)
+      if (placeholderMatch) return tables[parseInt(placeholderMatch[1])]
       if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`
       if (line.startsWith("### ")) return `<h3>${line.slice(4)}</h3>`
       if (line.startsWith("- ")) return `<li>${line.slice(2)}</li>`
+      if (line.startsWith("> ")) return `<blockquote>${line.slice(2)}</blockquote>`
       if (line.startsWith("**") && line.endsWith("**"))
         return `<p><strong>${line.slice(2, -2)}</strong></p>`
       if (line.trim() === "") return ""
@@ -212,6 +283,9 @@ function renderContent(content: string): string {
     })
     .join("\n")
     .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
+    .replace(/(<blockquote>.*<\/blockquote>\n?)+/g, (match) => `<div class="signals-blockquote">${match}</div>`)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
+
+  return rendered
 }

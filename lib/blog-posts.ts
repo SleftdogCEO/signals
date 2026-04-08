@@ -1127,12 +1127,34 @@ The orthopedic surgeon down the street could send you more patients than a year 
   },
 ]
 
+import { generateAllBlogs } from "./programmatic-blogs"
+
 export function getBlogPost(slug: string): BlogPost | undefined {
-  return blogPosts.find((p) => p.slug === slug)
+  // Check manually written posts first (faster)
+  const manual = blogPosts.find((p) => p.slug === slug)
+  if (manual) return manual
+  // Then check programmatic posts
+  return generateAllBlogs().find((p) => p.slug === slug)
 }
 
 export function getAllBlogPosts(): BlogPost[] {
-  return [...blogPosts].sort(
+  return [...blogPosts, ...generateAllBlogs()].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   )
+}
+
+/** Returns paginated blog posts for the listing page */
+export function getPaginatedBlogPosts(page: number, perPage: number = 24): {
+  posts: BlogPost[]
+  totalPages: number
+  totalPosts: number
+  currentPage: number
+} {
+  const all = getAllBlogPosts()
+  const totalPosts = all.length
+  const totalPages = Math.ceil(totalPosts / perPage)
+  const safePage = Math.max(1, Math.min(page, totalPages))
+  const start = (safePage - 1) * perPage
+  const posts = all.slice(start, start + perPage)
+  return { posts, totalPages, totalPosts, currentPage: safePage }
 }
