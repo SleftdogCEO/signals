@@ -1836,12 +1836,12 @@ export function generateAllBlogs(): BlogPost[] {
 
   const posts: BlogPost[] = []
 
-  // Category 1: Specialty x City (770 posts)
-  for (const spec of specialties) {
-    for (const city of cities) {
-      posts.push(generateSpecialtyCityPost(spec, city))
-    }
-  }
+  // Category 1: Specialty x City — DISABLED 2026-04-14.
+  // These 770 posts were cannibalizing with /find-referral-partners/[specialty]/[city]
+  // tool pages (identical content, self-referencing canonicals, authority split).
+  // Stale inbound traffic is 301-redirected to the tool pages via middleware.ts.
+  // generateSpecialtyCityPost is retained in case we want to revive them under
+  // a different URL scheme later.
 
   // Category 2: Cross-Specialty Referral Guides
   const crossSlugs = new Set<string>()

@@ -363,16 +363,90 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Organization",
-            name: "Sleft Signals",
-            url: "https://sleftsignals.com",
-            founder: {
-              "@type": "Person",
-              name: "Grant Denmark",
-              jobTitle: "Medical Student & Agentic Engineer",
-            },
-            description: "Find healthcare referral partners who share your patient population. Built by a medical student who understands how referral networks actually work.",
-            serviceType: "Healthcare Referral Intelligence",
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": "https://sleftsignals.com/#organization",
+                name: "Sleft Signals",
+                url: "https://sleftsignals.com",
+                logo: "https://sleftsignals.com/logo.png",
+                description:
+                  "Healthcare referral partner matching. Find providers in complementary specialties who share your patient population, within a 5-10 mile radius of your practice.",
+                founder: {
+                  "@type": "Person",
+                  name: "Grant Denmark",
+                  jobTitle: "Medical Student & Agentic Engineer",
+                },
+                areaServed: { "@type": "Country", name: "United States" },
+                sameAs: ["https://sleftsignals.com"],
+              },
+              {
+                "@type": "WebSite",
+                "@id": "https://sleftsignals.com/#website",
+                url: "https://sleftsignals.com",
+                name: "Sleft Signals",
+                description: "Healthcare Referral Partner Matching",
+                publisher: { "@id": "https://sleftsignals.com/#organization" },
+                inLanguage: "en-US",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: "https://sleftsignals.com/find-referral-partners/{search_term_string}",
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+              {
+                "@type": "Service",
+                "@id": "https://sleftsignals.com/#service",
+                name: "Healthcare Referral Partner Matching",
+                serviceType: "Healthcare Referral Intelligence",
+                provider: { "@id": "https://sleftsignals.com/#organization" },
+                areaServed: { "@type": "Country", name: "United States" },
+                audience: {
+                  "@type": "Audience",
+                  audienceType: "Healthcare Practitioners",
+                },
+                description:
+                  "Find and connect with complementary healthcare providers in your local area. Provider density mapping, referral corridor analysis, and mutual-fit matching for practices across 22 specialties and 35 metros.",
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "USD",
+                  availability: "https://schema.org/InStock",
+                },
+              },
+              {
+                "@type": "FAQPage",
+                "@id": "https://sleftsignals.com/#faq",
+                mainEntity: [
+                  {
+                    "@type": "Question",
+                    name: "How does Sleft Signals find referral partners?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "We scrape and verify local healthcare providers in complementary specialties, then match them based on mutual-fit referral patterns drawn from CMS shared patient data and NPI registry analysis. Matches are filtered to a 5-10 mile radius of your practice so referrals stay local.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "Which specialties does Sleft Signals cover?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "22 specialties including chiropractors, physical therapists, orthodontists, dermatologists, primary care, orthopedic surgeons, pain management, mental health, med spas, pediatricians, podiatrists, oral surgeons, cardiologists, ENT doctors, urologists, psychiatrists, sports medicine, plastic surgeons, endocrinologists, dentists, allergists, and ophthalmologists.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "How do healthcare practices get more referrals?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "The practices that grow their referral networks fastest do three things consistently: they identify the 5-10 complementary specialties most likely to share patients with them, they build relationships with specific providers within 10 miles of their office, and they close the loop on every referral with a clinical summary within 48 hours.",
+                    },
+                  },
+                ],
+              },
+            ],
           }),
         }}
       />
