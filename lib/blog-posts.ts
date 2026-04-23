@@ -11,6 +11,106 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    title: "How Practice Owners Can Build Their Own AI Automations (Without Paying An Agency)",
+    slug: "practice-owner-ai-automations-claude-code",
+    excerpt:
+      "You do not need to hire a developer or a consulting firm to automate your practice. A free tool called Claude Code can do it for you if you know how to talk to it. Here is the whole process in plain English.",
+    date: "2026-04-23",
+    readTime: "5 min read",
+    category: "Practice Growth",
+    metaDescription:
+      "Medical practice owners can build their own AI automations using Claude Code. No coding. No consultant fees. Here is the step by step for intake, referral follow-ups, and scheduling.",
+    content: `## Most Practice Owners Think Automation Means Hiring A Consultant
+
+It does not.
+
+There is a free tool called Claude Code that runs on your computer. You type what you want in plain English. It builds it for you. If it breaks, you take a screenshot of the error, paste it back, and it fixes itself. That is the whole job.
+
+This post walks you through the exact process. No coding background needed.
+
+## Why You Do Not Need To Pay A Consultant
+
+Healthcare consulting firms charge thousands of dollars a month to automate things you can now build yourself in an afternoon. That was not true two years ago. It is true today.
+
+The reason is simple. AI tools now write code, read error messages, and fix their own mistakes. You are not the builder anymore. You are the person describing the workflow. That part you are already good at because it is your practice.
+
+## Step 1: Install Claude Code
+
+Go to [claude.com/claude-code](https://claude.com/claude-code) and follow the install instructions for your computer, Mac or Windows. It is a command line tool, which means you type commands into a black window called Terminal. That sounds scary. It is not.
+
+If you can type in Google, you can type in Terminal.
+
+You will need a Claude account. There is a free tier. For anything serious, the $20 a month plan is enough.
+
+## Step 2: Tell It What You Want
+
+Open Terminal. Type \`claude\`. Hit enter.
+
+Now write what you want in normal English. Be specific. A bad prompt sounds like this: "make me an AI."
+
+A good prompt sounds like this: "I run a pediatric practice. Every Monday I want a list of every patient whose well-child visit is overdue by more than 30 days. Pull the list from a CSV export from my EHR and draft a text message to each of their parents. Do not send the texts. Just draft them so I can approve them."
+
+That is it. Claude Code will start writing files, asking you for the information it needs, and running the script.
+
+## Step 3: Screenshot Every Error
+
+This is the part nobody tells you. The first version will break. The second might break. That is fine.
+
+When something goes wrong, you will see red text. Take a screenshot of the error. Paste it into Claude Code and say: "this broke, fix it."
+
+Nine times out of ten it fixes itself in under a minute. If it does not, paste the error again and say: "that did not work, try something different."
+
+Keep doing that until it works. There is no shame in it. That is how real engineers work too. The only difference is you have the patience of an owner and they are on a deadline.
+
+## A Real Example
+
+An ENT in my network was paying a medical assistant eight hours a week just to send thank-you notes and clinical summaries back to referring providers. That is over fifteen thousand dollars a year in labor for a task that is high leverage but completely mechanical.
+
+We sat down together. It took two hours. Here is what she told Claude Code:
+
+"Every day I will drop a folder of visit notes into this directory. For each note, pull the referring provider name, write a two paragraph clinical summary in plain language, and draft an email to the referring provider. Do not send the emails. Put them in my drafts folder so I can review them before they go out."
+
+It broke four times. She took a screenshot each time. It fixed itself. Now she reviews drafts for fifteen minutes a day instead of paying someone to write them for eight hours a week.
+
+She did not know what an API was before that afternoon. She still does not. It does not matter.
+
+## What To Automate First In A Practice
+
+Start small. Pick one task your front desk or medical assistant does every week that everyone hates.
+
+Common ones for practice owners:
+
+- Sending referral thank you notes and clinical summaries to referring providers
+- Following up with patients who no showed
+- Pulling a weekly list of overdue well child or annual visits from an EHR export
+- Drafting responses to Google and Healthgrades reviews
+- Reminding patients of unpaid balances
+
+Pick the one that eats the most staff time. Build that. Move on.
+
+## What Not To Automate Yourself
+
+Here is the honest version. You should build it yourself when:
+
+- The task is clear and you can describe it in two sentences
+- It touches tools you already use (a CSV export, Gmail, your calendar, etc.)
+- The output is a draft a human reviews, not an action the AI takes on its own
+
+You should pay a real engineer or a HIPAA compliant vendor when:
+
+- The workflow involves protected health information that leaves your machine
+- It needs to write directly into your EHR or clearinghouse
+- It runs on a server that is always on and handles PHI
+
+For a medical practice, the safest rule is this. Let the AI draft. Never let it send. If the AI drafts a message and a human clicks send, you stay in control of what goes out the door.
+
+## The Bigger Point
+
+The gap between practice owners and developers is closing. The practices that win the next five years are the ones whose owner sits down on a Tuesday, opens Claude Code, and stops waiting for a consultant.
+
+You already know your practice better than any consulting firm ever will. Now you have the tool that does the typing for you. Go build something.`,
+  },
+  {
     title: "How ENT Practices Build Referral Networks That Fill the Schedule",
     slug: "ent-practice-referral-network-guide",
     excerpt:
