@@ -152,7 +152,7 @@ export default function HomePage() {
                 {/* Badge overlay */}
                 <div className="absolute -bottom-3 -right-3 rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 backdrop-blur-sm">
                   <p className="text-xs font-bold text-blue-400">Grant Denmark</p>
-                  <p className="text-[10px] text-slate-400">Resident Physician + Agentic Engineer</p>
+                  <p className="text-xs text-slate-400">Resident Physician + Agentic Engineer</p>
                 </div>
               </div>
             </div>
