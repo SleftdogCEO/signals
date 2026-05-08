@@ -152,7 +152,7 @@ export default function HomePage() {
                 {/* Badge overlay */}
                 <div className="absolute -bottom-3 -right-3 rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 backdrop-blur-sm">
                   <p className="text-xs font-bold text-blue-400">Grant Denmark</p>
-                  <p className="text-[10px] text-slate-400">Medical Student + Agentic Engineer</p>
+                  <p className="text-[10px] text-slate-400">Resident Physician + Agentic Engineer</p>
                 </div>
               </div>
             </div>
@@ -375,7 +375,7 @@ export default function HomePage() {
                 founder: {
                   "@type": "Person",
                   name: "Grant Denmark",
-                  jobTitle: "Medical Student & Agentic Engineer",
+                  jobTitle: "Resident Physician & Agentic Engineer",
                 },
                 areaServed: { "@type": "Country", name: "United States" },
                 sameAs: ["https://sleftsignals.com"],
