@@ -6,7 +6,6 @@ import {
   Search,
   MapPin,
   Handshake,
-  Stethoscope,
   Activity,
   Users,
 } from "lucide-react"
@@ -53,10 +52,22 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-200px] left-[10%] w-[600px] h-[600px] bg-blue-500/[0.07] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "8s" }} />
-        <div className="absolute top-[20%] right-[5%] w-[500px] h-[500px] bg-cyan-500/[0.06] rounded-full blur-[140px] animate-pulse" style={{ animationDuration: "12s" }} />
-        <div className="absolute bottom-[-100px] left-[30%] w-[700px] h-[700px] bg-blue-600/[0.05] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "10s" }} />
+        <div className="absolute top-[-200px] left-[10%] w-[600px] h-[600px] bg-blue-500/[0.09] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "8s" }} />
+        <div className="absolute top-[20%] right-[5%] w-[500px] h-[500px] bg-emerald-500/[0.07] rounded-full blur-[140px] animate-pulse" style={{ animationDuration: "12s" }} />
+        <div className="absolute bottom-[10%] left-[30%] w-[700px] h-[700px] bg-blue-600/[0.05] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "10s" }} />
+        <div className="absolute bottom-[-150px] right-[20%] w-[450px] h-[450px] bg-amber-500/[0.05] rounded-full blur-[150px] animate-pulse" style={{ animationDuration: "14s" }} />
       </div>
+      {/* Subtle grid overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+        }}
+      />
 
       {/* Nav */}
       <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
@@ -138,9 +149,12 @@ export default function HomePage() {
 
             {/* Right - Founder Image */}
             <div className="relative flex-shrink-0">
+              {/* Emerald accent sweep — distinguishes right column from blue left side */}
+              <div className="absolute -top-10 -right-10 w-72 h-72 bg-emerald-500/[0.12] rounded-full blur-[80px] pointer-events-none" />
+              <div className="absolute -bottom-12 -left-8 w-60 h-60 bg-cyan-500/[0.10] rounded-full blur-[70px] pointer-events-none" />
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 blur-lg" />
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500/30 via-cyan-500/30 to-blue-500/30 blur-lg" />
                 <Image
                   src="/grant-headshot.png"
                   alt="Grant Denmark, founder of Sleft Signals"
@@ -156,19 +170,6 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Built by a Clinician callout */}
-          <div className="max-w-3xl mx-auto mb-24 text-center">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <Stethoscope className="w-5 h-5 text-blue-400" />
-              <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">Built by a Clinician</span>
-            </div>
-            <p className="text-xl md:text-2xl text-slate-300 leading-relaxed font-medium">
-              I built Sleft Signals because I watched attending physicians struggle to grow their practices while
-              paying agencies thousands for leads that never converted. The answer was always the same:
-              <span className="text-white font-bold"> the best patients come from other providers who trust you.</span>
-            </p>
           </div>
 
           {/* The Problem - Condensed */}
@@ -226,7 +227,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Partnership Examples */}
+          {/* Partnership Network Visual */}
           <div className="mb-32">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -237,31 +238,90 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {partnerships.map((p, i) => (
-                <Link
-                  key={i}
-                  href={`/find-referral-partners/${p.specSlug}`}
-                  className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex items-center gap-4 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all"
-                >
-                  <div className="flex-1 text-right">
-                    <span className="text-white font-medium">{p.from}</span>
-                  </div>
-                  <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <ArrowRight className="w-4 h-4 text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-white font-medium">{p.to}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <div className="relative max-w-5xl mx-auto rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-950/80 p-8 md:p-12 overflow-hidden">
+              {/* Network SVG backdrop */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                aria-hidden="true"
+                preserveAspectRatio="none"
+                viewBox="0 0 800 500"
+              >
+                <defs>
+                  <radialGradient id="nodeGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="rgb(59 130 246)" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="rgb(59 130 246)" stopOpacity="0" />
+                  </radialGradient>
+                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgb(59 130 246)" stopOpacity="0" />
+                    <stop offset="50%" stopColor="rgb(34 211 238)" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="rgb(16 185 129)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Background dots */}
+                {Array.from({ length: 40 }).map((_, i) => {
+                  const x = (i * 137) % 800
+                  const y = (i * 89) % 500
+                  return <circle key={i} cx={x} cy={y} r="1.5" fill="rgb(148 163 184)" opacity="0.15" />
+                })}
+                {/* Connecting lines */}
+                <path d="M 80 100 Q 400 50 720 120" stroke="url(#lineGrad)" strokeWidth="1" fill="none" strokeDasharray="4 6">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="6s" repeatCount="indefinite" />
+                </path>
+                <path d="M 80 250 Q 400 200 720 280" stroke="url(#lineGrad)" strokeWidth="1" fill="none" strokeDasharray="4 6">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="8s" repeatCount="indefinite" />
+                </path>
+                <path d="M 80 400 Q 400 450 720 380" stroke="url(#lineGrad)" strokeWidth="1" fill="none" strokeDasharray="4 6">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="7s" repeatCount="indefinite" />
+                </path>
+                {/* Glow nodes */}
+                <circle cx="120" cy="120" r="60" fill="url(#nodeGrad)" />
+                <circle cx="680" cy="380" r="60" fill="url(#nodeGrad)" />
+              </svg>
 
-            <p className="text-center text-slate-500 mt-6">
-              <Link href="/find-referral-partners" className="text-blue-400 hover:text-blue-300 transition-colors">
-                Browse all {specialties.length} specialties across 35+ cities →
-              </Link>
-            </p>
+              {/* Partnership pills */}
+              <div className="relative grid sm:grid-cols-2 gap-4">
+                {partnerships.map((p, i) => {
+                  const accent = ["blue", "emerald", "amber", "blue", "emerald", "amber"][i % 6]
+                  const dotClass =
+                    accent === "blue"
+                      ? "bg-blue-400"
+                      : accent === "emerald"
+                        ? "bg-emerald-400"
+                        : "bg-amber-400"
+                  const arrowBg =
+                    accent === "blue"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : accent === "emerald"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-amber-500/20 text-amber-400"
+                  return (
+                    <Link
+                      key={i}
+                      href={`/find-referral-partners/${p.specSlug}`}
+                      className="group relative bg-slate-900/70 backdrop-blur-sm border border-slate-800 rounded-xl px-5 py-4 flex items-center gap-3 hover:border-blue-500/50 hover:-translate-y-0.5 transition-all"
+                    >
+                      <div className={`w-2 h-2 rounded-full ${dotClass} shadow-[0_0_12px_currentColor] flex-shrink-0`} />
+                      <span className="text-white font-medium text-sm md:text-base">{p.from}</span>
+                      <div className="flex-1 mx-2 border-t border-dashed border-slate-700 group-hover:border-blue-500/40 transition-colors" />
+                      <div className={`w-7 h-7 ${arrowBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-white font-medium text-sm md:text-base">{p.to}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              <div className="relative text-center mt-8">
+                <Link
+                  href="/find-referral-partners"
+                  className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                >
+                  Browse all {specialties.length} specialties across 35+ cities
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Referral Lookup CTA */}
@@ -313,9 +373,9 @@ export default function HomePage() {
           {/* Bottom line */}
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-2xl md:text-3xl text-white font-medium leading-relaxed">
-              Stop paying agencies to burn your budget.
-              <span className="block text-slate-400 mt-2">
-                Start building relationships with the providers next door.
+              The providers next door are sending patients to <span className="text-slate-500 line-through">someone</span>.
+              <span className="block text-slate-300 mt-2">
+                Make sure that someone is <span className="text-emerald-400 font-bold">you</span>.
               </span>
             </p>
           </div>
