@@ -99,6 +99,62 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  // 301 redirects for retired non-physician specialty pages and blog posts.
+  // Preserves any inbound link equity instead of returning 404.
+  async redirects() {
+    const retiredSpecialties = [
+      "chiropractors",
+      "physical-therapists",
+      "dentists",
+      "orthodontists",
+      "mental-health",
+      "med-spas",
+      "optometrists",
+      "podiatrists",
+      "oral-surgeons",
+    ]
+    const specialtyRedirects = retiredSpecialties.flatMap((slug) => [
+      {
+        source: `/find-referral-partners/${slug}`,
+        destination: "/find-referral-partners",
+        permanent: true,
+      },
+      {
+        source: `/find-referral-partners/${slug}/:city*`,
+        destination: "/find-referral-partners",
+        permanent: true,
+      },
+    ])
+    const retiredBlogPosts = [
+      "cross-referral-playbook-dentists-orthodontists",
+      "pt-practice-found-14-referring-physicians",
+    ]
+    const blogRedirects = retiredBlogPosts.map((slug) => ({
+      source: `/blog/${slug}`,
+      destination: "/blog",
+      permanent: true,
+    }))
+    // Programmatic blog posts of the form /blog/find-{specialty}-referral-partners-{city}
+    // for retired specialties. Wildcard match catches every city variant.
+    const programmaticRedirects = retiredSpecialties.map((slug) => ({
+      source: `/blog/find-${slug}-referral-partners-:city*`,
+      destination: "/blog",
+      permanent: true,
+    }))
+    // Specialty strategy guides (e.g. /blog/dermatologists-referral-strategy-guide)
+    // for retired specialties.
+    const strategyGuideRedirects = retiredSpecialties.map((slug) => ({
+      source: `/blog/${slug}-referral-strategy-guide`,
+      destination: "/blog",
+      permanent: true,
+    }))
+    return [
+      ...specialtyRedirects,
+      ...blogRedirects,
+      ...programmaticRedirects,
+      ...strategyGuideRedirects,
+    ]
+  },
   // Add static file handling for video
   async rewrites() {
     return [

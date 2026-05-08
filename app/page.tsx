@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   ArrowRight,
+  ArrowLeftRight,
   Zap,
   Search,
   MapPin,
@@ -33,12 +34,12 @@ const features = [
 ]
 
 const partnerships = [
-  { from: "Chiropractor", to: "Physical Therapist", specSlug: "chiropractors" },
-  { from: "Dentist", to: "Orthodontist", specSlug: "dentists" },
-  { from: "Primary Care", to: "Specialist", specSlug: "primary-care" },
-  { from: "Med Spa", to: "Dermatologist", specSlug: "med-spas" },
-  { from: "Mental Health", to: "Primary Care", specSlug: "mental-health" },
-  { from: "Orthopedic", to: "Pain Management", specSlug: "orthopedic-surgeons" },
+  { from: "Primary Care", to: "Cardiology", specSlug: "cardiologists", bi: true },
+  { from: "Primary Care", to: "Endocrinology", specSlug: "endocrinologists", bi: true },
+  { from: "Orthopedic Surgery", to: "Pain Management", specSlug: "orthopedic-surgeons", bi: true },
+  { from: "Plastic Surgery", to: "Dermatology", specSlug: "dermatologists", bi: true },
+  { from: "Primary Care", to: "Psychiatry", specSlug: "psychiatrists", bi: false },
+  { from: "Pediatrics", to: "Allergy & Immunology", specSlug: "allergists", bi: false },
 ]
 
 const colorMap = {
@@ -114,7 +115,7 @@ export default function HomePage() {
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-500/[0.08] border border-blue-500/30 rounded-full mb-6 backdrop-blur-sm">
                 <Activity className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-400 font-medium">Referral intelligence for healthcare</span>
+                <span className="text-sm text-blue-400 font-medium">Referral intelligence for physician practices</span>
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-6">
@@ -127,7 +128,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg md:text-xl text-slate-300 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0 font-medium">
-                We match your practice with <span className="text-blue-400">complementary providers in your zip code</span> who can send you patients. No ads. No agencies. Just the referral network you should have built years ago.
+                We match your practice with <span className="text-blue-400">complementary physicians in your zip code</span> who can send you patients. No ads. No agencies. Just the physician referral network you should have built years ago.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -304,7 +305,11 @@ export default function HomePage() {
                       <span className="text-white font-medium text-sm md:text-base">{p.from}</span>
                       <div className="flex-1 mx-2 border-t border-dashed border-slate-700 group-hover:border-blue-500/40 transition-colors" />
                       <div className={`w-7 h-7 ${arrowBg} rounded-full flex items-center justify-center flex-shrink-0`}>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        {p.bi ? (
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        ) : (
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        )}
                       </div>
                       <span className="text-white font-medium text-sm md:text-base">{p.to}</span>
                     </Link>
@@ -317,7 +322,7 @@ export default function HomePage() {
                   href="/find-referral-partners"
                   className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
                 >
-                  Browse all {specialties.length} specialties across 35+ cities
+                  Browse all {specialties.length} physician specialties across 35+ cities
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -337,7 +342,7 @@ export default function HomePage() {
                     See Your Referral Partners Instantly
                   </h2>
                   <p className="text-lg text-slate-400 mb-8 max-w-xl">
-                    Enter your specialty and zip code. We show you every complementary provider within 10 miles who could be sending you patients right now.
+                    Enter your specialty and zip code. We show you every complementary physician within 10 miles who could be sending you patients right now.
                   </p>
                   <Link
                     href="/referral-lookup"
@@ -354,9 +359,9 @@ export default function HomePage() {
                   <div className="w-64 h-64 bg-slate-900/80 border border-slate-700 rounded-2xl p-6 flex flex-col gap-3">
                     <div className="text-xs text-slate-500 font-mono mb-2">SAMPLE RESULTS</div>
                     {[
-                      { name: "Tampa Bay PT & Rehab", score: 97 },
-                      { name: "Coastal Orthopedics", score: 94 },
-                      { name: "Bay Area Pain Mgmt", score: 91 },
+                      { name: "Bay Area Cardiology", score: 97 },
+                      { name: "Coastal Family Medicine", score: 94 },
+                      { name: "Tampa Endocrinology", score: 91 },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
                         <span className="text-sm text-slate-300 truncate">{item.name}</span>
@@ -373,7 +378,7 @@ export default function HomePage() {
           {/* Bottom line */}
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-2xl md:text-3xl text-white font-medium leading-relaxed">
-              The providers next door are sending patients to <span className="text-slate-500 line-through">someone</span>.
+              The physicians next door are sending patients to <span className="text-slate-500 line-through">someone</span>.
               <span className="block text-slate-300 mt-2">
                 Make sure that someone is <span className="text-emerald-400 font-bold">you</span>.
               </span>
@@ -386,7 +391,7 @@ export default function HomePage() {
       <section className="relative z-10 px-6 lg:px-12 py-16 border-t border-slate-800">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white">Find Referral Partners by Specialty</h2>
+            <h2 className="text-2xl font-bold text-white">Find Physician Referral Partners by Specialty</h2>
             <Link href="/find-referral-partners" className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
               View all specialties & cities →
             </Link>
@@ -414,7 +419,7 @@ export default function HomePage() {
             </div>
             <span className="font-semibold text-white">Sleft Signals</span>
           </div>
-          <span className="text-sm text-slate-500">Local referral intelligence for healthcare practices</span>
+          <span className="text-sm text-slate-500">Local referral intelligence for physician practices</span>
         </div>
       </footer>
 
@@ -431,7 +436,7 @@ export default function HomePage() {
                 url: "https://sleftsignals.com",
                 logo: "https://sleftsignals.com/logo.png",
                 description:
-                  "Healthcare referral partner matching. Find providers in complementary specialties who share your patient population, within a 5-10 mile radius of your practice.",
+                  "Physician referral partner matching. Find physicians in complementary specialties who share your patient population, within a 5-10 mile radius of your practice.",
                 founder: {
                   "@type": "Person",
                   name: "Grant Denmark",
@@ -460,16 +465,16 @@ export default function HomePage() {
               {
                 "@type": "Service",
                 "@id": "https://sleftsignals.com/#service",
-                name: "Healthcare Referral Partner Matching",
-                serviceType: "Healthcare Referral Intelligence",
+                name: "Physician Referral Partner Matching",
+                serviceType: "Physician Referral Intelligence",
                 provider: { "@id": "https://sleftsignals.com/#organization" },
                 areaServed: { "@type": "Country", name: "United States" },
                 audience: {
                   "@type": "Audience",
-                  audienceType: "Healthcare Practitioners",
+                  audienceType: "Physicians",
                 },
                 description:
-                  "Find and connect with complementary healthcare providers in your local area. Provider density mapping, referral corridor analysis, and mutual-fit matching for practices across 22 specialties and 35 metros.",
+                  "Find and connect with complementary physicians in your local area. Provider density mapping, referral corridor analysis, and mutual-fit matching for physician practices across 13 specialties and 35 metros.",
                 offers: {
                   "@type": "Offer",
                   priceCurrency: "USD",
@@ -482,26 +487,26 @@ export default function HomePage() {
                 mainEntity: [
                   {
                     "@type": "Question",
-                    name: "How does Sleft Signals find referral partners?",
+                    name: "How does Sleft Signals find physician referral partners?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "We scrape and verify local healthcare providers in complementary specialties, then match them based on mutual-fit referral patterns drawn from CMS shared patient data and NPI registry analysis. Matches are filtered to a 5-10 mile radius of your practice so referrals stay local.",
+                      text: "We scrape and verify local physicians in complementary specialties, then match them based on mutual-fit referral patterns drawn from CMS shared patient data and NPI registry analysis. Matches are filtered to a 5-10 mile radius of your practice so referrals stay local.",
                     },
                   },
                   {
                     "@type": "Question",
-                    name: "Which specialties does Sleft Signals cover?",
+                    name: "Which physician specialties does Sleft Signals cover?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "22 specialties including chiropractors, physical therapists, orthodontists, dermatologists, primary care, orthopedic surgeons, pain management, mental health, med spas, pediatricians, podiatrists, oral surgeons, cardiologists, ENT doctors, urologists, psychiatrists, sports medicine, plastic surgeons, endocrinologists, dentists, allergists, and ophthalmologists.",
+                      text: "13 physician specialties: primary care, cardiology, endocrinology, psychiatry, dermatology, orthopedic surgery, pain management, pediatrics, ENT, allergy and immunology, urology, sports medicine, and plastic surgery.",
                     },
                   },
                   {
                     "@type": "Question",
-                    name: "How do healthcare practices get more referrals?",
+                    name: "How do physician practices get more referrals?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "The practices that grow their referral networks fastest do three things consistently: they identify the 5-10 complementary specialties most likely to share patients with them, they build relationships with specific providers within 10 miles of their office, and they close the loop on every referral with a clinical summary within 48 hours.",
+                      text: "The physician practices that grow their referral networks fastest do three things consistently: they identify the 3-5 complementary specialties most likely to share patients with them, they build relationships with specific physicians within 10 miles of their office, and they close the loop on every referral with a clinical summary within 48 hours.",
                     },
                   },
                 ],
