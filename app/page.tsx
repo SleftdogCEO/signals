@@ -474,7 +474,7 @@ export default function HomePage() {
                   audienceType: "Physicians",
                 },
                 description:
-                  "Find and connect with complementary physicians in your local area. Provider density mapping, referral corridor analysis, and mutual-fit matching for physician practices across 13 specialties and 35 metros.",
+                  "Find and connect with complementary physicians in your local area. Provider density mapping, referral corridor analysis, and mutual-fit matching for physician practices across 19 specialties and 35 metros.",
                 offers: {
                   "@type": "Offer",
                   priceCurrency: "USD",
@@ -498,7 +498,7 @@ export default function HomePage() {
                     name: "Which physician specialties does Sleft Signals cover?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "13 physician specialties: primary care, cardiology, endocrinology, psychiatry, dermatology, orthopedic surgery, pain management, pediatrics, ENT, allergy and immunology, urology, sports medicine, and plastic surgery.",
+                      text: "19 physician specialties: primary care, cardiology, pulmonology, endocrinology, gastroenterology, rheumatology, neurology, psychiatry, dermatology, ophthalmology, orthopedic surgery, pain management, pediatrics, ENT, allergy and immunology, urology, OB-GYN, sports medicine, and plastic surgery.",
                     },
                   },
                   {
