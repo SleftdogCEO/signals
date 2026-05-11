@@ -120,7 +120,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: `/find-referral-partners/${slug}/:city*`,
+        source: `/find-referral-partners/${slug}/:city`,
         destination: "/find-referral-partners",
         permanent: true,
       },
@@ -136,8 +136,12 @@ const nextConfig: NextConfig = {
     }))
     // Programmatic blog posts of the form /blog/find-{specialty}-referral-partners-{city}
     // for retired specialties. Wildcard match catches every city variant.
+    // Programmatic slugs are a single path segment of the form
+    // find-{specialty}-referral-partners-{city}. path-to-regexp can't use
+    // a wildcard after a non-/ separator, so we match with a regex
+    // constraint on a named param instead.
     const programmaticRedirects = retiredSpecialties.map((slug) => ({
-      source: `/blog/find-${slug}-referral-partners-:city*`,
+      source: `/blog/:fullSlug(find-${slug}-referral-partners-.*)`,
       destination: "/blog",
       permanent: true,
     }))
