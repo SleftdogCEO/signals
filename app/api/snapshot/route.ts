@@ -134,43 +134,32 @@ async function searchGoogleMaps(query: string, location: string): Promise<Serper
   }
 }
 
-// Map specialty to Google Maps search terms
+// Map specialty to Google Maps search terms.
+// Keys MUST match the SPECIALTIES list in app/onboarding/page.tsx and the
+// adjacency-map keys in lib/adjacency-map.ts. All 19 physician specialties
+// must be covered; missing keys fall through to .toLowerCase() which produces
+// poor Google Places matches.
 function getSearchTerms(specialty: string): string {
   const searchTermMap: Record<string, string> = {
-    "Physical Therapy": "physical therapy clinic",
-    "Orthopedic Surgery": "orthopedic surgeon",
     "Primary Care": "primary care doctor",
-    "Chiropractic": "chiropractor",
-    "Pain Management": "pain management doctor",
-    "Sports Medicine": "sports medicine doctor",
-    "Neurology": "neurologist",
     "Cardiology": "cardiologist",
-    "Dermatology": "dermatologist",
-    "Dentist": "dentist",
-    "Oral Surgery": "oral surgeon",
-    "Orthodontist": "orthodontist",
-    "Mental Health": "therapist mental health",
-    "Psychiatry": "psychiatrist",
-    "Psychology": "psychologist",
-    "Counseling": "counselor therapist",
-    "Gastroenterology": "gastroenterologist",
-    "Imaging Center": "imaging center MRI",
-    "Urgent Care": "urgent care clinic",
-    "OB/GYN": "obgyn gynecologist",
-    "ENT": "ENT doctor",
-    "Podiatry": "podiatrist",
-    "Optometry": "optometrist",
-    "Ophthalmology": "ophthalmologist",
-    "Endocrinology": "endocrinologist",
     "Pulmonology": "pulmonologist",
+    "Endocrinology": "endocrinologist",
+    "Gastroenterology": "gastroenterologist",
     "Rheumatology": "rheumatologist",
-    "Oncology": "oncologist",
+    "Neurology": "neurologist",
+    "Psychiatry": "psychiatrist",
+    "Dermatology": "dermatologist",
+    "Ophthalmology": "ophthalmologist",
+    "Orthopedic Surgery": "orthopedic surgeon",
+    "Pain Management": "pain management doctor",
+    "Pediatrics": "pediatrician",
+    "ENT (Otolaryngology)": "ENT doctor otolaryngologist",
+    "Allergy & Immunology": "allergist immunologist",
     "Urology": "urologist",
-    "Allergy/Immunology": "allergist",
-    "Acupuncture": "acupuncture clinic",
-    "Massage Therapy": "massage therapist",
-    "Nutrition": "nutritionist dietitian",
-    "Med Spa": "medical spa",
+    "OB-GYN": "obgyn obstetrician gynecologist",
+    "Sports Medicine": "sports medicine doctor",
+    "Plastic Surgery": "plastic surgeon",
   }
 
   return searchTermMap[specialty] || specialty.toLowerCase()
@@ -179,22 +168,25 @@ function getSearchTerms(specialty: string): string {
 // Generate demo data as fallback
 function generateDemoSource(specialty: string, location: string, index: number): ReferralSource {
   const demoNames: Record<string, string[]> = {
-    "Physical Therapy": ["Athlete Restoration Co", "Lifemotion Physical Therapy", "Palm Beach Sports Rehab", "PhysioCare Jupiter"],
-    "Orthopedic Surgery": ["Palm Beach Orthopaedic Institute", "Personalized Orthopedics of the Palm Beaches", "Atlantis Orthopaedics", "The Center for Bone & Joint"],
     "Primary Care": ["Palm Beach Family Practice", "Gardens Primary Care", "Coastal Internal Medicine", "Jupiter Medical Associates"],
-    "Chiropractic": ["Paramount Chiropractic", "PGA Chiropractic Health Center", "Papa Chiropractic & PT", "Simply Chiropractic"],
-    "Pain Management": ["Certified Spine & Pain Care", "APM Wellness", "Palm Beach Pain Institute", "Cantor Spine Center"],
+    "Cardiology": ["Bay Cardiology Associates", "Palm Beach Heart Center", "Gardens Cardiovascular", "Atlantis Cardiology"],
+    "Pulmonology": ["Palm Beach Pulmonary", "Gardens Lung Center", "Coastal Sleep & Pulmonary"],
+    "Endocrinology": ["Palm Beach Endocrinology", "Gardens Diabetes & Endocrine", "Coastal Endocrine Associates"],
+    "Gastroenterology": ["Palm Beach Gastroenterology", "Gardens GI Center", "Coastal Digestive Health"],
+    "Rheumatology": ["Palm Beach Rheumatology", "Gardens Arthritis & Rheumatology", "Coastal Rheumatology Center"],
+    "Neurology": ["Palm Beach Neurology", "Gardens Neuroscience Center", "Coastal Neurology Associates"],
+    "Psychiatry": ["Palm Beach Psychiatry Associates", "Gardens Behavioral Health", "Coastal Psychiatry"],
     "Dermatology": ["Gardens Dermatology", "Frieder Dermatology", "Water's Edge Dermatology", "Palm Beach Dermatology"],
-    "Dentist": ["Natural Smile Dentistry", "Ritter & Ramsey Dentistry", "PGA Dentistry", "Intercoastal Dental"],
-    "Orthodontist": ["Palm Beach Orthodontics", "Gardens Orthodontic Associates", "Smile Design Orthodontics"],
-    "Oral Surgery": ["South Florida Oral Surgery", "Palm Beach Oral & Facial Surgery", "Jupiter Oral Surgery Center"],
-    "Med Spa": ["New Radiance Cosmetic Centers", "Opulence Medical Spa", "GaliDerm Aesthetics", "MD Beauty Labs"],
-    "Imaging Center": ["Palm Beach Radiology", "Gardens Imaging Center", "Precision MRI Palm Beach"],
-    "Massage Therapy": ["Healing Hands Massage PBG", "Palm Beach Therapeutic Massage", "Jupiter Bodywork"],
+    "Ophthalmology": ["Palm Beach Eye Center", "Gardens Ophthalmology", "Coastal Vision Institute"],
+    "Orthopedic Surgery": ["Palm Beach Orthopaedic Institute", "Personalized Orthopedics of the Palm Beaches", "Atlantis Orthopaedics", "The Center for Bone & Joint"],
+    "Pain Management": ["Certified Spine & Pain Care", "APM Wellness", "Palm Beach Pain Institute", "Cantor Spine Center"],
+    "Pediatrics": ["Palm Beach Pediatrics", "Gardens Children's Health", "Coastal Pediatric Associates"],
+    "ENT (Otolaryngology)": ["Palm Beach ENT", "Gardens Sinus & Hearing", "Coastal Otolaryngology"],
+    "Allergy & Immunology": ["Palm Beach Allergy & Asthma", "Gardens Allergy Center", "Coastal Immunology"],
+    "Urology": ["Palm Beach Urology", "Gardens Urological Associates", "Coastal Urology Center"],
+    "OB-GYN": ["Palm Beach OB-GYN", "Gardens Women's Health", "Coastal Obstetrics & Gynecology"],
     "Sports Medicine": ["Palm Beach Sports Medicine", "Jupiter Sports Medicine", "Gardens Sports & Spine"],
-    "Psychology": ["Palm Beach Psychological Associates", "Gardens Behavioral Health", "Coastal Psychology Center"],
-    "Psychiatry": ["Palm Beach Psychiatry Associates", "Gardens Mental Health Center", "Coastal Psychiatry"],
-    "Counseling": ["Palm Beach Counseling Center", "Gardens Family Counseling", "Hope Counseling PBG"],
+    "Plastic Surgery": ["Palm Beach Plastic Surgery", "Gardens Aesthetic Surgery", "Coastal Plastic & Reconstructive"],
     default: ["Palm Beach Health Associates", "Gardens Medical Specialists", "Jupiter Care Center"]
   }
 

@@ -18,139 +18,120 @@ import {
 import { specialties } from "@/lib/seo-data"
 import type { Specialty } from "@/lib/seo-data"
 
-// Reasons why a specialty refers to another specialty -- based on clinical reality
+// Reasons why a specialty refers to another specialty -- based on clinical reality.
+// Keys mirror the .plural values in lib/seo-data.ts. Inner keys mirror that
+// specialty's refersTo array. Keep this map in lockstep with seo-data.ts so
+// dynamic lookups in buildOutboundReferrals / buildReverseReferralMap surface
+// specific clinical reasons instead of falling back to generic copy.
 const referralReasons: Record<string, Record<string, string>> = {
-  Chiropractors: {
-    "Physical Therapists": "Patients needing rehab exercises and long-term mobility work after spinal adjustments",
-    "Orthopedic Surgeons": "Complex spinal or joint cases requiring imaging, surgical evaluation, or injections",
-    "Pain Management Specialists": "Chronic pain patients who need interventional procedures or medication management",
-    "Primary Care Physicians": "Patients with systemic health concerns discovered during chiropractic evaluation",
-  },
-  "Physical Therapists": {
-    "Orthopedic Surgeons": "Post-rehab patients who plateau and may need surgical intervention",
-    Chiropractors: "Patients with spinal alignment issues that complement their PT program",
-    "Pain Management Specialists": "Chronic pain patients who need interventional procedures beyond therapy",
-    "Sports Medicine Doctors": "Athletes needing comprehensive sports injury evaluation and management",
-  },
-  Dentists: {
-    Orthodontists: "Patients with malocclusion, crowding, or bite alignment issues",
-    "Oral Surgeons": "Wisdom tooth extractions, implant placement, and jaw surgery cases",
-    Periodontists: "Patients with advanced gum disease requiring specialized periodontal treatment",
-    "Pediatric Dentists": "Young patients needing age-specific dental care and behavior management",
-  },
-  Orthodontists: {
-    "General Dentists": "Patients completing orthodontic treatment who need restorative or cosmetic work",
-    "Oral Surgeons": "Surgical orthodontic cases requiring jaw repositioning or impacted tooth exposure",
-    "Pediatric Dentists": "Young patients needing primary dental care alongside orthodontic treatment",
-    "TMJ Specialists": "Patients with temporomandibular joint dysfunction related to bite alignment",
-  },
-  Dermatologists: {
-    "Primary Care Physicians": "Patients with skin conditions that indicate systemic disease requiring PCP follow-up",
-    "Med Spas": "Cosmetic patients seeking treatments like Botox or laser that complement medical dermatology",
-    "Plastic Surgeons": "Patients needing surgical removal of skin lesions or reconstructive procedures",
-    Allergists: "Patients with chronic skin reactions suggesting underlying allergic conditions",
-  },
   "Primary Care Physicians": {
-    "Specialists (All)": "Any condition requiring specialist evaluation, from cardiology to orthopedics",
-    "Mental Health Providers": "Patients with depression, anxiety, or behavioral health needs identified during visits",
-    "Physical Therapists": "Musculoskeletal injuries and post-surgical rehabilitation referrals",
-    Dermatologists: "Skin lesions, rashes, and dermatologic conditions beyond primary care scope",
-  },
-  "Orthopedic Surgeons": {
-    "Physical Therapists": "Post-surgical rehab for joint replacements, ACL repairs, and fracture recovery",
-    "Pain Management Specialists": "Non-surgical chronic pain cases requiring injections or nerve blocks",
-    "Primary Care Physicians": "Patients with medical comorbidities needing ongoing primary care management",
-    "Sports Medicine Doctors": "Non-surgical musculoskeletal cases better managed conservatively",
-  },
-  "Pain Management Specialists": {
-    "Primary Care Physicians": "Patients needing ongoing chronic disease management alongside pain treatment",
-    "Orthopedic Surgeons": "Patients failing conservative pain management who may benefit from surgery",
-    Chiropractors: "Patients who would benefit from spinal manipulation as part of multimodal pain care",
-    "Physical Therapists": "Patients needing functional rehabilitation alongside interventional pain procedures",
-  },
-  "Mental Health Providers": {
-    "Primary Care Physicians": "Patients needing medical evaluation for physical symptoms or medication management",
-    Psychiatrists: "Patients requiring psychiatric medication management alongside therapy",
-    Pediatricians: "Child and adolescent patients needing developmental or medical evaluation",
-    "School Counselors": "Students needing academic or behavioral support in the school setting",
-  },
-  "Med Spas": {
-    Dermatologists: "Patients with medical skin conditions that need clinical dermatologic treatment",
-    "Plastic Surgeons": "Patients wanting surgical procedures beyond what med spa treatments can achieve",
-    "OB-GYNs": "Patients interested in hormone therapy or women's wellness services",
-    "Primary Care Physicians": "Patients with underlying health conditions identified during consultations",
-  },
-  Pediatricians: {
-    "Pediatric Dentists": "Children needing dental care, especially those with first-tooth milestones",
-    "Child Psychologists": "Children showing behavioral, developmental, or emotional health concerns",
-    Allergists: "Pediatric patients with chronic allergies, asthma, or food sensitivities",
-    "Pediatric Orthopedists": "Children with growth plate injuries, scoliosis, or musculoskeletal concerns",
-  },
-  Optometrists: {
-    Ophthalmologists: "Patients needing cataract surgery, glaucoma treatment, or retinal procedures",
-    "Primary Care Physicians": "Patients with systemic conditions detected during eye exams (diabetes, hypertension)",
-    Pediatricians: "Children with vision issues affecting learning and development",
-    Neurologists: "Patients with visual disturbances suggesting neurological conditions",
-  },
-  Podiatrists: {
-    "Primary Care Physicians": "Diabetic patients needing comprehensive primary care alongside foot care",
-    "Orthopedic Surgeons": "Complex foot and ankle cases requiring surgical intervention",
-    Endocrinologists: "Diabetic patients with foot complications needing endocrine management",
-    "Physical Therapists": "Patients needing gait training and lower extremity rehabilitation",
-  },
-  "Oral Surgeons": {
-    "General Dentists": "Post-surgical patients returning for restorative dental work and ongoing care",
-    Orthodontists: "Patients needing orthodontic treatment after surgical jaw correction",
-    ENTs: "Patients with overlapping oral and ear/nose/throat conditions",
-    Oncologists: "Patients with oral pathology requiring oncologic evaluation and treatment",
+    Cardiologists: "Patients with HTN, CHF, AFib, abnormal stress tests, chest pain workup, or strong CV family history",
+    Endocrinologists: "Type 2 diabetes uncontrolled on two oral agents, thyroid nodules, suspected PCOS, or hormonal disorders",
+    Psychiatrists: "Failed SSRI trials, treatment-resistant depression, adult ADHD evaluation, or complex med management",
+    Dermatologists: "Suspicious skin lesions, persistent rashes, and chronic conditions beyond primary care scope",
   },
   Cardiologists: {
-    "Primary Care Physicians": "Patients needing ongoing primary care management of cardiovascular risk factors",
-    Endocrinologists: "Diabetic patients with cardiovascular complications needing endocrine care",
-    Pulmonologists: "Patients with heart failure and concomitant pulmonary disease",
-    "Cardiac Surgeons": "Patients needing coronary bypass, valve replacement, or other cardiac surgery",
+    "Primary Care Physicians": "Stable patients returning for ongoing CV risk management after cardiology workup is complete",
+    Endocrinologists: "Diabetic patients with significant CV risk who need glycemic optimization",
+    Pulmonologists: "Patients with cardiopulmonary overlap, sleep apnea cardiac risk, or pulmonary hypertension",
+    "Sports Medicine Doctors": "Athletes with cardiac concerns or exercise tolerance issues",
   },
-  "ENT Doctors": {
-    "Primary Care Physicians": "Patients with general health needs identified during ENT evaluation",
-    Allergists: "Patients with chronic sinusitis driven by underlying allergic conditions",
-    Pediatricians: "Pediatric patients with ear infections and tonsil issues needing primary care",
-    Audiologists: "Patients with hearing loss needing audiometric testing and hearing aid fitting",
+  Pulmonologists: {
+    "Primary Care Physicians": "Stable patients with chronic conditions returning to PCP for ongoing management",
+    Allergists: "Patients with difficult-to-control asthma where allergic component drives airway disease",
+    Cardiologists: "Patients with CHF vs COPD differentiation, pulmonary hypertension, or cardiopulmonary overlap",
+    "ENT Doctors": "Patients with upper airway involvement or chronic sinusitis affecting lower airway disease",
   },
-  Allergists: {
-    "Primary Care Physicians": "Patients with chronic conditions needing ongoing primary care management",
-    "ENT Doctors": "Patients with structural sinus issues contributing to allergy symptoms",
-    Pediatricians: "Pediatric allergy patients needing well-child care and vaccination management",
-    Dermatologists: "Patients with allergic skin conditions needing dermatologic treatment",
+  Endocrinologists: {
+    "Primary Care Physicians": "Well-controlled diabetic and thyroid patients sent back for ongoing primary care management",
+    Cardiologists: "Diabetic patients with cardiovascular complications needing co-management",
+    Pediatricians: "Pediatric Type 1 diabetes, pediatric thyroid disorders, and growth concerns",
+    "OB-GYNs": "PCOS, gestational diabetes, thyroid in pregnancy, or hormonal infertility evaluation",
   },
-  Urologists: {
-    "Primary Care Physicians": "Patients needing ongoing chronic disease management alongside urologic care",
-    "OB-GYNs": "Female patients with pelvic floor or incontinence issues overlapping gynecology",
-    Nephrologists: "Patients with kidney disease requiring nephrology co-management",
-    Oncologists: "Patients with urologic cancers needing oncologic treatment and monitoring",
+  Gastroenterologists: {
+    "Primary Care Physicians": "Stable IBD, GERD, or celiac patients returning to PCP for ongoing chronic disease care",
+    Pediatricians: "Pediatric chronic abdominal pain, failure to thrive, or pediatric IBD evaluation",
+    Rheumatologists: "IBD patients with extraintestinal manifestations or rheumatologic comorbidities",
+    Allergists: "Eosinophilic esophagitis, food allergy workup, or IgE-mediated GI symptoms",
+  },
+  Rheumatologists: {
+    "Primary Care Physicians": "Patients with stable autoimmune conditions returning for ongoing chronic care",
+    Dermatologists: "Psoriatic arthritis, lupus skin findings, or connective tissue disease with dermatologic features",
+    "Pain Management Specialists": "Fibromyalgia and inflammatory pain syndromes needing interventional pain care",
+    Gastroenterologists: "IBD-associated arthritis where GI workup drives diagnosis",
+  },
+  Neurologists: {
+    "Primary Care Physicians": "Patients with stable migraine or neuropathy returning to PCP for ongoing care",
+    Psychiatrists: "Cognitive disorders with significant mood components or functional neurological symptoms",
+    Pediatricians: "Pediatric patients with seizures, developmental concerns, or migraine",
+    "Pain Management Specialists": "Neuropathic pain patients needing interventional procedures",
   },
   Psychiatrists: {
-    "Primary Care Physicians": "Patients needing medical management of physical health conditions",
-    Therapists: "Patients needing psychotherapy alongside psychiatric medication management",
-    Neurologists: "Patients with neuropsychiatric conditions needing neurologic evaluation",
-    Pediatricians: "Pediatric patients needing developmental and medical follow-up",
+    "Primary Care Physicians": "Patients needing medical workup for physical symptoms or medication interactions",
+    Pediatricians: "Pediatric patients needing ongoing pediatric care alongside psychiatric treatment",
+    Neurologists: "Patients with cognitive decline, post-stroke depression, or functional neurologic concerns",
+    "Pain Management Specialists": "Chronic pain patients with mood disorder comorbidity needing interventional care",
+  },
+  Dermatologists: {
+    "Primary Care Physicians": "Patients with stable skin conditions returning for ongoing primary care management",
+    "Plastic Surgeons": "Post-Mohs reconstruction cases or patients seeking aesthetic procedures",
+    Allergists: "Chronic eczema, contact dermatitis, or atopic dermatitis with allergic features",
+    Pediatricians: "Pediatric skin conditions, severe acne, or eczema in young patients",
+  },
+  Ophthalmologists: {
+    "Primary Care Physicians": "Stable patients with chronic eye conditions returning for ongoing primary care",
+    Endocrinologists: "Diabetic retinopathy screening and follow-up for diabetic patients",
+    Pediatricians: "Pediatric vision concerns, amblyopia, or strabismus",
+    Neurologists: "Optic neuritis, visual field defects, papilledema workups, or migraine with aura",
+  },
+  "Orthopedic Surgeons": {
+    "Pain Management Specialists": "Non-surgical chronic MSK pain or post-op pain needing interventional procedures",
+    "Primary Care Physicians": "Stable post-op patients returning to PCP for ongoing medical management",
+    "Sports Medicine Doctors": "Non-operative MSK injuries better managed conservatively",
+  },
+  "Pain Management Specialists": {
+    "Primary Care Physicians": "Stable chronic pain patients on established regimens returning to PCP for ongoing care",
+    "Orthopedic Surgeons": "Patients failing conservative pain management who may benefit from surgery",
+    Rheumatologists: "Patients with inflammatory or autoimmune pain syndromes needing systemic treatment",
+    Psychiatrists: "Chronic pain patients with significant mood disorder comorbidity",
+  },
+  Pediatricians: {
+    Allergists: "Pediatric patients with food allergies, eczema, asthma, or chronic allergic rhinitis",
+    "ENT Doctors": "Chronic otitis, tonsillitis, recurrent ear infections, or hearing concerns",
+    Psychiatrists: "Adolescent depression, anxiety, or ADHD requiring medication management",
+    Endocrinologists: "Pediatric Type 1 diabetes, pediatric thyroid disorders, or growth concerns",
+  },
+  "ENT Doctors": {
+    "Primary Care Physicians": "Patients with stable conditions returning for ongoing primary care",
+    Allergists: "Patients with chronic sinusitis driven by underlying allergic disease",
+    Pulmonologists: "Patients with upper airway involvement in lower respiratory disease",
+    Pediatricians: "Pediatric patients needing well-child care alongside ENT follow-up",
+  },
+  Allergists: {
+    "Primary Care Physicians": "Stable allergy patients on established regimens returning for ongoing primary care",
+    "ENT Doctors": "Patients with structural sinus issues contributing to allergic symptoms",
+    Pediatricians: "Pediatric allergy patients needing developmental and vaccination management",
+    Pulmonologists: "Difficult-to-control asthma needing pulmonary workup beyond allergy management",
+  },
+  Urologists: {
+    "Primary Care Physicians": "Stable patients post-procedure returning for ongoing primary care",
+    "OB-GYNs": "Female patients with pelvic floor disorders, recurrent UTIs, or urinary incontinence overlap",
+  },
+  "OB-GYNs": {
+    "Primary Care Physicians": "Women needing comprehensive primary care beyond gynecologic scope",
+    Endocrinologists: "PCOS, thyroid in pregnancy, gestational diabetes, or hormonal disorders",
+    Urologists: "Pelvic floor disorders, recurrent UTIs, or urinary incontinence",
+    Psychiatrists: "Postpartum depression, PMDD, or perimenopausal mood disorders",
   },
   "Sports Medicine Doctors": {
     "Orthopedic Surgeons": "Athletes with injuries requiring surgical intervention beyond conservative care",
-    "Physical Therapists": "Athletes needing structured rehabilitation programs for injury recovery",
     "Primary Care Physicians": "Athletes with medical conditions requiring primary care management",
-    Chiropractors: "Athletes with spinal and musculoskeletal issues benefiting from chiropractic care",
+    Endocrinologists: "Athletes with metabolic or hormonal concerns affecting performance",
   },
   "Plastic Surgeons": {
-    Dermatologists: "Patients with skin conditions requiring medical dermatology follow-up post-surgery",
-    "Med Spas": "Patients wanting non-surgical maintenance treatments after plastic surgery",
+    Dermatologists: "Patients needing dermatologic follow-up after reconstructive or cosmetic surgery",
+    "Primary Care Physicians": "Patients needing pre-surgical clearance or chronic condition management",
     "OB-GYNs": "Post-mastectomy reconstruction patients needing ongoing gynecologic care",
-    "Primary Care Physicians": "Patients needing pre-surgical clearance and ongoing health management",
-  },
-  Endocrinologists: {
-    "Primary Care Physicians": "Diabetic and thyroid patients needing comprehensive primary care management",
-    "OB-GYNs": "PCOS and fertility patients needing gynecologic management alongside hormone therapy",
-    Cardiologists: "Diabetic patients with cardiovascular complications needing cardiology care",
-    Podiatrists: "Diabetic patients developing foot complications needing podiatric monitoring",
   },
 }
 

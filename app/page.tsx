@@ -28,7 +28,7 @@ const features = [
   {
     icon: Handshake,
     title: "Mutual-Fit Only",
-    description: "A chiropractor needs PTs. A PT needs orthopedic surgeons. We match specialties that actually refer to each other.",
+    description: "A cardiologist needs PCPs sending HTN and AFib referrals. A PCP needs psychiatrists who can see their patients in three weeks. We match physicians who actually refer to each other.",
     color: "amber" as const,
   },
 ]

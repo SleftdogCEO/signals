@@ -96,25 +96,30 @@ function getDemoSources(specialty: string, location: string): ReferralSource[] {
   return demoData[specialty] || demoData["default"]
 }
 
-// Map specialty to search terms
+// Map specialty to Google Maps search terms.
+// Must match the SPECIALTIES list in app/onboarding/page.tsx and the
+// keys in lib/adjacency-map.ts (all 19 physician specialties).
 function getSearchTerms(specialty: string): string {
   const searchTermMap: Record<string, string> = {
-    "Physical Therapy": "physical therapy clinic",
-    "Orthopedic Surgery": "orthopedic surgeon",
     "Primary Care": "primary care doctor",
-    "Chiropractic": "chiropractor",
-    "Pain Management": "pain management doctor",
-    "Sports Medicine": "sports medicine doctor",
-    "Neurology": "neurologist",
     "Cardiology": "cardiologist",
-    "Dermatology": "dermatologist",
-    "Dentist": "dentist",
-    "Oral Surgery": "oral surgeon",
-    "Orthodontist": "orthodontist",
-    "Mental Health": "therapist mental health",
+    "Pulmonology": "pulmonologist",
+    "Endocrinology": "endocrinologist",
+    "Gastroenterology": "gastroenterologist",
+    "Rheumatology": "rheumatologist",
+    "Neurology": "neurologist",
     "Psychiatry": "psychiatrist",
-    "Psychology": "psychologist",
-    "Counseling": "counselor therapist",
+    "Dermatology": "dermatologist",
+    "Ophthalmology": "ophthalmologist",
+    "Orthopedic Surgery": "orthopedic surgeon",
+    "Pain Management": "pain management doctor",
+    "Pediatrics": "pediatrician",
+    "ENT (Otolaryngology)": "ENT doctor otolaryngologist",
+    "Allergy & Immunology": "allergist immunologist",
+    "Urology": "urologist",
+    "OB-GYN": "obgyn obstetrician gynecologist",
+    "Sports Medicine": "sports medicine doctor",
+    "Plastic Surgery": "plastic surgeon",
   }
   return searchTermMap[specialty] || specialty.toLowerCase()
 }

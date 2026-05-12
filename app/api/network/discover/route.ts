@@ -60,50 +60,42 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   }
 }
 
-// Category mapping for search queries
+// Category mapping for search queries.
+// Keys MUST stay in sync with PARTNER_CATEGORIES ids in app/onboarding/page.tsx.
+// Each value is a list of Google Places search terms covering the underlying
+// physician specialties for that category.
 const CATEGORY_SEARCH_TERMS: Record<string, string[]> = {
-  'primary_care': ['family medicine clinic', 'primary care doctor', 'internal medicine practice', 'pediatrician office'],
-  'specialists': ['cardiologist', 'dermatologist', 'orthopedic surgeon', 'gastroenterologist'],
-  'mental_health': ['psychiatrist', 'psychologist office', 'mental health counselor', 'therapy practice'],
-  'physical_rehab': ['physical therapy clinic', 'chiropractor', 'sports medicine', 'occupational therapy'],
-  'dental_vision': ['dentist office', 'orthodontist', 'optometrist', 'ophthalmologist'],
-  'wellness_aesthetic': ['med spa', 'medical spa', 'functional medicine doctor', 'wellness clinic', 'aesthetic clinic']
+  'primary_care': ['family medicine clinic', 'primary care doctor', 'internal medicine practice'],
+  'internal_medicine_subspecialties': ['cardiologist', 'pulmonologist', 'endocrinologist', 'gastroenterologist', 'rheumatologist', 'neurologist'],
+  'psychiatry_pain': ['psychiatrist', 'pain management doctor'],
+  'surgery_msk': ['orthopedic surgeon', 'plastic surgeon', 'urologist', 'sports medicine doctor'],
+  'womens_childrens': ['pediatrician office', 'OB-GYN', 'obstetrician gynecologist'],
+  'ent_eye_skin_allergy': ['ENT doctor', 'ophthalmologist', 'dermatologist', 'allergist']
 }
 
-// Map search results to specialties
+// Map search results to one of the 19 physician specialties in lib/seo-data.ts.
 function getSpecialtyFromCategory(category: string | undefined, searchTerm: string): string {
-  if (!category) {
-    // Infer from search term
-    if (searchTerm.includes('physical therapy') || searchTerm.includes('PT')) return 'Physical Therapy'
-    if (searchTerm.includes('chiropractor')) return 'Chiropractic'
-    if (searchTerm.includes('dentist')) return 'Dentistry'
-    if (searchTerm.includes('orthodontist')) return 'Orthodontics'
-    if (searchTerm.includes('optometrist')) return 'Optometry'
-    if (searchTerm.includes('psychiatrist')) return 'Psychiatry'
-    if (searchTerm.includes('psychologist') || searchTerm.includes('therapy')) return 'Psychology'
-    if (searchTerm.includes('med spa') || searchTerm.includes('medical spa')) return 'Med Spa'
-    if (searchTerm.includes('cardiologist')) return 'Cardiology'
-    if (searchTerm.includes('dermatologist')) return 'Dermatology'
-    if (searchTerm.includes('orthopedic')) return 'Orthopedics'
-    if (searchTerm.includes('family medicine') || searchTerm.includes('primary care')) return 'Primary Care'
-    return 'Healthcare'
-  }
-
-  const categoryLower = category.toLowerCase()
-  if (categoryLower.includes('physical therapy')) return 'Physical Therapy'
-  if (categoryLower.includes('chiropractor')) return 'Chiropractic'
-  if (categoryLower.includes('dentist') || categoryLower.includes('dental')) return 'Dentistry'
-  if (categoryLower.includes('orthodontist')) return 'Orthodontics'
-  if (categoryLower.includes('optometrist') || categoryLower.includes('optician')) return 'Optometry'
-  if (categoryLower.includes('psychiatr')) return 'Psychiatry'
-  if (categoryLower.includes('psycholog') || categoryLower.includes('counselor') || categoryLower.includes('therapist')) return 'Psychology'
-  if (categoryLower.includes('spa') || categoryLower.includes('aesthetic')) return 'Med Spa'
-  if (categoryLower.includes('cardiolog')) return 'Cardiology'
-  if (categoryLower.includes('dermatolog')) return 'Dermatology'
-  if (categoryLower.includes('orthopedic')) return 'Orthopedics'
-  if (categoryLower.includes('family') || categoryLower.includes('primary') || categoryLower.includes('internal medicine')) return 'Primary Care'
-  if (categoryLower.includes('pediatric')) return 'Pediatrics'
-  return 'Healthcare'
+  const haystack = `${category || ''} ${searchTerm}`.toLowerCase()
+  if (haystack.includes('cardiolog')) return 'Cardiology'
+  if (haystack.includes('pulmonolog')) return 'Pulmonology'
+  if (haystack.includes('endocrinolog')) return 'Endocrinology'
+  if (haystack.includes('gastroenterolog')) return 'Gastroenterology'
+  if (haystack.includes('rheumatolog')) return 'Rheumatology'
+  if (haystack.includes('neurolog')) return 'Neurology'
+  if (haystack.includes('psychiatr')) return 'Psychiatry'
+  if (haystack.includes('dermatolog')) return 'Dermatology'
+  if (haystack.includes('ophthalmolog')) return 'Ophthalmology'
+  if (haystack.includes('orthopedic') || haystack.includes('orthopaedic')) return 'Orthopedic Surgery'
+  if (haystack.includes('pain management') || haystack.includes('pain clinic')) return 'Pain Management'
+  if (haystack.includes('pediatric')) return 'Pediatrics'
+  if (haystack.includes('ent') || haystack.includes('otolaryngolog')) return 'ENT (Otolaryngology)'
+  if (haystack.includes('allerg') || haystack.includes('immunolog')) return 'Allergy & Immunology'
+  if (haystack.includes('urolog')) return 'Urology'
+  if (haystack.includes('obgyn') || haystack.includes('ob-gyn') || haystack.includes('ob/gyn') || haystack.includes('obstetric') || haystack.includes('gynecolog')) return 'OB-GYN'
+  if (haystack.includes('sports medicine')) return 'Sports Medicine'
+  if (haystack.includes('plastic surg')) return 'Plastic Surgery'
+  if (haystack.includes('family medicine') || haystack.includes('primary care') || haystack.includes('internal medicine') || haystack.includes('general practice')) return 'Primary Care'
+  return 'Physician Practice'
 }
 
 // Search for local businesses using Serper Places API
@@ -227,32 +219,52 @@ export async function GET(request: NextRequest) {
       searchTerms.push(...terms)
     }
 
-    // If no specific interests, search for complementary specialties based on user's specialty
+    // If no specific interests, search for complementary specialties based on user's specialty.
+    // Each branch matches one of the 19 physician specialties from lib/seo-data.ts.
     if (searchTerms.length === 0) {
       const userSpecialty = (currentProvider.specialty || '').toLowerCase()
 
-      // Map user specialty to complementary partner types to avoid returning competitors
-      if (userSpecialty.includes('family') || userSpecialty.includes('primary') || userSpecialty.includes('internal')) {
-        // Primary care should partner with specialists and ancillary services
-        searchTerms.push('physical therapy clinic', 'chiropractor', 'mental health counselor', 'cardiologist', 'dermatologist', 'orthopedic surgeon')
-      } else if (userSpecialty.includes('physical therapy') || userSpecialty.includes('chiropract')) {
-        // Rehab should partner with PCPs and orthopedics
-        searchTerms.push('family medicine clinic', 'orthopedic surgeon', 'sports medicine', 'pain management')
-      } else if (userSpecialty.includes('mental') || userSpecialty.includes('psych')) {
-        // Mental health should partner with PCPs and wellness
-        searchTerms.push('family medicine clinic', 'primary care doctor', 'wellness clinic', 'life coach')
-      } else if (userSpecialty.includes('dental') || userSpecialty.includes('orthodont')) {
-        // Dental should partner with other dental specialties and PCPs
-        searchTerms.push('family medicine clinic', 'oral surgeon', 'periodontist', 'pediatric dentist')
+      if (userSpecialty.includes('primary') || userSpecialty.includes('family') || userSpecialty.includes('internal medicine')) {
+        searchTerms.push('cardiologist', 'endocrinologist', 'psychiatrist', 'dermatologist', 'gastroenterologist', 'orthopedic surgeon')
       } else if (userSpecialty.includes('cardio')) {
-        searchTerms.push('family medicine clinic', 'internal medicine', 'cardiac rehabilitation', 'vascular surgeon')
+        searchTerms.push('primary care doctor', 'endocrinologist', 'pulmonologist', 'family medicine clinic')
+      } else if (userSpecialty.includes('pulmonolog')) {
+        searchTerms.push('primary care doctor', 'allergist', 'cardiologist', 'ENT doctor')
+      } else if (userSpecialty.includes('endocrinolog')) {
+        searchTerms.push('primary care doctor', 'cardiologist', 'pediatrician office', 'OB-GYN')
+      } else if (userSpecialty.includes('gastroenterolog')) {
+        searchTerms.push('primary care doctor', 'pediatrician office', 'rheumatologist', 'allergist')
+      } else if (userSpecialty.includes('rheumatolog')) {
+        searchTerms.push('primary care doctor', 'dermatologist', 'pain management doctor', 'gastroenterologist')
+      } else if (userSpecialty.includes('neurolog')) {
+        searchTerms.push('primary care doctor', 'psychiatrist', 'pediatrician office', 'pain management doctor')
+      } else if (userSpecialty.includes('psychiatr')) {
+        searchTerms.push('primary care doctor', 'pediatrician office', 'neurologist', 'pain management doctor')
       } else if (userSpecialty.includes('derma')) {
-        searchTerms.push('family medicine clinic', 'plastic surgeon', 'med spa', 'allergy specialist')
+        searchTerms.push('primary care doctor', 'plastic surgeon', 'allergist', 'pediatrician office')
+      } else if (userSpecialty.includes('ophthalmolog')) {
+        searchTerms.push('primary care doctor', 'endocrinologist', 'pediatrician office', 'neurologist')
       } else if (userSpecialty.includes('orthopedic')) {
-        searchTerms.push('physical therapy clinic', 'pain management', 'sports medicine', 'chiropractor')
+        searchTerms.push('pain management doctor', 'primary care doctor', 'sports medicine doctor')
+      } else if (userSpecialty.includes('pain management')) {
+        searchTerms.push('primary care doctor', 'orthopedic surgeon', 'rheumatologist', 'psychiatrist')
+      } else if (userSpecialty.includes('pediatric')) {
+        searchTerms.push('allergist', 'ENT doctor', 'psychiatrist', 'endocrinologist')
+      } else if (userSpecialty.includes('ent') || userSpecialty.includes('otolaryngolog')) {
+        searchTerms.push('primary care doctor', 'allergist', 'pulmonologist', 'pediatrician office')
+      } else if (userSpecialty.includes('allerg') || userSpecialty.includes('immunolog')) {
+        searchTerms.push('primary care doctor', 'ENT doctor', 'pediatrician office', 'pulmonologist')
+      } else if (userSpecialty.includes('urolog')) {
+        searchTerms.push('primary care doctor', 'OB-GYN')
+      } else if (userSpecialty.includes('ob-gyn') || userSpecialty.includes('ob/gyn') || userSpecialty.includes('obgyn')) {
+        searchTerms.push('primary care doctor', 'endocrinologist', 'urologist', 'psychiatrist')
+      } else if (userSpecialty.includes('sports medicine')) {
+        searchTerms.push('orthopedic surgeon', 'primary care doctor', 'endocrinologist')
+      } else if (userSpecialty.includes('plastic')) {
+        searchTerms.push('dermatologist', 'primary care doctor', 'OB-GYN')
       } else {
-        // Default: search for a variety of complementary practices
-        searchTerms.push('physical therapy clinic', 'mental health counselor', 'chiropractor', 'family medicine clinic', 'specialist doctor')
+        // Unknown specialty: search a balanced set of physician partner types
+        searchTerms.push('primary care doctor', 'cardiologist', 'psychiatrist', 'orthopedic surgeon')
       }
     }
 

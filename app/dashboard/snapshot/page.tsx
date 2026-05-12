@@ -736,64 +736,79 @@ export default function DashboardSnapshotPage() {
                   <h3 className="font-bold text-lg text-white">Ideas for {data.specialty}</h3>
                 </div>
                 <ul className="space-y-3">
-                  {data.specialty === "Psychology" || data.specialty === "Mental Health" || data.specialty === "Counseling" ? (
+                  {data.specialty === "Primary Care" ? (
                     <>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Refer clients needing <strong className="text-white font-semibold">neuropsych evals</strong> or <strong className="text-white font-semibold">medication management</strong></span>
+                        <span className="text-slate-200">Build a <strong className="text-white font-semibold">trusted specialist short list</strong> for cards, endo, derm, and psych</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Offer to be their go-to for <strong className="text-white font-semibold">therapy after diagnosis</strong></span>
+                        <span className="text-slate-200">Prioritize specialists who <strong className="text-white font-semibold">return consult notes within 48 hours</strong></span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Provide <strong className="text-white font-semibold">specialized therapy</strong> (ADHD coaching, CBT, etc.)</span>
+                        <span className="text-slate-200">Track which specialists <strong className="text-white font-semibold">send patients back</strong> vs. capture them</span>
                       </li>
                     </>
                   ) : data.specialty === "Psychiatry" ? (
                     <>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Refer patients needing <strong className="text-white font-semibold">ongoing therapy</strong> to therapists</span>
+                        <span className="text-slate-200">Advertise <strong className="text-white font-semibold">specific appointment availability</strong> ("within 3 weeks") to local PCPs</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Partner with PCPs for <strong className="text-white font-semibold">mental health screenings</strong></span>
+                        <span className="text-slate-200">Build named relationships with <strong className="text-white font-semibold">pediatricians</strong> for adolescent and ADHD cases</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Offer <strong className="text-white font-semibold">medication consults</strong> for complex cases</span>
+                        <span className="text-slate-200">Offer <strong className="text-white font-semibold">medication consult availability</strong> for complex PCP cases</span>
                       </li>
                     </>
-                  ) : data.specialty === "Physical Therapy" ? (
+                  ) : data.specialty === "Cardiology" ? (
                     <>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Refer patients needing <strong className="text-white font-semibold">imaging or surgery consults</strong></span>
+                        <span className="text-slate-200">Offer <strong className="text-white font-semibold">same-week urgent slots</strong> for PCP referrals (HTN crisis, new AFib)</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Offer to be their <strong className="text-white font-semibold">post-surgical rehab</strong> partner</span>
+                        <span className="text-slate-200">Send <strong className="text-white font-semibold">one-paragraph summaries</strong> on every consult — not raw EHR notes</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Provide <strong className="text-white font-semibold">progress reports</strong> on shared patients</span>
+                        <span className="text-slate-200">Build a <strong className="text-white font-semibold">bidirectional loop</strong> with endocrinology for diabetic CV risk</span>
+                      </li>
+                    </>
+                  ) : data.specialty === "Pediatrics" ? (
+                    <>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                        <span className="text-slate-200">Build named relationships at <strong className="text-white font-semibold">one allergy office and one ENT office</strong></span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                        <span className="text-slate-200">Route <strong className="text-white font-semibold">ADHD and adolescent mood cases</strong> to a child-friendly psychiatrist</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                        <span className="text-slate-200">Identify the <strong className="text-white font-semibold">pediatric endocrinologist</strong> who takes new T1D patients within 30 days</span>
                       </li>
                     </>
                   ) : (
                     <>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Identify services <strong className="text-white font-semibold">you don't offer</strong> that clients need</span>
+                        <span className="text-slate-200">Build named relationships with <strong className="text-white font-semibold">5-10 local PCPs</strong> — the dominant inbound channel</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Offer to handle <strong className="text-white font-semibold">their overflow</strong> or specialty cases</span>
+                        <span className="text-slate-200">Return <strong className="text-white font-semibold">a one-paragraph clinical summary</strong> to the referring physician within 48 hours</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                        <span className="text-slate-200">Create a <strong className="text-white font-semibold">referral agreement</strong> with clear expectations</span>
+                        <span className="text-slate-200">Send <strong className="text-white font-semibold">stable patients back</strong> to the PCP — your best move for repeat referrals</span>
                       </li>
                     </>
                   )}

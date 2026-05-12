@@ -23,67 +23,72 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// Simplified partner categories - broad, easy to understand
+// Partner categories shown on step 2. Each maps to a subset of the 19 physician
+// specialties in lib/seo-data.ts. Adding or removing categories here must stay
+// in sync with the marketplace -- a user who picks a category whose specialties
+// aren't in seo-data.ts will get zero matches.
 const PARTNER_CATEGORIES = [
   {
     id: "primary_care",
     label: "Primary Care",
-    description: "Family medicine, internal medicine, pediatrics",
+    description: "Family medicine, internal medicine, general practice",
     icon: "🏥"
   },
   {
-    id: "specialists",
-    label: "Medical Specialists",
-    description: "Cardiology, dermatology, gastroenterology, etc.",
+    id: "internal_medicine_subspecialties",
+    label: "Internal Medicine Subspecialties",
+    description: "Cardiology, pulmonology, endocrinology, gastroenterology, rheumatology, neurology",
     icon: "🩺"
   },
   {
-    id: "mental_health",
-    label: "Mental Health",
-    description: "Psychiatry, psychology, counseling, therapy",
+    id: "psychiatry_pain",
+    label: "Psychiatry & Pain Management",
+    description: "Psychiatry, pain management, behavioral health bridging medical and surgical care",
     icon: "🧠"
   },
   {
-    id: "physical_rehab",
-    label: "Physical & Rehab",
-    description: "PT, OT, chiropractic, sports medicine",
-    icon: "💪"
+    id: "surgery_msk",
+    label: "Surgery & Musculoskeletal",
+    description: "Orthopedic surgery, plastic surgery, urology, sports medicine",
+    icon: "🦴"
   },
   {
-    id: "dental_vision",
-    label: "Dental & Vision",
-    description: "Dentistry, orthodontics, optometry, ophthalmology",
-    icon: "😁"
+    id: "womens_childrens",
+    label: "Women's & Children's Health",
+    description: "Pediatrics, OB-GYN, adolescent and pediatric specialty referrals",
+    icon: "👶"
   },
   {
-    id: "wellness_aesthetic",
-    label: "Wellness & Aesthetic",
-    description: "Med spas, functional medicine, nutrition, acupuncture",
-    icon: "✨"
+    id: "ent_eye_skin_allergy",
+    label: "ENT, Eye, Skin & Allergy",
+    description: "ENT, ophthalmology, dermatology, allergy and immunology",
+    icon: "👁️"
   }
 ]
 
+// Mirror of the 19 physician specialties in lib/seo-data.ts (name field).
+// Keep in sync when adding specialties to the marketplace.
 const SPECIALTIES = [
   "Primary Care",
-  "Family Medicine",
-  "Internal Medicine",
-  "Pediatrics",
-  "Physical Therapy",
-  "Chiropractic",
-  "Orthopedics",
-  "Pain Management",
-  "Dermatology",
-  "Psychiatry",
-  "Psychology",
-  "Dentistry",
-  "Optometry/Ophthalmology",
-  "Med Spa",
-  "Plastic Surgery",
   "Cardiology",
-  "OB/GYN",
-  "Urgent Care",
-  "Functional Medicine",
-  "Other"
+  "Pulmonology",
+  "Endocrinology",
+  "Gastroenterology",
+  "Rheumatology",
+  "Neurology",
+  "Psychiatry",
+  "Dermatology",
+  "Ophthalmology",
+  "Orthopedic Surgery",
+  "Pain Management",
+  "Pediatrics",
+  "ENT (Otolaryngology)",
+  "Allergy & Immunology",
+  "Urology",
+  "OB-GYN",
+  "Sports Medicine",
+  "Plastic Surgery",
+  "Other physician specialty"
 ]
 
 interface FormData {
@@ -286,7 +291,7 @@ export default function OnboardingPage() {
                     type="text"
                     value={formData.practiceName}
                     onChange={(e) => setFormData({ ...formData, practiceName: e.target.value })}
-                    placeholder="e.g., Summit Physical Therapy"
+                    placeholder="e.g., Bay Cardiology Associates"
                     className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   />
                 </div>

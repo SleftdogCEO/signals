@@ -70,26 +70,31 @@ interface PlaybookAction {
   priority: 'high' | 'medium'
 }
 
-// Healthcare specialty adjacency map - which specialties commonly refer to each other
+// Physician specialty adjacency map - which physician specialties refer to each other.
+// Lowercase keys for case-insensitive lookup against user-entered specialty.
+// 'primary care' refers to 'all' since PCPs are the network hub.
 const specialtyAdjacency: Record<string, string[]> = {
-  'dentist': ['orthodontist', 'oral surgeon', 'periodontist', 'pediatric dentist', 'endodontist', 'prosthodontist', 'family medicine', 'pediatrician', 'ent'],
-  'orthodontist': ['dentist', 'oral surgeon', 'pediatric dentist', 'tmj specialist'],
-  'chiropractor': ['physical therapist', 'massage therapist', 'orthopedic', 'pain management', 'sports medicine', 'acupuncturist', 'neurologist'],
-  'physical therapist': ['chiropractor', 'orthopedic', 'sports medicine', 'pain management', 'neurologist', 'rheumatologist'],
-  'dermatologist': ['plastic surgeon', 'allergist', 'rheumatologist', 'oncologist', 'family medicine'],
-  'cardiologist': ['internal medicine', 'family medicine', 'endocrinologist', 'nephrologist', 'pulmonologist'],
-  'pediatrician': ['pediatric dentist', 'allergist', 'dermatologist', 'ent', 'family medicine'],
-  'orthopedic': ['physical therapist', 'chiropractor', 'sports medicine', 'pain management', 'rheumatologist'],
-  'optometrist': ['ophthalmologist', 'neurologist', 'endocrinologist', 'family medicine'],
-  'psychiatrist': ['psychologist', 'therapist', 'family medicine', 'neurologist', 'internal medicine'],
-  'obgyn': ['fertility specialist', 'urologist', 'endocrinologist', 'family medicine', 'pediatrician'],
-  'urologist': ['nephrologist', 'oncologist', 'obgyn', 'family medicine'],
-  'gastroenterologist': ['internal medicine', 'oncologist', 'nutritionist', 'family medicine'],
-  'neurologist': ['psychiatrist', 'physical therapist', 'pain management', 'neurosurgeon', 'family medicine'],
-  'ent': ['allergist', 'audiologist', 'sleep specialist', 'pediatrician', 'family medicine'],
-  'allergist': ['ent', 'dermatologist', 'pulmonologist', 'pediatrician'],
-  'family medicine': ['all'], // family medicine refers to everything
-  'internal medicine': ['all'],
+  'primary care': ['all'],
+  'cardiology': ['primary care', 'endocrinology', 'pulmonology', 'sports medicine'],
+  'pulmonology': ['primary care', 'allergy', 'cardiology', 'ent'],
+  'endocrinology': ['primary care', 'cardiology', 'pediatrics', 'ob-gyn'],
+  'gastroenterology': ['primary care', 'pediatrics', 'rheumatology', 'allergy'],
+  'rheumatology': ['primary care', 'dermatology', 'pain management', 'gastroenterology'],
+  'neurology': ['primary care', 'psychiatry', 'pediatrics', 'pain management'],
+  'psychiatry': ['primary care', 'pediatrics', 'neurology', 'pain management'],
+  'dermatology': ['primary care', 'plastic surgery', 'allergy', 'pediatrics'],
+  'ophthalmology': ['primary care', 'endocrinology', 'pediatrics', 'neurology'],
+  'orthopedic': ['pain management', 'primary care', 'sports medicine'],
+  'orthopedic surgery': ['pain management', 'primary care', 'sports medicine'],
+  'pain management': ['primary care', 'orthopedic', 'rheumatology', 'psychiatry'],
+  'pediatrics': ['allergy', 'ent', 'psychiatry', 'endocrinology'],
+  'ent': ['primary care', 'allergy', 'pulmonology', 'pediatrics'],
+  'allergy': ['primary care', 'ent', 'pediatrics', 'pulmonology'],
+  'allergy & immunology': ['primary care', 'ent', 'pediatrics', 'pulmonology'],
+  'urology': ['primary care', 'ob-gyn'],
+  'ob-gyn': ['primary care', 'endocrinology', 'urology', 'psychiatry'],
+  'sports medicine': ['orthopedic', 'primary care', 'endocrinology'],
+  'plastic surgery': ['dermatology', 'primary care', 'ob-gyn'],
 }
 
 // Generate match insight based on specialty adjacency and other factors
@@ -180,7 +185,7 @@ function generatePlaybook(source: ReferralSource, userSpecialty: string): Playbo
   })
 
   // Lunch & Learn for certain specialties
-  if (['dentist', 'orthodontist', 'chiropractor', 'physical therapist', 'dermatologist', 'pediatrician'].some(s => sourceSpecLower.includes(s))) {
+  if (['primary care', 'family medicine', 'internal medicine', 'pediatric', 'cardiolog', 'endocrinolog', 'dermatolog'].some(s => sourceSpecLower.includes(s))) {
     actions.push({
       icon: 'presentation',
       title: 'Offer a Lunch & Learn',

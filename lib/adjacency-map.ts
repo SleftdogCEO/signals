@@ -1,71 +1,41 @@
-// Referral Adjacency Map
-// Maps each specialty to adjacent specialties whose patients naturally flow to/from them
+// Referral Adjacency Map - PHYSICIAN ONLY
+// Maps each of the 19 physician specialties in lib/seo-data.ts to the
+// specialties whose patients naturally flow to/from them, in priority order.
+// First entry = highest-volume referral source for that specialty.
+// Keep keys aligned to the SPECIALTIES array in app/onboarding/page.tsx so that
+// formData.specialty submitted from onboarding produces a valid lookup.
 
 export const ADJACENCY_MAP: Record<string, string[]> = {
-  // Surgical Specialties
-  "Orthopedic Surgery": ["Physical Therapy", "Chiropractic", "Primary Care", "Imaging Center", "Pain Management", "Sports Medicine"],
-  "Oral Surgery": ["Dentist", "Orthodontist", "Periodontist", "Primary Care"],
-  "Plastic Surgery": ["Dermatology", "Primary Care", "Med Spa"],
-  "General Surgery": ["Primary Care", "Gastroenterology", "Imaging Center"],
-  "Cardiac Surgery": ["Cardiology", "Primary Care", "Pulmonology"],
-  "Neurosurgery": ["Neurology", "Primary Care", "Pain Management", "Physical Therapy"],
+  // Primary care: hub of the physician network
+  "Primary Care": ["Cardiology", "Endocrinology", "Psychiatry", "Dermatology", "Gastroenterology", "Neurology", "Pulmonology", "Orthopedic Surgery"],
 
-  // Rehab & Therapy
-  "Physical Therapy": ["Orthopedic Surgery", "Primary Care", "Chiropractic", "Sports Medicine", "Pain Management", "Neurology"],
-  "Occupational Therapy": ["Orthopedic Surgery", "Neurology", "Primary Care", "Pediatrics"],
-  "Chiropractic": ["Physical Therapy", "Orthopedic Surgery", "Imaging Center", "Primary Care", "Massage Therapy"],
-  "Sports Medicine": ["Orthopedic Surgery", "Physical Therapy", "Primary Care", "Imaging Center"],
+  // Internal medicine subspecialties
+  "Cardiology": ["Primary Care", "Endocrinology", "Pulmonology", "Sports Medicine"],
+  "Pulmonology": ["Primary Care", "Allergy & Immunology", "Cardiology", "ENT (Otolaryngology)"],
+  "Endocrinology": ["Primary Care", "Cardiology", "Pediatrics", "OB-GYN"],
+  "Gastroenterology": ["Primary Care", "Pediatrics", "Rheumatology", "Allergy & Immunology"],
+  "Rheumatology": ["Primary Care", "Dermatology", "Pain Management", "Gastroenterology"],
+  "Neurology": ["Primary Care", "Psychiatry", "Pediatrics", "Pain Management"],
 
-  // Mental Health
-  "Psychiatry": ["Primary Care", "Psychology", "Counseling", "Neurology"],
-  "Psychology": ["Primary Care", "Psychiatry", "Counseling"],
-  "Counseling": ["Primary Care", "Psychiatry", "Psychology"],
-  "Mental Health": ["Primary Care", "Psychiatry", "Psychology", "Counseling"],
+  // Mental health + pain
+  "Psychiatry": ["Primary Care", "Pediatrics", "Neurology", "Pain Management"],
+  "Pain Management": ["Primary Care", "Orthopedic Surgery", "Rheumatology", "Psychiatry"],
 
-  // Dental
-  "Dentist": ["Oral Surgery", "Orthodontist", "Periodontist", "Endodontist", "Primary Care"],
-  "Orthodontist": ["Dentist", "Oral Surgery", "Pediatric Dentist"],
-  "Periodontist": ["Dentist", "Oral Surgery"],
-  "Endodontist": ["Dentist"],
-  "Pediatric Dentist": ["Pediatrics", "Orthodontist"],
+  // Skin / Eye / ENT / Allergy
+  "Dermatology": ["Primary Care", "Plastic Surgery", "Allergy & Immunology", "Pediatrics"],
+  "Ophthalmology": ["Primary Care", "Endocrinology", "Pediatrics", "Neurology"],
+  "ENT (Otolaryngology)": ["Primary Care", "Allergy & Immunology", "Pulmonology", "Pediatrics"],
+  "Allergy & Immunology": ["Primary Care", "ENT (Otolaryngology)", "Pediatrics", "Pulmonology"],
 
-  // Primary & Internal
-  "Primary Care": ["Cardiology", "Gastroenterology", "Orthopedic Surgery", "Mental Health", "Dermatology", "Endocrinology", "Pulmonology", "Neurology"],
-  "Family Medicine": ["Cardiology", "Gastroenterology", "Orthopedic Surgery", "Mental Health", "Dermatology", "Pediatrics"],
-  "Internal Medicine": ["Cardiology", "Gastroenterology", "Pulmonology", "Endocrinology", "Rheumatology"],
-  "Pediatrics": ["Family Medicine", "Pediatric Dentist", "Occupational Therapy", "Psychology"],
+  // Surgical specialties
+  "Orthopedic Surgery": ["Pain Management", "Primary Care", "Sports Medicine"],
+  "Plastic Surgery": ["Dermatology", "Primary Care", "OB-GYN"],
+  "Urology": ["Primary Care", "OB-GYN"],
+  "Sports Medicine": ["Orthopedic Surgery", "Primary Care", "Endocrinology"],
 
-  // Medical Specialties
-  "Cardiology": ["Primary Care", "Cardiac Surgery", "Pulmonology", "Endocrinology"],
-  "Gastroenterology": ["Primary Care", "General Surgery", "Imaging Center"],
-  "Dermatology": ["Primary Care", "Plastic Surgery", "Allergy/Immunology"],
-  "Endocrinology": ["Primary Care", "Cardiology", "Nutrition"],
-  "Neurology": ["Primary Care", "Neurosurgery", "Physical Therapy", "Psychiatry", "Pain Management"],
-  "Pulmonology": ["Primary Care", "Cardiology", "Allergy/Immunology"],
-  "Rheumatology": ["Primary Care", "Orthopedic Surgery", "Physical Therapy"],
-  "Oncology": ["Primary Care", "General Surgery", "Imaging Center", "Pain Management"],
-
-  // Pain & Wellness
-  "Pain Management": ["Primary Care", "Orthopedic Surgery", "Neurology", "Physical Therapy", "Chiropractic"],
-  "Acupuncture": ["Chiropractic", "Physical Therapy", "Pain Management"],
-  "Massage Therapy": ["Chiropractic", "Physical Therapy", "Acupuncture"],
-
-  // Eye Care
-  "Optometry": ["Ophthalmology", "Primary Care"],
-  "Ophthalmology": ["Optometry", "Primary Care"],
-
-  // Women's Health
-  "OB/GYN": ["Primary Care", "Urology", "Endocrinology"],
-
-  // Other
-  "Urology": ["Primary Care", "OB/GYN", "Oncology"],
-  "ENT": ["Primary Care", "Allergy/Immunology", "Audiology"],
-  "Allergy/Immunology": ["Primary Care", "ENT", "Pulmonology", "Dermatology"],
-  "Podiatry": ["Primary Care", "Orthopedic Surgery", "Vascular Surgery"],
-  "Imaging Center": ["Primary Care", "Orthopedic Surgery", "Chiropractic", "Gastroenterology"],
-  "Urgent Care": ["Primary Care", "Orthopedic Surgery", "Imaging Center"],
-  "Med Spa": ["Dermatology", "Plastic Surgery"],
-  "Nutrition": ["Primary Care", "Endocrinology", "Gastroenterology"],
+  // Women's & children's
+  "Pediatrics": ["Allergy & Immunology", "ENT (Otolaryngology)", "Psychiatry", "Endocrinology"],
+  "OB-GYN": ["Primary Care", "Endocrinology", "Urology", "Psychiatry"],
 }
 
 // Get all unique specialties

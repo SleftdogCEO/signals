@@ -8,7 +8,8 @@ const supabase = createClient(
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY
 
-// Curated insights by specialty category - actionable tips, not just news
+// Curated insights by partner category - actionable tips for physician practices.
+// Keys mirror the PARTNER_CATEGORIES ids in app/onboarding/page.tsx.
 const CURATED_INSIGHTS: Record<string, {
   title: string
   summary: string
@@ -18,32 +19,32 @@ const CURATED_INSIGHTS: Record<string, {
   'primary_care': [
     {
       title: "Increase Patient Retention with Same-Day Appointments",
-      summary: "Practices offering same-day sick visits see 40% higher retention. Consider blocking 2-3 slots daily for urgent needs. This reduces no-shows and builds loyalty.",
+      summary: "PCP practices offering same-day sick visits see 40% higher retention. Block 2-3 slots daily for urgent needs. This reduces no-shows and builds loyalty across your panel.",
       category: "operations",
       relevance_score: 95
     },
     {
-      title: "The 5-Minute Pre-Visit Survey That Cuts Appointment Time",
-      summary: "Sending a brief digital intake form 24 hours before visits reduces average appointment time by 8 minutes while improving documentation quality.",
-      category: "technology",
-      relevance_score: 92
+      title: "The Closed-Loop Referral Habit That Compounds",
+      summary: "PCPs who confirm receipt of every specialist consult note within 24 hours get 30% more inbound referrals back from those specialists. Make this a front-desk SOP.",
+      category: "partnerships",
+      relevance_score: 93
     }
   ],
-  'physical_rehab': [
+  'internal_medicine_subspecialties': [
     {
-      title: "Build Orthopedic Referral Relationships That Stick",
-      summary: "Top PT practices send monthly outcome reports to referring physicians. Include patient progress photos (with consent) and specific functional improvements.",
+      title: "Cut Your PCP Consult Note Turnaround to 48 Hours",
+      summary: "Sub-specialists who return consult notes within 48 hours of every visit get 25% more PCP referrals within a year. Lead with a one-paragraph summary, not an EHR data dump.",
       category: "partnerships",
       relevance_score: 96
     },
     {
-      title: "Cash Pay PT Programs: What's Actually Working",
-      summary: "Practices adding wellness/maintenance programs see 35% revenue increase. Position as 'performance optimization' not just injury recovery.",
-      category: "marketing",
-      relevance_score: 91
+      title: "Curating Your Referring Physician Network",
+      summary: "Most subspecialists are referral-saturated. The ones who grow without burnout deliberately educate referring PCPs on which patient mix they're best for. Send polite feedback notes on misroutes.",
+      category: "operations",
+      relevance_score: 92
     }
   ],
-  'mental_health': [
+  'psychiatry_pain': [
     {
       title: "Reduce No-Shows with the 48-Hour Confirmation System",
       summary: "Text reminders at 48hrs and 2hrs before appointments cut no-show rates by 50%. Include a 'running late?' option to reschedule instantly.",
@@ -52,40 +53,40 @@ const CURATED_INSIGHTS: Record<string, {
     },
     {
       title: "Primary Care Partnerships for Mental Health Practices",
-      summary: "PCPs are desperate for reliable mental health referrals. Offer a 'fast track' program: guaranteed first appointment within 7 days for their patients.",
+      summary: "PCPs are desperate for reliable psychiatry referrals. Offer a 'fast track' program: guaranteed first appointment within 21 days for their patients and watch your panel fill.",
       category: "partnerships",
       relevance_score: 93
     }
   ],
-  'dental_vision': [
+  'surgery_msk': [
     {
-      title: "Membership Plans: The Alternative to Insurance Dependency",
-      summary: "Dental practices with in-house membership plans average 30% higher case acceptance. Typical structure: $30-40/month covers cleanings + 20% off all services.",
-      category: "finance",
+      title: "Post-Op Communication That Drives Repeat Referrals",
+      summary: "Surgical specialists who send a brief outcome update to the referring physician at 2 weeks AND 6 weeks post-op see 35% more repeat referrals from the same source.",
+      category: "partnerships",
       relevance_score: 95
     },
     {
-      title: "Google Reviews Strategy That Actually Works",
-      summary: "Ask for reviews at the moment of peak satisfaction - right after complimenting their smile in the mirror. Text the link before they leave the parking lot.",
-      category: "marketing",
-      relevance_score: 90
+      title: "The 'Same-Week Consult' Promise for Urgent MSK",
+      summary: "Orthopedic and pain practices that offer guaranteed same-week consults for PCP-flagged urgent cases own their local market. Block 2 slots per week for this.",
+      category: "operations",
+      relevance_score: 91
     }
   ],
-  'wellness_aesthetic': [
+  'womens_childrens': [
     {
-      title: "Before/After Content That Converts",
-      summary: "Med spas with consistent before/after posting see 3x more inquiries. Use consistent lighting, angles, and timing. Always get signed photo releases upfront.",
-      category: "marketing",
-      relevance_score: 96
+      title: "Pediatrics: The Allergy & ENT Pipeline",
+      summary: "Pediatric practices with named relationships at one allergy and one ENT office route 90% of chronic eczema, food allergy, and chronic otitis cases predictably. Build both pipelines deliberately.",
+      category: "partnerships",
+      relevance_score: 94
     },
     {
-      title: "Building Your VIP Membership Program",
-      summary: "Top med spas generate 40% of revenue from membership programs. Include monthly treatments + product discounts + priority booking.",
-      category: "finance",
-      relevance_score: 93
+      title: "OB-GYN: The De Facto PCP for Young Women",
+      summary: "OB-GYNs who acknowledge their de facto PCP role for women under 40 build dramatically deeper bidirectional referral loops with endocrinology, urology, and psychiatry.",
+      category: "operations",
+      relevance_score: 92
     }
   ],
-  'specialists': [
+  'ent_eye_skin_allergy': [
     {
       title: "The Referral Thank-You Note That Gets Results",
       summary: "Hand-written thank you notes to referring physicians within 48 hours increase future referrals by 25%. Include a brief update on the patient's care plan.",
@@ -93,40 +94,39 @@ const CURATED_INSIGHTS: Record<string, {
       relevance_score: 94
     },
     {
-      title: "Reduce Referral Leakage in Your Specialty",
-      summary: "Make it easy: provide referring offices with digital referral forms, direct scheduler phone lines, and same-week appointment availability.",
+      title: "Allergy + ENT + Pulm: The Tri-Specialty Loop",
+      summary: "The strongest sensory-specialty practices have a single named contact at each of the other two. Patients with overlapping conditions get co-managed instead of bouncing.",
       category: "operations",
       relevance_score: 91
     }
   ]
 }
 
-// Get category from specialty
+// Get partner-category bucket for a physician specialty.
+// Keys must match the SPECIALTIES list in app/onboarding/page.tsx.
 function getSpecialtyCategory(specialty: string): string {
   const mapping: Record<string, string> = {
     'Primary Care': 'primary_care',
-    'Family Medicine': 'primary_care',
-    'Internal Medicine': 'primary_care',
-    'Pediatrics': 'primary_care',
-    'Physical Therapy': 'physical_rehab',
-    'Chiropractic': 'physical_rehab',
-    'Orthopedics': 'physical_rehab',
-    'Pain Management': 'physical_rehab',
-    'Psychiatry': 'mental_health',
-    'Psychology': 'mental_health',
-    'Counseling': 'mental_health',
-    'Dentistry': 'dental_vision',
-    'Optometry': 'dental_vision',
-    'Orthodontics': 'dental_vision',
-    'Med Spa': 'wellness_aesthetic',
-    'Plastic Surgery': 'wellness_aesthetic',
-    'Functional Medicine': 'wellness_aesthetic',
-    'Dermatology': 'specialists',
-    'Cardiology': 'specialists',
-    'OB/GYN': 'specialists',
-    'Urgent Care': 'primary_care'
+    'Cardiology': 'internal_medicine_subspecialties',
+    'Pulmonology': 'internal_medicine_subspecialties',
+    'Endocrinology': 'internal_medicine_subspecialties',
+    'Gastroenterology': 'internal_medicine_subspecialties',
+    'Rheumatology': 'internal_medicine_subspecialties',
+    'Neurology': 'internal_medicine_subspecialties',
+    'Psychiatry': 'psychiatry_pain',
+    'Pain Management': 'psychiatry_pain',
+    'Orthopedic Surgery': 'surgery_msk',
+    'Plastic Surgery': 'surgery_msk',
+    'Urology': 'surgery_msk',
+    'Sports Medicine': 'surgery_msk',
+    'Pediatrics': 'womens_childrens',
+    'OB-GYN': 'womens_childrens',
+    'Dermatology': 'ent_eye_skin_allergy',
+    'Ophthalmology': 'ent_eye_skin_allergy',
+    'ENT (Otolaryngology)': 'ent_eye_skin_allergy',
+    'Allergy & Immunology': 'ent_eye_skin_allergy',
   }
-  return mapping[specialty] || 'specialists'
+  return mapping[specialty] || 'primary_care'
 }
 
 // General insights that apply to all practices
