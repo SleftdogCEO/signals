@@ -39,11 +39,14 @@ export function AuthCard() {
   }, []);
 
   const getRedirectURL = () => {
-    const baseURL = process.env.NODE_ENV === 'production'
-      ? 'https://signals-navy.vercel.app'
-      : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    // Always derive from the current origin. Hardcoding a domain here used to
+    // route confirmation emails to a stale preview URL (signals-navy.vercel.app)
+    // and Supabase rejected the redirect as not in the allowed-callbacks list,
+    // breaking signup. Browser-only call so it's safe in this client component.
+    const baseURL = typeof window !== 'undefined'
+      ? window.location.origin
+      : 'http://localhost:3000';
 
-    // Include the post-auth redirect in the callback URL
     const postAuthRedirect = getPostAuthRedirect();
     return `${baseURL}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`;
   };
