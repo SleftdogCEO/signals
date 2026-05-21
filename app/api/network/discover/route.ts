@@ -60,6 +60,23 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   }
 }
 
+// Reverse-geocode lat/lng to a human-readable location (city/state/zip) for
+// use as the Serper "near {location}" search term.
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  if (!GOOGLE_MAPS_API_KEY) return null
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&result_type=locality|postal_code|administrative_area_level_1&key=${GOOGLE_MAPS_API_KEY}`
+    )
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.results?.[0]?.formatted_address || null
+  } catch (error) {
+    console.error('Reverse geocoding error:', error)
+    return null
+  }
+}
+
 // Category mapping for search queries.
 // Keys MUST stay in sync with PARTNER_CATEGORIES ids in app/onboarding/page.tsx.
 // Each value is a list of Google Places search terms covering the underlying
@@ -167,7 +184,7 @@ async function searchLocalPartners(location: string, searchTerms: string[]): Pro
           website: place.website,
           rating: place.rating,
           review_count: place.ratingCount,
-          coordinates
+          coordinates: coordinates || undefined
         })
       }
     } catch (error) {
@@ -178,10 +195,396 @@ async function searchLocalPartners(location: string, searchTerms: string[]): Pro
   return results
 }
 
+// ===========================================================================
+// NPPES (NPI Registry) — primary data source. Free, no API key, authoritative
+// US provider data. Addresses are geocoded with the free US Census geocoder
+// and cached in Supabase (provider_geo_cache). Serper (above) remains as an
+// automatic fallback when NPPES yields nothing.
+// ===========================================================================
+
+interface NppesProvider {
+  npi: string
+  practice_name: string
+  taxonomy: string
+  specialty: string
+  address: string
+  city: string
+  state: string
+  postal_code: string
+  phone?: string
+}
+
+interface SearchLocation { city?: string; state?: string; postal?: string }
+
+// Canonical specialty -> NPPES taxonomy_description substrings to query.
+// NPPES does a substring match, so a distinctive specialization word suffices;
+// the classifier below removes cross-contaminated matches.
+const SPECIALTY_TAXONOMY_QUERY: Record<string, string[]> = {
+  'Primary Care': ['Family Medicine', 'Internal Medicine'],
+  'Cardiology': ['Cardiovascular Disease'],
+  'Pulmonology': ['Pulmonary Disease'],
+  'Endocrinology': ['Endocrinology'],
+  'Gastroenterology': ['Gastroenterology'],
+  'Rheumatology': ['Rheumatology'],
+  'Neurology': ['Neurology'],
+  'Psychiatry': ['Psychiatry'],
+  'Pain Management': ['Pain Medicine'],
+  'Orthopedic Surgery': ['Orthopaedic Surgery'],
+  'Plastic Surgery': ['Plastic Surgery'],
+  'Urology': ['Urology'],
+  'Sports Medicine': ['Sports Medicine'],
+  'Pediatrics': ['Pediatrics'],
+  'OB-GYN': ['Obstetrics & Gynecology'],
+  'Dermatology': ['Dermatology'],
+  'Ophthalmology': ['Ophthalmology'],
+  'ENT (Otolaryngology)': ['Otolaryngology'],
+  'Allergy & Immunology': ['Allergy & Immunology'],
+}
+
+// Partner category id (patients_i_want) -> canonical specialties.
+const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
+  'primary_care': ['Primary Care'],
+  'internal_medicine_subspecialties': ['Cardiology', 'Pulmonology', 'Endocrinology', 'Gastroenterology', 'Rheumatology', 'Neurology'],
+  'psychiatry_pain': ['Psychiatry', 'Pain Management'],
+  'surgery_msk': ['Orthopedic Surgery', 'Plastic Surgery', 'Urology', 'Sports Medicine'],
+  'womens_childrens': ['Pediatrics', 'OB-GYN'],
+  'ent_eye_skin_allergy': ['ENT (Otolaryngology)', 'Ophthalmology', 'Dermatology', 'Allergy & Immunology'],
+}
+
+// Complementary referral partners by the user's own specialty (used when they
+// have not selected specific partner interests).
+const COMPLEMENTARY_SPECIALTIES: Record<string, string[]> = {
+  'Primary Care': ['Cardiology', 'Endocrinology', 'Psychiatry', 'Dermatology', 'Gastroenterology', 'Orthopedic Surgery'],
+  'Cardiology': ['Primary Care', 'Endocrinology', 'Pulmonology'],
+  'Pulmonology': ['Primary Care', 'Allergy & Immunology', 'Cardiology', 'ENT (Otolaryngology)'],
+  'Endocrinology': ['Primary Care', 'Cardiology', 'Pediatrics', 'OB-GYN'],
+  'Gastroenterology': ['Primary Care', 'Pediatrics', 'Rheumatology', 'Allergy & Immunology'],
+  'Rheumatology': ['Primary Care', 'Dermatology', 'Pain Management', 'Gastroenterology'],
+  'Neurology': ['Primary Care', 'Psychiatry', 'Pediatrics', 'Pain Management'],
+  'Psychiatry': ['Primary Care', 'Pediatrics', 'Neurology', 'Pain Management'],
+  'Dermatology': ['Primary Care', 'Plastic Surgery', 'Allergy & Immunology', 'Pediatrics'],
+  'Ophthalmology': ['Primary Care', 'Endocrinology', 'Pediatrics', 'Neurology'],
+  'Orthopedic Surgery': ['Pain Management', 'Primary Care', 'Sports Medicine'],
+  'Pain Management': ['Primary Care', 'Orthopedic Surgery', 'Rheumatology', 'Psychiatry'],
+  'Pediatrics': ['Allergy & Immunology', 'ENT (Otolaryngology)', 'Psychiatry', 'Endocrinology'],
+  'ENT (Otolaryngology)': ['Primary Care', 'Allergy & Immunology', 'Pulmonology', 'Pediatrics'],
+  'Allergy & Immunology': ['Primary Care', 'ENT (Otolaryngology)', 'Pediatrics', 'Pulmonology'],
+  'Urology': ['Primary Care', 'OB-GYN'],
+  'OB-GYN': ['Primary Care', 'Endocrinology', 'Urology', 'Psychiatry'],
+  'Sports Medicine': ['Orthopedic Surgery', 'Primary Care', 'Endocrinology'],
+  'Plastic Surgery': ['Dermatology', 'Primary Care', 'OB-GYN'],
+}
+
+const US_STATE_ABBR: Record<string, string> = {
+  'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA','colorado':'CO','connecticut':'CT','delaware':'DE','florida':'FL','georgia':'GA','hawaii':'HI','idaho':'ID','illinois':'IL','indiana':'IN','iowa':'IA','kansas':'KS','kentucky':'KY','louisiana':'LA','maine':'ME','maryland':'MD','massachusetts':'MA','michigan':'MI','minnesota':'MN','mississippi':'MS','missouri':'MO','montana':'MT','nebraska':'NE','nevada':'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK','oregon':'OR','pennsylvania':'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD','tennessee':'TN','texas':'TX','utah':'UT','vermont':'VT','virginia':'VA','washington':'WA','west virginia':'WV','wisconsin':'WI','wyoming':'WY','district of columbia':'DC'
+}
+
+// Map a free-text specialty to one of our canonical specialty keys.
+function canonicalizeSpecialty(raw: string): string {
+  const s = (raw || '').toLowerCase()
+  if (s.includes('primary') || s.includes('family') || s.includes('internal medicine') || s.includes('general practice')) return 'Primary Care'
+  if (s.includes('cardio')) return 'Cardiology'
+  if (s.includes('pulmonolog')) return 'Pulmonology'
+  if (s.includes('endocrinolog')) return 'Endocrinology'
+  if (s.includes('gastroenterolog')) return 'Gastroenterology'
+  if (s.includes('rheumatolog')) return 'Rheumatology'
+  if (s.includes('neurolog')) return 'Neurology'
+  if (s.includes('psychiatr')) return 'Psychiatry'
+  if (s.includes('pain')) return 'Pain Management'
+  if (s.includes('orthop')) return 'Orthopedic Surgery'
+  if (s.includes('plastic')) return 'Plastic Surgery'
+  if (s.includes('urolog')) return 'Urology'
+  if (s.includes('sports medicine')) return 'Sports Medicine'
+  if (s.includes('pediatric')) return 'Pediatrics'
+  if (s.includes('obstetric') || s.includes('gynecolog') || s.includes('ob-gyn') || s.includes('ob/gyn') || s.includes('obgyn')) return 'OB-GYN'
+  if (s.includes('dermatolog')) return 'Dermatology'
+  if (s.includes('ophthalmolog')) return 'Ophthalmology'
+  if (s.includes('otolaryngolog') || s.includes('ent')) return 'ENT (Otolaryngology)'
+  if (s.includes('allerg') || s.includes('immunolog')) return 'Allergy & Immunology'
+  return 'Primary Care'
+}
+
+// Classify an NPPES taxonomy "desc" string to a canonical specialty. Order
+// matters: subspecialties before broad classifications, and Psychiatry before
+// Neurology since both share the classification "Psychiatry & Neurology".
+function classifyTaxonomy(desc: string): string | null {
+  const d = (desc || '').toLowerCase()
+  if (d.includes('cardiovascular disease')) return 'Cardiology'
+  if (d.includes('pulmonary disease')) return 'Pulmonology'
+  if (d.includes('endocrinology')) return 'Endocrinology'
+  if (d.includes('gastroenterology')) return 'Gastroenterology'
+  if (d.includes('rheumatology')) return 'Rheumatology'
+  if (d.includes('pain medicine')) return 'Pain Management'
+  if (d.includes('plastic surgery')) return 'Plastic Surgery'
+  if (d.includes('orthopaedic surgery') || d.includes('orthopedic surgery')) return 'Orthopedic Surgery'
+  if (d.includes('sports medicine')) return 'Sports Medicine'
+  if (d.includes('urology')) return 'Urology'
+  if (d.includes('dermatology')) return 'Dermatology'
+  if (d.includes('ophthalmology')) return 'Ophthalmology'
+  if (d.includes('otolaryngology')) return 'ENT (Otolaryngology)'
+  if (d.includes('allergy & immunology')) return 'Allergy & Immunology'
+  if (d.includes('obstetrics & gynecology')) return 'OB-GYN'
+  if (d.includes('pediatric')) return 'Pediatrics'
+  if (d.endsWith('psychiatry') || d.includes(', psychiatry')) return 'Psychiatry'
+  if (d.includes('neurology')) return 'Neurology'
+  if (d.includes('family medicine')) return 'Primary Care'
+  if (d.includes('internal medicine')) return 'Primary Care'
+  return null
+}
+
+// Parse a free-text location ("33606", "Tampa, FL", "Texas") into NPPES params.
+function parseLocation(raw: string): SearchLocation {
+  const str = (raw || '').trim()
+  if (!str) return {}
+  const zipMatch = str.match(/\b(\d{5})\b/)
+  if (zipMatch) return { postal: zipMatch[1] }
+  const parts = str.split(',').map(p => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    const statePart = parts[parts.length - 1]
+    const state = statePart.length === 2 ? statePart.toUpperCase() : (US_STATE_ABBR[statePart.toLowerCase()] || '')
+    return { city: parts[0], state }
+  }
+  if (str.length === 2) return { state: str.toUpperCase() }
+  if (US_STATE_ABBR[str.toLowerCase()]) return { state: US_STATE_ABBR[str.toLowerCase()] }
+  return { city: str }
+}
+
+// Reverse-geocode GPS to city/state/zip using free OSM Nominatim, falling back
+// to Google if available.
+async function reverseGeocodeToLocation(lat: number, lng: number): Promise<SearchLocation> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+      { headers: { 'User-Agent': 'SleftSignals/1.0 (referral-network)' } }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      const a = data.address || {}
+      const city = a.city || a.town || a.village || a.county
+      const state = a.state ? (US_STATE_ABBR[String(a.state).toLowerCase()] || '') : ''
+      const postal = a.postcode ? String(a.postcode).slice(0, 5) : undefined
+      if (city || state || postal) return { city, state, postal }
+    }
+  } catch (e) {
+    console.error('Nominatim reverse error:', e)
+  }
+  const readable = await reverseGeocode(lat, lng)
+  return readable ? parseLocation(readable) : {}
+}
+
+// Forward-geocode a US address to lat/lng using the free US Census geocoder.
+async function geocodeCensus(oneLine: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(oneLine)}&benchmark=Public_AR_Current&format=json`
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const match = data.result?.addressMatches?.[0]
+    if (match?.coordinates) return { lat: match.coordinates.y, lng: match.coordinates.x }
+    return null
+  } catch (e) {
+    console.error('Census geocode error:', e)
+    return null
+  }
+}
+
+// Geocode a free-text place (ZIP, "City, ST", state) to coordinates via free
+// OSM Nominatim. Used for map centering when we have no GPS fix (Census can't
+// resolve a bare ZIP or city without a street address).
+async function geocodeSearchNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', USA')}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'SleftSignals/1.0 (referral-network)' } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (Array.isArray(data) && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+    return null
+  } catch (e) {
+    console.error('Nominatim search error:', e)
+    return null
+  }
+}
+
+function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const R = 3958.8
+  const dLat = toRad(b.lat - a.lat)
+  const dLng = toRad(b.lng - a.lng)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
+
+// Query NPPES for providers in a location matching a taxonomy substring.
+async function fetchNppes(loc: SearchLocation, taxonomy: string, limit = 15): Promise<NppesProvider[]> {
+  const params = new URLSearchParams({ version: '2.1', taxonomy_description: taxonomy, limit: String(limit) })
+  // City+state first: NPPES postal_code matches mailing addresses too, which
+  // scatters results far from the search area.
+  if (loc.city && loc.state) { params.set('city', loc.city); params.set('state', loc.state) }
+  else if (loc.postal) params.set('postal_code', loc.postal)
+  else if (loc.state) params.set('state', loc.state)
+  else return []
+
+  try {
+    const res = await fetch(`https://npiregistry.cms.hhs.gov/api/?${params.toString()}`)
+    if (!res.ok) return []
+    const data = await res.json()
+    const out: NppesProvider[] = []
+    for (const r of data.results || []) {
+      const primary = (r.taxonomies || []).find((t: any) => t.primary) || (r.taxonomies || [])[0]
+      const specialty = classifyTaxonomy(primary?.desc || '')
+      if (!specialty) continue
+      const addr = (r.addresses || []).find((a: any) => a.address_purpose === 'LOCATION') || (r.addresses || [])[0]
+      if (!addr) continue
+      const b = r.basic || {}
+      const name = (b.organization_name || `${b.first_name || ''} ${b.last_name || ''}`).trim()
+      if (!name) continue
+      out.push({
+        npi: String(r.number),
+        practice_name: name,
+        taxonomy: primary?.desc || '',
+        specialty,
+        address: addr.address_1 || '',
+        city: addr.city || '',
+        state: addr.state || '',
+        postal_code: (addr.postal_code || '').slice(0, 5),
+        phone: addr.telephone_number || undefined,
+      })
+    }
+    return out
+  } catch (e) {
+    console.error('NPPES fetch error:', e)
+    return []
+  }
+}
+
+// Discover partners via NPPES + free geocoding, cached in Supabase.
+async function searchNppesPartners(
+  loc: SearchLocation,
+  desiredSpecialties: string[],
+  origin: { lat: number; lng: number } | null
+): Promise<MatchResult[]> {
+  // 1. Pull candidate providers from NPPES for each desired specialty.
+  const byNpi = new Map<string, NppesProvider>()
+  for (const specialty of desiredSpecialties.slice(0, 5)) {
+    for (const q of (SPECIALTY_TAXONOMY_QUERY[specialty] || [specialty])) {
+      const providers = await fetchNppes(loc, q)
+      for (const p of providers) {
+        if (p.specialty === specialty && !byNpi.has(p.npi)) byNpi.set(p.npi, p)
+      }
+    }
+  }
+  const candidates = Array.from(byNpi.values()).slice(0, 40)
+  if (candidates.length === 0) return []
+
+  // 2. Resolve coordinates from the Supabase cache; geocode the misses.
+  const coordsByNpi = new Map<string, { lat: number; lng: number }>()
+  const { data: cached } = await supabase
+    .from('provider_geo_cache')
+    .select('npi, latitude, longitude')
+    .in('npi', candidates.map(c => c.npi))
+  for (const row of cached || []) {
+    if (row.latitude != null && row.longitude != null) {
+      coordsByNpi.set(row.npi, { lat: Number(row.latitude), lng: Number(row.longitude) })
+    }
+  }
+
+  const toGeocode = candidates.filter(c => !coordsByNpi.has(c.npi))
+  const geocoded = await Promise.all(
+    toGeocode.map(async (c) => {
+      const coords = await geocodeCensus(`${c.address}, ${c.city}, ${c.state} ${c.postal_code}`)
+      return { c, coords }
+    })
+  )
+  const rowsToUpsert: any[] = []
+  for (const { c, coords } of geocoded) {
+    if (coords) coordsByNpi.set(c.npi, coords)
+    rowsToUpsert.push({
+      npi: c.npi,
+      practice_name: c.practice_name,
+      specialty: c.specialty,
+      taxonomy: c.taxonomy,
+      address: c.address,
+      city: c.city,
+      state: c.state,
+      postal_code: c.postal_code,
+      phone: c.phone || null,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+      geocoded: !!coords,
+      updated_at: new Date().toISOString(),
+    })
+  }
+  if (rowsToUpsert.length > 0) {
+    await supabase.from('provider_geo_cache').upsert(rowsToUpsert, { onConflict: 'npi' })
+  }
+
+  // 3. Build, score, and sort results (closest first when we have an origin).
+  const results = candidates.map((c) => {
+    const coords = coordsByNpi.get(c.npi) || null
+    const distance = coords && origin ? haversineMiles(origin, coords) : null
+
+    let score = 70
+    if (distance != null) {
+      if (distance < 5) score += 25
+      else if (distance < 10) score += 18
+      else if (distance < 20) score += 10
+      else if (distance < 40) score += 5
+    }
+    if (c.phone) score += 3
+
+    return {
+      id: c.npi,
+      practice_name: c.practice_name,
+      specialty: c.specialty,
+      location: [c.city, c.state].filter(Boolean).join(', '),
+      match_score: Math.min(score, 98),
+      why_match: [
+        `Practicing ${c.specialty} in ${c.city || 'your area'}`,
+        distance != null ? `${distance.toFixed(1)} miles from you` : 'In your search area',
+        'Open to building referral relationships',
+      ],
+      address: c.address ? `${c.address}, ${c.city}, ${c.state} ${c.postal_code}`.trim() : undefined,
+      phone: c.phone,
+      website: undefined,
+      coordinates: coords || undefined,
+      _distance: distance,
+    } as MatchResult & { _distance: number | null }
+  })
+
+  // Drop NPPES mailing-address scatter: when we know the origin, keep only
+  // results within a reasonable radius. Relax if that leaves too few.
+  let finalResults = results
+  if (origin) {
+    const near = results.filter((r: any) => r._distance != null && r._distance <= 75)
+    if (near.length >= 3) finalResults = near
+    else {
+      const anyCoords = results.filter((r: any) => r._distance != null)
+      finalResults = anyCoords.length > 0 ? anyCoords : results
+    }
+  }
+
+  finalResults.sort((a: any, b: any) => {
+    if (a._distance != null && b._distance != null) return a._distance - b._distance
+    if (a._distance != null) return -1
+    if (b._distance != null) return 1
+    return b.match_score - a.match_score
+  })
+  return finalResults.map(({ _distance, ...m }: any) => m)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    // Optional precise location overrides (from browser geolocation or a zip/city
+    // the user typed). When present, these take priority over the coarse
+    // onboarding location so "near me" searches actually center on the user.
+    const latParam = searchParams.get('lat')
+    const lngParam = searchParams.get('lng')
+    const locParam = searchParams.get('loc')
 
     if (!userId) {
       return NextResponse.json(
@@ -210,7 +613,31 @@ export async function GET(request: NextRequest) {
     const hasAccess = isSubscribed || isTrialing
 
     const userInterests = currentProvider.patients_i_want || []
-    const userLocation = currentProvider.location || ''
+
+    // Resolve the location to search around. Priority:
+    //   1. Browser geolocation (lat/lng) -> reverse-geocoded to a city/zip
+    //   2. A zip/city the user typed (loc)
+    //   3. The coarse onboarding location (fallback)
+    let userLocation = currentProvider.location || ''
+    let origin: { lat: number; lng: number } | null = null
+    let searchLoc: SearchLocation
+
+    if (latParam && lngParam) {
+      const lat = parseFloat(latParam)
+      const lng = parseFloat(lngParam)
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        origin = { lat, lng }
+        searchLoc = await reverseGeocodeToLocation(lat, lng)
+        userLocation = [searchLoc.city, searchLoc.state].filter(Boolean).join(', ') || searchLoc.postal || userLocation
+      } else {
+        searchLoc = parseLocation(userLocation)
+      }
+    } else if (locParam && locParam.trim()) {
+      userLocation = locParam.trim()
+      searchLoc = parseLocation(userLocation)
+    } else {
+      searchLoc = parseLocation(userLocation)
+    }
 
     // Build search terms based on user interests
     const searchTerms: string[] = []
@@ -268,16 +695,42 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Search for real local partners using Serper
-    let matches = await searchLocalPartners(userLocation, searchTerms)
+    // Determine which partner specialties to search for (canonical names).
+    const userCanonical = canonicalizeSpecialty(currentProvider.specialty || '')
+    let desiredSpecialties: string[] = []
+    for (const interest of userInterests) {
+      desiredSpecialties.push(...(CATEGORY_TO_SPECIALTIES[interest] || []))
+    }
+    if (desiredSpecialties.length === 0) {
+      desiredSpecialties = COMPLEMENTARY_SPECIALTIES[userCanonical] || ['Primary Care', 'Cardiology', 'Psychiatry', 'Orthopedic Surgery']
+    }
+    // De-dupe and never recommend the user's own specialty (no competitors).
+    desiredSpecialties = Array.from(new Set(desiredSpecialties)).filter(s => s !== userCanonical)
 
-    // Filter out same specialty (competitors)
-    matches = matches.filter(m =>
-      m.specialty.toLowerCase() !== currentProvider.specialty.toLowerCase()
-    )
+    // Resolve the map origin (for centering + distance sorting) when we don't
+    // already have GPS coordinates.
+    if (!origin) {
+      const centerQuery = searchLoc.postal || [searchLoc.city, searchLoc.state].filter(Boolean).join(', ') || userLocation
+      origin = centerQuery ? await geocodeSearchNominatim(centerQuery) : null
+    }
+    // If we only have a ZIP (no city/state), backfill city/state from the
+    // origin so NPPES can search by city — far more precise than postal_code.
+    if (origin && (!searchLoc.city || !searchLoc.state)) {
+      const rev = await reverseGeocodeToLocation(origin.lat, origin.lng)
+      searchLoc = {
+        city: searchLoc.city || rev.city,
+        state: searchLoc.state || rev.state,
+        postal: searchLoc.postal || rev.postal,
+      }
+    }
 
-    // Sort by match score
-    matches.sort((a, b) => b.match_score - a.match_score)
+    // Primary source: NPPES (free, no key). Fallback: Serper, if configured.
+    let matches = await searchNppesPartners(searchLoc, desiredSpecialties, origin)
+    if (matches.length === 0 && SERPER_API_KEY) {
+      matches = await searchLocalPartners(userLocation, searchTerms)
+      matches = matches.filter(m => canonicalizeSpecialty(m.specialty) !== userCanonical)
+      matches.sort((a, b) => b.match_score - a.match_score)
+    }
 
     // Limit results
     matches = matches.slice(0, 12)
@@ -293,8 +746,7 @@ export async function GET(request: NextRequest) {
       }))
     }
 
-    // Geocode the user's location for map centering
-    const centerCoordinates = await geocodeAddress(userLocation)
+    const centerCoordinates = origin
 
     return NextResponse.json({
       matches,
@@ -308,7 +760,8 @@ export async function GET(request: NextRequest) {
         specialty: currentProvider.specialty,
         location: currentProvider.location
       },
-      center_coordinates: centerCoordinates
+      center_coordinates: centerCoordinates,
+      search_location: userLocation
     })
   } catch (error) {
     console.error('Discover error:', error)

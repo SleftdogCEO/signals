@@ -38,7 +38,8 @@ import {
   Map as MapIcon,
   List,
   Mail,
-  Phone
+  Phone,
+  CheckCircle
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -359,6 +360,10 @@ function NetworkHubContent() {
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
   const [centerCoordinates, setCenterCoordinates] = useState<{ lat: number; lng: number } | null>(null)
+  const [searchLocation, setSearchLocation] = useState<string>('')
+  const [geoLoading, setGeoLoading] = useState(false)
+  const [showZipInput, setShowZipInput] = useState(false)
+  const [zipValue, setZipValue] = useState('')
 
   const isSubscribed = provider?.subscription_status === 'active'
   const isTrial = provider?.subscription_status === 'trial'
@@ -394,6 +399,9 @@ function NetworkHubContent() {
         if (matchesData.center_coordinates) {
           setCenterCoordinates(matchesData.center_coordinates)
         }
+        if (matchesData.search_location) {
+          setSearchLocation(matchesData.search_location)
+        }
       }
 
       // Load all data in parallel
@@ -423,6 +431,59 @@ function NetworkHubContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Re-run partner discovery with a precise location (browser geolocation or a
+  // typed zip/city). Updates the matches, map center, and resolved location label.
+  const runDiscovery = async (opts?: { lat?: number; lng?: number; loc?: string }) => {
+    if (!user?.id) return
+    const params = new URLSearchParams({ userId: user.id })
+    if (opts?.lat != null && opts?.lng != null) {
+      params.set('lat', String(opts.lat))
+      params.set('lng', String(opts.lng))
+    }
+    if (opts?.loc) params.set('loc', opts.loc)
+
+    const res = await fetch(`/api/network/discover?${params.toString()}`)
+    if (res.ok) {
+      const data = await res.json()
+      setPartnerMatches(data.matches || [])
+      if (data.center_coordinates) setCenterCoordinates(data.center_coordinates)
+      if (data.search_location) setSearchLocation(data.search_location)
+    }
+  }
+
+  // "Explore Network": center results on the user's real location. Try the
+  // browser's GPS first; fall back to a zip/city input if denied or unavailable.
+  const handleExploreNetwork = () => {
+    setViewMode('map')
+    setGeoLoading(true)
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoLoading(false)
+      setShowZipInput(true)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        await runDiscovery({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setShowZipInput(false)
+        setGeoLoading(false)
+        document.getElementById('network-results')?.scrollIntoView({ behavior: 'smooth' })
+      },
+      () => {
+        setGeoLoading(false)
+        setShowZipInput(true)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  const handleZipSearch = async () => {
+    if (!zipValue.trim()) return
+    setGeoLoading(true)
+    await runDiscovery({ loc: zipValue.trim() })
+    setGeoLoading(false)
+    document.getElementById('network-results')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const formatTimeAgo = (date: string) => {
@@ -479,7 +540,9 @@ function NetworkHubContent() {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm font-medium text-emerald-400">
                 <CheckCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Member</span>
+                <span className="hidden sm:inline">
+                  {user?.user_metadata?.full_name ? `Dr. ${user.user_metadata.full_name}` : 'Member'}
+                </span>
               </span>
               <button
                 onClick={handleLogout}
@@ -551,7 +614,7 @@ function NetworkHubContent() {
                   </span>
                 </h1>
                 <p className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto mb-6">
-                  Real healthcare practices in {provider?.location || 'your area'} looking to build referral relationships.
+                  Real healthcare practices in {searchLocation || provider?.location || 'your area'} looking to build referral relationships.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <span className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-sm font-medium text-blue-400">
@@ -610,17 +673,56 @@ function NetworkHubContent() {
                       Connect with local partners, share insights with the community, and grow your practice together.
                     </p>
                   </div>
-                  <Link
-                    href="/dashboard/network/hub"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 whitespace-nowrap"
+                  <button
+                    onClick={handleExploreNetwork}
+                    disabled={geoLoading}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 whitespace-nowrap disabled:opacity-60"
                   >
-                    Explore Network
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+                    {geoLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Finding practices near you...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="w-4 h-4" />
+                        Explore Network
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
                 </div>
+
+                {/* Zip/city fallback when geolocation is denied or unavailable */}
+                {showZipInput && (
+                  <div className="mt-6 pt-6 border-t border-blue-500/20">
+                    <p className="text-sm text-slate-400 mb-3 text-center sm:text-left">
+                      We couldn't get your location automatically. Enter a city or ZIP code to find nearby practices:
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={zipValue}
+                        onChange={(e) => setZipValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleZipSearch() }}
+                        placeholder="e.g. 33606 or Tampa, FL"
+                        className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      />
+                      <button
+                        onClick={handleZipSearch}
+                        disabled={geoLoading || !zipValue.trim()}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                        Search
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
 
               {/* Partner Cards / Map */}
+              <div id="network-results" />
               {partnerMatches.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">

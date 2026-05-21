@@ -999,6 +999,7 @@ export default function DashboardSnapshotPage() {
             Join the network to search for partners, connect with the community, and grow your practice.
           </p>
           <button
+            onClick={() => router.push("/dashboard/network/hub")}
             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-xl text-lg"
           >
             Explore Network
