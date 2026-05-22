@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { specialties } from "@/lib/seo-data"
 import TypingSpecialty from "@/components/TypingSpecialty"
+import HeroReferralCTA from "@/components/HeroReferralCTA"
 
 const features = [
   {
@@ -109,13 +110,7 @@ export default function HomePage() {
             </p>
 
             <div className="flex justify-center">
-              <Link
-                href="/directory"
-                className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-blue-400 hover:to-cyan-400 transition-all shadow-xl shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]"
-              >
-                See Your Referral Partners
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              <HeroReferralCTA />
             </div>
           </div>
 
