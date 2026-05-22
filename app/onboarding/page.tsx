@@ -115,11 +115,41 @@ const SPECIALTIES = [
   "Other physician specialty"
 ]
 
+// Common offerings per specialty. Members click these to build their profile —
+// the selected ones become their service tags and bio, and feed referral
+// matching. Keyed by the specialty values above.
+const OFFERINGS_BY_SPECIALTY: Record<string, string[]> = {
+  "Primary Care": ["annual physicals", "chronic disease management", "preventive care", "vaccinations", "sick visits", "minor procedures", "wellness counseling", "lab work"],
+  "Weight Loss / Obesity Medicine": ["medically supervised weight loss", "GLP-1 therapy", "metabolic testing", "body composition analysis", "nutrition counseling", "bariatric pre-op clearance", "meal planning", "InBody scans"],
+  "Cardiology": ["echocardiography", "stress testing", "EKG", "Holter monitoring", "heart failure management", "hypertension management", "arrhythmia care", "cardiac catheterization"],
+  "Pulmonology": ["pulmonary function testing", "sleep studies", "COPD management", "asthma management", "bronchoscopy", "sleep apnea treatment", "chronic cough evaluation"],
+  "Endocrinology": ["diabetes management", "thyroid care", "hormone therapy", "osteoporosis care", "adrenal disorders", "insulin pump management", "PCOS care"],
+  "Gastroenterology": ["colonoscopy", "upper endoscopy", "IBD management", "GERD treatment", "liver disease care", "hepatitis treatment", "fatty liver evaluation"],
+  "Rheumatology": ["autoimmune disease management", "infusion therapy", "joint injections", "arthritis care", "lupus management", "gout treatment", "osteoporosis care"],
+  "Neurology": ["headache & migraine care", "seizure management", "EEG", "EMG", "neuropathy treatment", "stroke follow-up", "movement disorders"],
+  "Psychiatry": ["medication management", "depression treatment", "anxiety treatment", "ADHD care", "telepsychiatry", "bipolar care", "substance use treatment"],
+  "Dermatology": ["skin cancer screening", "mole & lesion removal", "acne treatment", "cosmetic dermatology", "skin biopsies", "eczema & psoriasis care"],
+  "Ophthalmology": ["comprehensive eye exams", "cataract surgery", "glaucoma management", "diabetic eye exams", "LASIK", "retinal care", "dry eye treatment"],
+  "Orthopedic Surgery": ["joint replacement", "sports injury care", "fracture care", "arthroscopy", "spine care", "hand surgery", "joint injections"],
+  "Pain Management": ["epidural injections", "nerve blocks", "spinal cord stimulation", "medication management", "joint injections", "radiofrequency ablation"],
+  "Pediatrics": ["well-child visits", "vaccinations", "sick visits", "developmental screening", "adolescent care", "newborn care", "ADHD care"],
+  "ENT (Otolaryngology)": ["sinus treatment", "hearing evaluations", "tonsillectomy", "sleep apnea surgery", "allergy testing", "voice & swallow care", "ear tubes"],
+  "Allergy & Immunology": ["allergy testing", "immunotherapy", "asthma management", "food allergy care", "immune deficiency care", "eczema care", "drug allergy testing"],
+  "Urology": ["prostate care", "kidney stone treatment", "vasectomy", "incontinence treatment", "men's health", "bladder care", "low testosterone treatment"],
+  "OB-GYN": ["prenatal care", "well-woman exams", "contraception", "menopause management", "PCOS care", "gynecologic surgery", "fertility evaluation"],
+  "Sports Medicine": ["injury evaluation", "concussion management", "joint injections", "regenerative medicine", "sports physicals", "rehab planning"],
+  "Plastic Surgery": ["reconstructive surgery", "cosmetic surgery", "breast reconstruction", "skin cancer reconstruction", "hand surgery", "injectables & fillers"],
+}
+const DEFAULT_OFFERINGS = ["consultations", "diagnostics", "procedures", "chronic disease management", "preventive care", "follow-up care"]
+
+function offeringsFor(specialty: string): string[] {
+  return OFFERINGS_BY_SPECIALTY[specialty] || DEFAULT_OFFERINGS
+}
+
 interface FormData {
   practiceName: string
   specialty: string
   location: string
-  servicesText: string
   valueProp: string
   serviceTags: string[]
   partnerInterests: string[]
@@ -140,7 +170,6 @@ export default function OnboardingPage() {
     practiceName: "",
     specialty: "",
     location: "",
-    servicesText: "",
     valueProp: "",
     serviceTags: [],
     partnerInterests: [],
@@ -148,15 +177,27 @@ export default function OnboardingPage() {
     email: ""
   })
 
-  // Turn the comma/line-separated services list into clean tags. No API — pure
-  // local string-splitting, so it is free and instant.
-  const generateTags = () => {
-    const fromText = formData.servicesText
-      .split(/[,\n;]+/)
-      .map((t) => t.trim().toLowerCase())
-      .filter(Boolean)
-    const merged = Array.from(new Set([...formData.serviceTags, ...fromText])).slice(0, 12)
-    setFormData((prev) => ({ ...prev, serviceTags: merged }))
+  const [customOffering, setCustomOffering] = useState("")
+
+  // Toggle a clicked offering chip on/off in the practice's service tags.
+  const toggleOffering = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      serviceTags: prev.serviceTags.includes(tag)
+        ? prev.serviceTags.filter((t) => t !== tag)
+        : [...prev.serviceTags, tag],
+    }))
+  }
+
+  // Add a free-text offering the catalog doesn't list.
+  const addCustomOffering = () => {
+    const tag = customOffering.trim().toLowerCase()
+    if (!tag) return
+    setFormData((prev) => ({
+      ...prev,
+      serviceTags: prev.serviceTags.includes(tag) ? prev.serviceTags : [...prev.serviceTags, tag],
+    }))
+    setCustomOffering("")
   }
 
   useEffect(() => {
@@ -250,7 +291,7 @@ export default function OnboardingPage() {
             practice_name: formData.practiceName,
             specialty: formData.specialty,
             location: formData.location,
-            services_text: formData.servicesText || null,
+            services_text: formData.serviceTags.join(", ") || null,
             value_prop: formData.valueProp || null,
             service_tags: formData.serviceTags,
             patients_i_want: formData.partnerInterests,
@@ -280,7 +321,7 @@ export default function OnboardingPage() {
           practice_name: formData.practiceName,
           specialty: formData.specialty,
           location: formData.location,
-          services_text: formData.servicesText || null,
+          services_text: formData.serviceTags.join(", ") || null,
           value_prop: formData.valueProp || null,
           service_tags: formData.serviceTags,
           patients_i_want: formData.partnerInterests,
@@ -424,52 +465,83 @@ export default function OnboardingPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     <Stethoscope className="w-4 h-4 inline mr-1" />
-                    What services do you offer?{" "}
-                    <span className="text-slate-500 font-normal">(comma-separated — the more specific, the better we can match and market you)</span>
+                    Select the services you offer{" "}
+                    <span className="text-slate-500 font-normal">(these appear on your profile and help us match you)</span>
                   </label>
-                  <textarea
-                    value={formData.servicesText}
-                    onChange={(e) => setFormData({ ...formData, servicesText: e.target.value })}
-                    rows={3}
-                    placeholder="e.g., Medically supervised weight loss, GLP-1 therapy (semaglutide, tirzepatide), metabolic testing, nutrition counseling"
-                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-base placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={generateTags}
-                    disabled={!formData.servicesText.trim()}
-                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
-                      !formData.servicesText.trim()
-                        ? "bg-slate-800 text-slate-500 border-slate-800 cursor-not-allowed"
-                        : "bg-slate-800 text-white border-slate-700 hover:bg-slate-700"
-                    }`}
-                  >
-                    Turn into tags
-                  </button>
 
-                  {formData.serviceTags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {formData.serviceTags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 rounded-full text-sm"
-                        >
-                          {tag}
+                  {!formData.specialty ? (
+                    <p className="text-sm text-slate-500 bg-slate-900 border border-slate-800 rounded-xl px-5 py-4">
+                      Pick your specialty above to see common services to choose from.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {offeringsFor(formData.specialty).map((tag) => {
+                        const selected = formData.serviceTags.includes(tag)
+                        return (
                           <button
+                            key={tag}
                             type="button"
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                serviceTags: formData.serviceTags.filter((_, idx) => idx !== i),
-                              })
-                            }
-                            className="text-blue-400/70 hover:text-white"
-                            aria-label={`Remove ${tag}`}
+                            onClick={() => toggleOffering(tag)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                              selected
+                                ? "bg-blue-500/15 border-blue-500 text-blue-300"
+                                : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                            }`}
                           >
-                            ×
+                            {selected ? "✓ " : "+ "}
+                            {tag}
                           </button>
-                        </span>
-                      ))}
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add a service the catalog doesn't list */}
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      type="text"
+                      value={customOffering}
+                      onChange={(e) => setCustomOffering(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          addCustomOffering()
+                        }
+                      }}
+                      placeholder="Add another service..."
+                      className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomOffering}
+                      disabled={!customOffering.trim()}
+                      className="px-4 py-2.5 rounded-lg text-sm font-semibold border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Custom-added services (not in the catalog) — removable */}
+                  {formData.serviceTags.filter((t) => !offeringsFor(formData.specialty).includes(t)).length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {formData.serviceTags
+                        .filter((t) => !offeringsFor(formData.specialty).includes(t))
+                        .map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 rounded-full text-sm"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => toggleOffering(tag)}
+                              className="text-blue-400/70 hover:text-white"
+                              aria-label={`Remove ${tag}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
                     </div>
                   )}
                 </div>
