@@ -514,26 +514,34 @@ const RECEIVES: Record<string, string> = {
   'Plastic Surgery': 'patients needing reconstructive or cosmetic surgical evaluation',
 }
 
-// Build directionally-correct, mutual why-match reasons for a candidate partner.
-// "You refer ..." = what the partner takes in; "They refer ..." = what the
-// viewing practice's own specialty takes in.
+// What a practice takes in. Prefer its own specific service tags (members);
+// fall back to its specialty's intake (cold NPPES leads have no services).
+function intakePhrase(specialty: string, serviceTags?: string[] | null): string {
+  if (serviceTags && serviceTags.length > 0) {
+    return `patients who need ${serviceTags.slice(0, 3).join(", ")}`
+  }
+  return RECEIVES[specialty] || `patients who need ${specialty.toLowerCase()} care`
+}
+
+// Build directionally-correct, mutual why-match reasons.
+//   A -> B ("You refer ...")  = what the PARTNER (B) takes in
+//   B -> A ("They refer ...") = what the VIEWER (A) takes in
+// Each side uses the practice's own service tags when known, else its specialty.
+// Since A is always a known member, the inbound line can always be specific.
 function mutualFitReasons(
   userSpecialty: string,
+  userServiceTags: string[] | null | undefined,
   partnerSpecialty: string,
+  partnerServiceTags: string[] | null | undefined,
   distance: number | null
 ): string[] {
-  const reasons: string[] = []
-  reasons.push(
+  return [
     distance != null
       ? `${distance.toFixed(1)} miles from your practice`
-      : 'In your local area'
-  )
-  const partnerTakes =
-    RECEIVES[partnerSpecialty] || `patients who need ${partnerSpecialty.toLowerCase()} care`
-  reasons.push(`You refer ${partnerTakes}`)
-  const youTake = RECEIVES[userSpecialty]
-  if (youTake) reasons.push(`They refer ${youTake}`)
-  return reasons
+      : 'In your local area',
+    `You refer ${intakePhrase(partnerSpecialty, partnerServiceTags)}`,
+    `They refer ${intakePhrase(userSpecialty, userServiceTags)}`,
+  ]
 }
 
 // Geocode uncached providers this many at a time (parallel within a chunk).
@@ -549,6 +557,7 @@ async function searchNppesPartners(
   desiredSpecialties: string[],
   origin: { lat: number; lng: number } | null,
   userSpecialty: string,
+  userServiceTags: string[] | null | undefined,
   radiusMiles = 25
 ): Promise<MatchResult[]> {
   // 1. Pull candidates from NPPES for each desired specialty. Prefer a 3-digit
@@ -649,7 +658,7 @@ async function searchNppesPartners(
       specialty: c.specialty,
       location: [c.city, c.state].filter(Boolean).join(', '),
       match_score: Math.min(score, 98),
-      why_match: mutualFitReasons(userSpecialty, c.specialty, distance),
+      why_match: mutualFitReasons(userSpecialty, userServiceTags, c.specialty, undefined, distance),
       address: c.address ? `${c.address}, ${c.city}, ${c.state} ${c.postal_code}`.trim() : undefined,
       phone: c.phone,
       website: undefined,
@@ -850,7 +859,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Primary source: NPPES (free, no key). Fallback: Serper, if configured.
-    let matches = await searchNppesPartners(searchLoc, desiredSpecialties, origin, userCanonical, 25)
+    let matches = await searchNppesPartners(searchLoc, desiredSpecialties, origin, userCanonical, currentProvider.service_tags || [], 25)
     if (matches.length === 0 && SERPER_API_KEY) {
       matches = await searchLocalPartners(userLocation, searchTerms)
       matches = matches.filter(m => canonicalizeSpecialty(m.specialty) !== userCanonical)
