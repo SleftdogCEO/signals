@@ -70,6 +70,7 @@ const PARTNER_CATEGORIES = [
 // Keep in sync when adding specialties to the marketplace.
 const SPECIALTIES = [
   "Primary Care",
+  "Weight Loss / Obesity Medicine",
   "Cardiology",
   "Pulmonology",
   "Endocrinology",
@@ -96,6 +97,7 @@ interface FormData {
   specialty: string
   location: string
   partnerInterests: string[]
+  referInterests: string[]
   email: string
 }
 
@@ -110,6 +112,7 @@ export default function OnboardingPage() {
     specialty: "",
     location: "",
     partnerInterests: [],
+    referInterests: [],
     email: ""
   })
 
@@ -122,7 +125,7 @@ export default function OnboardingPage() {
     }
   }, [user, authLoading, router, formData.email])
 
-  const totalSteps = 2
+  const totalSteps = 3
 
   const canProceed = () => {
     switch (step) {
@@ -130,6 +133,8 @@ export default function OnboardingPage() {
         return formData.practiceName && formData.specialty && formData.location
       case 2:
         return formData.partnerInterests.length > 0
+      case 3:
+        return formData.referInterests.length > 0
       default:
         return false
     }
@@ -154,6 +159,17 @@ export default function OnboardingPage() {
         return { ...prev, partnerInterests: current.filter(c => c !== categoryId) }
       } else {
         return { ...prev, partnerInterests: [...current, categoryId] }
+      }
+    })
+  }
+
+  const toggleReferInterest = (categoryId: string) => {
+    setFormData(prev => {
+      const current = prev.referInterests
+      if (current.includes(categoryId)) {
+        return { ...prev, referInterests: current.filter(c => c !== categoryId) }
+      } else {
+        return { ...prev, referInterests: [...current, categoryId] }
       }
     })
   }
@@ -184,6 +200,7 @@ export default function OnboardingPage() {
             specialty: formData.specialty,
             location: formData.location,
             patients_i_want: formData.partnerInterests,
+            patients_i_refer: formData.referInterests,
             email: formData.email,
             network_opted_in: true,
             updated_at: new Date().toISOString()
@@ -192,20 +209,47 @@ export default function OnboardingPage() {
 
         if (error) throw error
       } else {
-        // Create new provider
-        const { error } = await supabase.from("providers").insert({
+        // If this practice was pre-seeded in the directory, claim that row
+        // instead of creating a duplicate.
+        const { data: seeded } = await supabase
+          .from("providers")
+          .select("id")
+          .is("user_id", null)
+          .eq("is_seeded", true)
+          .ilike("practice_name", formData.practiceName.trim())
+          .ilike("location", `%${formData.location.trim()}%`)
+          .limit(1)
+          .maybeSingle()
+
+        const providerData = {
           user_id: user.id,
           practice_name: formData.practiceName,
           specialty: formData.specialty,
           location: formData.location,
           patients_i_want: formData.partnerInterests,
-          patients_i_refer: [],
+          patients_i_refer: formData.referInterests,
           email: formData.email,
-          subscription_status: "trial",
-          network_opted_in: true
-        })
+          network_opted_in: true,
+          updated_at: new Date().toISOString()
+        }
 
-        if (error) throw error
+        if (seeded) {
+          // Claim the seeded profile.
+          const { error } = await supabase
+            .from("providers")
+            .update({ ...providerData, claimed_at: new Date().toISOString() })
+            .eq("id", seeded.id)
+
+          if (error) throw error
+        } else {
+          // Create a brand-new provider.
+          const { error } = await supabase.from("providers").insert({
+            ...providerData,
+            subscription_status: "trial"
+          })
+
+          if (error) throw error
+        }
       }
 
       // Redirect to welcome experience
@@ -220,20 +264,14 @@ export default function OnboardingPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen">
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-slate-800 z-50">
         <motion.div
@@ -382,6 +420,64 @@ export default function OnboardingPage() {
               {formData.partnerInterests.length > 0 && (
                 <p className="text-center text-sm text-slate-500">
                   {formData.partnerInterests.length} selected
+                </p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Step 3: Refer-Out Interests */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <ArrowRight className="w-10 h-10 text-blue-400" />
+                </div>
+                <h1 className="text-4xl font-black text-white mb-3">
+                  Who Do You Refer Patients To?
+                </h1>
+                <p className="text-xl text-slate-400">
+                  This tells the directory which referrals you send out
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {PARTNER_CATEGORIES.map(category => (
+                  <button
+                    key={category.id}
+                    onClick={() => toggleReferInterest(category.id)}
+                    className={`flex items-center gap-4 p-5 rounded-2xl text-left transition-all ${
+                      formData.referInterests.includes(category.id)
+                        ? "bg-blue-500/10 border-2 border-blue-500 ring-2 ring-blue-500/20"
+                        : "bg-slate-900 border-2 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="text-3xl">{category.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-lg ${
+                          formData.referInterests.includes(category.id) ? "text-blue-400" : "text-white"
+                        }`}>
+                          {category.label}
+                        </h3>
+                        {formData.referInterests.includes(category.id) && (
+                          <Check className="w-5 h-5 text-blue-400" />
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm">{category.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {formData.referInterests.length > 0 && (
+                <p className="text-center text-sm text-slate-500">
+                  {formData.referInterests.length} selected
                 </p>
               )}
             </motion.div>

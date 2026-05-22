@@ -101,13 +101,7 @@ function UpgradeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Subtle gradient background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/3 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/50">
         <div className="max-w-4xl mx-auto px-6">
@@ -320,7 +314,7 @@ function UpgradeContent() {
 export default function UpgradePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     }>

@@ -318,7 +318,7 @@ export default function DashboardSnapshotPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30">
             <Stethoscope className="w-8 h-8 text-white" />
@@ -338,7 +338,7 @@ export default function DashboardSnapshotPage() {
   // Show new search form
   if (showNewSearchForm || (!data && !loading)) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen">
         <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
@@ -459,7 +459,7 @@ export default function DashboardSnapshotPage() {
 
   if (error && !data) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center px-6">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Oops!</h2>
@@ -479,7 +479,7 @@ export default function DashboardSnapshotPage() {
   if (!data) return null
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen">
       {/* Header */}
       <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">

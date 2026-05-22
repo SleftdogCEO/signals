@@ -73,6 +73,48 @@ export async function sendLeadNotification(
   }
 }
 
+/**
+ * Notify Grant that one provider requested an introduction to another.
+ * Reuses the sleftpayments lead-capture API so no SMTP/Resend setup is needed.
+ */
+export async function sendIntroRequestNotification(params: {
+  requesterName: string
+  requesterEmail: string
+  requesterSpecialty: string
+  requesterLocation: string
+  targetName: string
+  targetSpecialty: string
+  targetLocation: string
+}) {
+  try {
+    const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: params.requesterEmail,
+        name: params.requesterName || "",
+        businessName: params.requesterName || "Sleft Signals Intro Request",
+        source: "sleftsignals.com",
+        conversationSummary: [
+          `Referral Introduction Request`,
+          `Requester: ${params.requesterName} (${params.requesterSpecialty}, ${params.requesterLocation})`,
+          `Requester email: ${params.requesterEmail}`,
+          `Wants intro to: ${params.targetName} (${params.targetSpecialty}, ${params.targetLocation})`,
+          `Time: ${new Date().toLocaleString()}`,
+        ].join("\n"),
+      }),
+    })
+
+    if (!res.ok) {
+      console.error("Intro notification failed:", res.status, await res.text())
+    } else {
+      console.log("Intro request notification sent via lead-capture API")
+    }
+  } catch (err) {
+    console.error("Failed to send intro request notification:", err)
+  }
+}
+
 function buildSnapshotEmail(
   firstName: string,
   specialty: string,

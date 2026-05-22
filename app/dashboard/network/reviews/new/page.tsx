@@ -143,13 +143,7 @@ export default function NewReviewPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Gradient Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">

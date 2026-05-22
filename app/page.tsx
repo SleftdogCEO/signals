@@ -3,7 +3,6 @@ import Image from "next/image"
 import {
   ArrowRight,
   ArrowLeftRight,
-  Zap,
   Search,
   MapPin,
   Handshake,
@@ -11,6 +10,7 @@ import {
   Users,
 } from "lucide-react"
 import { specialties } from "@/lib/seo-data"
+import TypingSpecialty from "@/components/TypingSpecialty"
 
 const features = [
   {
@@ -50,34 +50,12 @@ const colorMap = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-200px] left-[10%] w-[600px] h-[600px] bg-blue-500/[0.09] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "8s" }} />
-        <div className="absolute top-[20%] right-[5%] w-[500px] h-[500px] bg-emerald-500/[0.07] rounded-full blur-[140px] animate-pulse" style={{ animationDuration: "12s" }} />
-        <div className="absolute bottom-[10%] left-[30%] w-[700px] h-[700px] bg-blue-600/[0.05] rounded-full blur-[160px] animate-pulse" style={{ animationDuration: "10s" }} />
-        <div className="absolute bottom-[-150px] right-[20%] w-[450px] h-[450px] bg-amber-500/[0.05] rounded-full blur-[150px] animate-pulse" style={{ animationDuration: "14s" }} />
-      </div>
-      {/* Subtle grid overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.04]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
-        }}
-      />
-
+    <div className="min-h-screen text-white overflow-hidden">
       {/* Nav */}
       <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-white">Sleft Signals</span>
-        </div>
+        <Link href="/" className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+          Sleft Signals
+        </Link>
 
         <div className="flex items-center gap-4">
           <Link
@@ -87,10 +65,10 @@ export default function HomePage() {
             Blog
           </Link>
           <Link
-            href="/referral-lookup"
+            href="/directory"
             className="text-slate-400 hover:text-white transition-colors font-medium"
           >
-            Find Partners
+            Directory
           </Link>
           <Link
             href="/auth"
@@ -107,69 +85,37 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero - Two Column Layout */}
-      <main className="relative z-20 px-6 lg:px-12 pt-16 lg:pt-24 pb-20">
+      {/* Hero - Centered */}
+      <main className="relative z-20 px-6 lg:px-12 pt-20 lg:pt-28 pb-20">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 mb-24">
-            {/* Left - Text Content */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-500/[0.08] border border-blue-500/30 rounded-full mb-6 backdrop-blur-sm">
-                <Activity className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-400 font-medium">Referral intelligence for physician practices</span>
-              </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-6">
-                <span className="bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent">
-                  Your Best Referrals Are Down The Street.
-                </span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl font-bold text-slate-300 mt-3">
-                  We Help You Find Them.
-                </span>
-              </h1>
-
-              <p className="text-lg md:text-xl text-slate-300 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0 font-medium">
-                We match your practice with <span className="text-blue-400">complementary physicians in your zip code</span> who can send you patients. No ads. No agencies. Just the physician referral network you should have built years ago.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link
-                  href="/referral-lookup"
-                  className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-blue-400 hover:to-cyan-400 transition-all shadow-xl shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]"
-                >
-                  See Your Referral Partners
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  href="#how-it-works"
-                  className="flex items-center gap-2 px-6 py-3.5 text-sm font-semibold text-slate-400 border border-white/10 bg-white/[0.03] rounded-lg backdrop-blur-sm hover:border-blue-500/20 hover:bg-blue-500/[0.04] hover:text-white transition-all"
-                >
-                  How It Works
-                </Link>
-              </div>
+          <div className="max-w-4xl mx-auto text-center mb-24">
+            <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-500/[0.08] border border-blue-500/30 rounded-full mb-8 backdrop-blur-sm">
+              <Activity className="w-4 h-4 text-blue-400" />
+              <span className="text-sm text-blue-400 font-medium">Referral intelligence for physician practices</span>
             </div>
 
-            {/* Right - Founder Image */}
-            <div className="relative flex-shrink-0">
-              {/* Emerald accent sweep — distinguishes right column from blue left side */}
-              <div className="absolute -top-10 -right-10 w-72 h-72 bg-emerald-500/[0.12] rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute -bottom-12 -left-8 w-60 h-60 bg-cyan-500/[0.10] rounded-full blur-[70px] pointer-events-none" />
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500/30 via-cyan-500/30 to-blue-500/30 blur-lg" />
-                <Image
-                  src="/grant-headshot.png"
-                  alt="Grant Denmark, founder of Sleft Signals"
-                  width={320}
-                  height={320}
-                  className="relative h-64 w-64 md:h-80 md:w-80 rounded-2xl object-cover object-top border-2 border-white/10 shadow-2xl"
-                  priority
-                />
-                {/* Badge overlay */}
-                <div className="absolute -bottom-3 -right-3 rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 backdrop-blur-sm">
-                  <p className="text-xs font-bold text-blue-400">Grant Denmark</p>
-                  <p className="text-xs text-slate-400">Resident Physician + Agentic Engineer</p>
-                </div>
-              </div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight mb-5">
+              <span className="bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent">
+                Your Best Referrals Are Down The Street.
+              </span>
+            </h1>
+
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-300 mb-6">
+              We Help You Find Them.
+            </p>
+
+            <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-400 mb-10 min-h-[3.5rem] md:min-h-[4rem]">
+              Built for <TypingSpecialty />
+            </p>
+
+            <div className="flex justify-center">
+              <Link
+                href="/directory"
+                className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-blue-400 hover:to-cyan-400 transition-all shadow-xl shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]"
+              >
+                See Your Referral Partners
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
 
@@ -410,15 +356,47 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Meet the Founder */}
+      <section className="relative z-20 px-6 lg:px-12 py-24">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center text-white mb-3">
+            Meet the Founder
+          </h2>
+          <p className="text-center text-slate-400 mb-12">
+            Built by someone who lives on the physician&apos;s side of the referral.
+          </p>
+
+          <div className="flex flex-col md:flex-row items-center gap-10 bg-slate-900/60 border border-slate-800 rounded-2xl p-8 md:p-10">
+            <div className="relative flex-shrink-0">
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500/30 via-cyan-500/30 to-blue-500/30 blur-lg" />
+              <Image
+                src="/grant-headshot.png"
+                alt="Dr. Grant Denmark, founder and CEO of Sleft Signals"
+                width={320}
+                height={320}
+                className="relative h-56 w-56 rounded-2xl object-cover object-top border-2 border-white/10 shadow-2xl"
+              />
+            </div>
+            <div className="text-center md:text-left">
+              <h3 className="text-2xl font-bold text-white">Dr. Grant Denmark</h3>
+              <p className="text-blue-400 font-semibold mb-4">Founder &amp; CEO</p>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Grant is an EM resident in Tampa, FL and an agentic engineer who
+                has spent years building AI systems for lead generation and
+                referral growth. He has watched too many strong practices burn
+                thousands on ads that send patients who never show up. Sleft
+                Signals is his answer: a way for physicians to grow through warm
+                referrals from the doctors already down the street.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative z-10 px-6 py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-white">Sleft Signals</span>
-          </div>
+          <span className="font-semibold text-white">Sleft Signals</span>
           <span className="text-sm text-slate-500">Local referral intelligence for physician practices</span>
         </div>
       </footer>

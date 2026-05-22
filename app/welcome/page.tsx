@@ -98,7 +98,7 @@ export default function WelcomePage() {
 
   if (authLoading || !isReady) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -119,13 +119,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 overflow-hidden">
-      {/* Subtle background - much lower opacity */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen overflow-hidden">
       {/* Progress dots */}
       <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
         {WELCOME_SECTIONS.map((_, index) => (

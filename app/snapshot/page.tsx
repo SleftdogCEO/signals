@@ -82,7 +82,7 @@ export default function SnapshotPage() {
   // Form view
   if (!data) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="min-h-screen text-white">
         <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -201,7 +201,7 @@ export default function SnapshotPage() {
 
   // Results view
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen text-white">
       <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
         <Link href="/" className="flex items-center gap-3">
           <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">

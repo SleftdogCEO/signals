@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
+import SiteBackground from "@/components/SiteBackground"
 import "./globals.css"
 
 
@@ -50,6 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <SiteBackground />
         <AuthProvider>
           {children}
           <Toaster position="top-right" />

@@ -272,19 +272,7 @@ export default function ReferralLookupPage() {
   const topReferrer = inboundPartners[0]?.specialtyName || "N/A"
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-[-200px] left-[10%] w-[600px] h-[600px] bg-blue-500/[0.07] rounded-full blur-[160px] animate-pulse"
-          style={{ animationDuration: "8s" }}
-        />
-        <div
-          className="absolute top-[20%] right-[5%] w-[500px] h-[500px] bg-cyan-500/[0.06] rounded-full blur-[140px] animate-pulse"
-          style={{ animationDuration: "12s" }}
-        />
-      </div>
-
+    <div className="min-h-screen text-white overflow-hidden">
       {/* Nav */}
       <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
         <Link href="/" className="flex items-center gap-3">

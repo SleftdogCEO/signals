@@ -36,7 +36,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-black flex overflow-hidden">
+      <div className="min-h-screen flex overflow-hidden">
         {/* Sidebar */}
         <DashboardSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
         
