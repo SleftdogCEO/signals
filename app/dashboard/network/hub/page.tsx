@@ -52,19 +52,26 @@ const mapContainerStyle = {
   height: "100%"
 }
 
+// Minimal dark map: just land, subdued roads, and water for orientation. All
+// the busy POI/business/transit/road labels are stripped so only our referral
+// partner pins read on the map.
 const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
-  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#334155" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1e3a2f" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#475569" }] },
-  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#334155" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#475569" }] },
+  // Strip the clutter.
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.neighborhood", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "labels.text", stylers: [{ visibility: "off" }] },
+  // Keep subtle geometry for orientation only.
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#334155" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0b1220" }] },
 ]
 
 // Types
@@ -234,6 +241,7 @@ function HubNetworkMap({
         options={{
           styles: darkMapStyle,
           disableDefaultUI: false,
+          clickableIcons: false,
           zoomControl: true,
           mapTypeControl: false,
           streetViewControl: false,
@@ -258,8 +266,8 @@ function HubNetworkMap({
         )}
         {centerCoordinates && showUserInfo && (
           <InfoWindow position={center} onCloseClick={() => setShowUserInfo(false)}>
-            <div style={{ padding: "2px 6px", fontWeight: 700, color: "#0f172a", fontSize: "14px" }}>
-              {userName} <span style={{ fontWeight: 500, color: "#2563eb" }}>(You)</span>
+            <div style={{ padding: "4px 8px", fontWeight: 700, color: "#f8fafc", fontSize: "14px" }}>
+              {userName} <span style={{ fontWeight: 500, color: "#60a5fa" }}>(You)</span>
             </div>
           </InfoWindow>
         )}
@@ -285,14 +293,20 @@ function HubNetworkMap({
             position={{ lat: selectedProvider.coordinates.lat, lng: selectedProvider.coordinates.lng }}
             onCloseClick={() => setSelectedProvider(null)}
           >
-            <div className="bg-slate-800 rounded-xl p-4 min-w-[300px]">
-              <h3 className="font-bold text-lg text-white mb-1">
+            <div className="w-[330px] max-w-[80vw] p-4 pr-7 text-white">
+              <h3 className="font-bold text-lg leading-snug mb-2">
                 {selectedProvider.practice_name}
               </h3>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-medium rounded">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="px-2.5 py-0.5 bg-blue-500/15 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/25">
                   {selectedProvider.specialty}
                 </span>
+                {selectedProvider.why_match?.[0] && (
+                  <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <MapPin className="w-3 h-3" />
+                    {selectedProvider.why_match[0]}
+                  </span>
+                )}
                 {selectedProvider.rating && (
                   <span className="flex items-center gap-1 text-xs text-slate-400">
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
@@ -301,15 +315,29 @@ function HubNetworkMap({
                 )}
               </div>
 
+              {selectedProvider.why_match && selectedProvider.why_match.length > 1 && (
+                <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3 mb-3 space-y-1.5">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-400 font-semibold">
+                    Why you&apos;re a mutual fit
+                  </p>
+                  {selectedProvider.why_match.slice(1).map((reason, i) => (
+                    <p key={i} className="text-[13px] text-slate-300 leading-snug flex items-start gap-1.5">
+                      <span className="text-emerald-400 font-bold mt-px">{i === 0 ? "→" : "←"}</span>
+                      {reason}
+                    </p>
+                  ))}
+                </div>
+              )}
+
               {selectedProvider.address && (
-                <div className="flex items-center gap-2 mb-3 text-slate-300 text-sm">
-                  <MapPin className="w-4 h-4 text-slate-400" />
+                <div className="flex items-start gap-1.5 mb-3 text-slate-400 text-xs leading-snug">
+                  <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   {selectedProvider.address}
                 </div>
               )}
 
               {hasAccess ? (
-                <div className="space-y-2 pt-2 border-t border-slate-700">
+                <div className="space-y-2 pt-3 border-t border-white/10">
                   {selectedProvider.phone && (
                     <a
                       href={`tel:${selectedProvider.phone}`}
@@ -332,10 +360,10 @@ function HubNetworkMap({
                   )}
                 </div>
               ) : (
-                <div className="pt-2 border-t border-slate-700">
+                <div className="pt-3 border-t border-white/10">
                   <Link
                     href="/dashboard/network/upgrade"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold rounded-lg hover:from-blue-400 hover:to-cyan-400"
                   >
                     <Lock className="w-4 h-4" />
                     Unlock Contact Info
@@ -487,22 +515,29 @@ function NetworkHubContent() {
   const handleExploreNetwork = () => {
     setViewMode('map')
     setGeoLoading(true)
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGeoLoading(false)
+    // Geolocation unavailable/denied/timed out: still refresh results using the
+    // saved onboarding location so the button always does something, and offer
+    // the zip/city input as a manual override.
+    const fallback = async () => {
+      try { await runDiscovery() } catch { /* keep existing matches */ }
       setShowZipInput(true)
+      setGeoLoading(false)
+      document.getElementById('network-results')?.scrollIntoView({ behavior: 'smooth' })
+    }
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      fallback()
       return
     }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        await runDiscovery({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        try {
+          await runDiscovery({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        } catch { /* keep existing matches */ }
         setShowZipInput(false)
         setGeoLoading(false)
         document.getElementById('network-results')?.scrollIntoView({ behavior: 'smooth' })
       },
-      () => {
-        setGeoLoading(false)
-        setShowZipInput(true)
-      },
+      () => { fallback() },
       { enableHighAccuracy: true, timeout: 10000 }
     )
   }
@@ -783,23 +818,29 @@ function NetworkHubContent() {
                 />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {partnerMatches.slice(0, 6).map((match, index) => (
+                  {partnerMatches.map((match, index) => (
                     <motion.div
                       key={match.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="group bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all"
+                      transition={{ delay: Math.min(index, 12) * 0.04 }}
+                      className="group bg-slate-900/80 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/40 hover:bg-slate-900 transition-all"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-bold text-white truncate pr-4">
                             {match.practice_name}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs font-medium">
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className="px-2.5 py-0.5 bg-blue-500/15 text-blue-300 rounded-full border border-blue-500/25 text-xs font-semibold">
                               {match.specialty}
                             </span>
+                            {match.why_match?.[0] && (
+                              <span className="flex items-center gap-1 text-xs text-slate-400">
+                                <MapPin className="w-3 h-3" />
+                                {match.why_match[0]}
+                              </span>
+                            )}
                             {match.rating && (
                               <span className="flex items-center gap-1 text-xs text-slate-400">
                                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
@@ -817,10 +858,21 @@ function NetworkHubContent() {
                         </p>
                       )}
 
-                      {/* Why match */}
-                      <div className="bg-slate-800/50 rounded-lg p-3 mb-4">
-                        <p className="text-xs text-emerald-400 font-medium mb-1">Why partner?</p>
-                        <p className="text-sm text-slate-300">{match.why_match[0]}</p>
+                      {/* Why match — mutual referral fit */}
+                      <div className="bg-slate-800/50 rounded-xl p-3 mb-4 space-y-1.5">
+                        <p className="text-[11px] uppercase tracking-wide text-emerald-400 font-semibold">
+                          Why you&apos;re a mutual fit
+                        </p>
+                        {match.why_match && match.why_match.length > 1 ? (
+                          match.why_match.slice(1).map((reason, i) => (
+                            <p key={i} className="text-[13px] text-slate-300 leading-snug flex items-start gap-1.5">
+                              <span className="text-emerald-400 font-bold mt-px">{i === 0 ? "→" : "←"}</span>
+                              {reason}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-[13px] text-slate-300">{match.why_match?.[0]}</p>
+                        )}
                       </div>
 
                       {/* Actions */}

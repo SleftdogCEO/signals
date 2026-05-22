@@ -12,7 +12,8 @@ import {
   Check,
   Stethoscope,
   Loader2,
-  Sparkles
+  Sparkles,
+  SlidersHorizontal
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { createClient } from "@supabase/supabase-js"
@@ -66,6 +67,28 @@ const PARTNER_CATEGORIES = [
   }
 ]
 
+// Auto-recommend: map the user's own specialty to the partner CATEGORY ids most
+// likely to exchange referrals with them. Used to pre-fill step 2 so we do the
+// thinking for the user. Falls back to a broad, sensible set.
+function recommendedCategoriesFor(specialty: string): string[] {
+  const s = (specialty || "").toLowerCase()
+  if (s.includes("weight") || s.includes("obesity"))
+    return ["internal_medicine_subspecialties", "womens_childrens", "primary_care"]
+  if (s.includes("primary") || s.includes("family") || s.includes("internal medicine"))
+    return ["internal_medicine_subspecialties", "psychiatry_pain", "surgery_msk", "ent_eye_skin_allergy", "womens_childrens"]
+  if (s.includes("cardio") || s.includes("pulmonolog") || s.includes("endocrinolog") || s.includes("gastroenterolog") || s.includes("rheumatolog") || s.includes("neurolog"))
+    return ["primary_care", "internal_medicine_subspecialties", "psychiatry_pain"]
+  if (s.includes("psychiatr") || s.includes("pain"))
+    return ["primary_care", "internal_medicine_subspecialties", "surgery_msk"]
+  if (s.includes("orthop") || s.includes("plastic") || s.includes("urolog") || s.includes("sports"))
+    return ["primary_care", "psychiatry_pain", "ent_eye_skin_allergy"]
+  if (s.includes("pediatric") || s.includes("ob-gyn") || s.includes("ob/gyn") || s.includes("obgyn") || s.includes("gynecolog"))
+    return ["primary_care", "internal_medicine_subspecialties", "ent_eye_skin_allergy"]
+  if (s.includes("ent") || s.includes("otolaryngolog") || s.includes("ophthalmolog") || s.includes("dermatolog") || s.includes("allerg") || s.includes("immunolog"))
+    return ["primary_care", "womens_childrens", "internal_medicine_subspecialties"]
+  return ["primary_care", "internal_medicine_subspecialties", "surgery_msk"]
+}
+
 // Mirror of the 19 physician specialties in lib/seo-data.ts (name field).
 // Keep in sync when adding specialties to the marketplace.
 const SPECIALTIES = [
@@ -96,6 +119,9 @@ interface FormData {
   practiceName: string
   specialty: string
   location: string
+  servicesText: string
+  valueProp: string
+  serviceTags: string[]
   partnerInterests: string[]
   referInterests: string[]
   email: string
@@ -106,15 +132,58 @@ export default function OnboardingPage() {
   const { user, loading: authLoading } = useAuth()
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Step 2 mode: 'auto' = we recommend partners from their specialty; 'manual'
+  // = they hand-pick. Defaults to auto so we do the thinking for them.
+  const [partnerMode, setPartnerMode] = useState<"auto" | "manual">("auto")
+  const [refining, setRefining] = useState(false)
+  const [refineError, setRefineError] = useState("")
 
   const [formData, setFormData] = useState<FormData>({
     practiceName: "",
     specialty: "",
     location: "",
+    servicesText: "",
+    valueProp: "",
+    serviceTags: [],
     partnerInterests: [],
     referInterests: [],
     email: ""
   })
+
+  // Send the free-text services through Claude to extract a value prop + tags,
+  // then let the user confirm/edit before continuing.
+  const refineServices = async () => {
+    if (!formData.servicesText.trim()) {
+      setRefineError("Describe your services first.")
+      return
+    }
+    setRefining(true)
+    setRefineError("")
+    try {
+      const res = await fetch("/api/network/profile/structure-services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          services: formData.servicesText,
+          specialty: formData.specialty,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setRefineError(data.error || "Could not refine your services.")
+        return
+      }
+      setFormData((prev) => ({
+        ...prev,
+        valueProp: data.value_prop || "",
+        serviceTags: Array.isArray(data.service_tags) ? data.service_tags : [],
+      }))
+    } catch {
+      setRefineError("Could not reach the AI service. Try again.")
+    } finally {
+      setRefining(false)
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -126,6 +195,14 @@ export default function OnboardingPage() {
   }, [user, authLoading, router, formData.email])
 
   const totalSteps = 3
+
+  // In auto mode, keep the recommended partner categories in sync with the
+  // chosen specialty so we always "do the thinking" for the user.
+  useEffect(() => {
+    if (step === 2 && partnerMode === "auto") {
+      setFormData(prev => ({ ...prev, partnerInterests: recommendedCategoriesFor(prev.specialty) }))
+    }
+  }, [step, partnerMode])
 
   const canProceed = () => {
     switch (step) {
@@ -199,6 +276,9 @@ export default function OnboardingPage() {
             practice_name: formData.practiceName,
             specialty: formData.specialty,
             location: formData.location,
+            services_text: formData.servicesText || null,
+            value_prop: formData.valueProp || null,
+            service_tags: formData.serviceTags,
             patients_i_want: formData.partnerInterests,
             patients_i_refer: formData.referInterests,
             email: formData.email,
@@ -226,6 +306,9 @@ export default function OnboardingPage() {
           practice_name: formData.practiceName,
           specialty: formData.specialty,
           location: formData.location,
+          services_text: formData.servicesText || null,
+          value_prop: formData.valueProp || null,
+          service_tags: formData.serviceTags,
           patients_i_want: formData.partnerInterests,
           patients_i_refer: formData.referInterests,
           email: formData.email,
@@ -363,6 +446,85 @@ export default function OnboardingPage() {
                     className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <Stethoscope className="w-4 h-4 inline mr-1" />
+                    What services do you offer?{" "}
+                    <span className="text-slate-500 font-normal">(be specific — the more detail, the better we can match and market you to referral partners)</span>
+                  </label>
+                  <textarea
+                    value={formData.servicesText}
+                    onChange={(e) => setFormData({ ...formData, servicesText: e.target.value })}
+                    rows={3}
+                    placeholder="e.g., Medically supervised weight loss, GLP-1 therapy (semaglutide, tirzepatide), metabolic testing, nutrition counseling"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-base placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+                  />
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={refineServices}
+                      disabled={refining || !formData.servicesText.trim()}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                        refining || !formData.servicesText.trim()
+                          ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                          : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:opacity-90"
+                      }`}
+                    >
+                      {refining ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      )}
+                      {refining ? "Refining..." : "Refine with AI"}
+                    </button>
+                    {refineError && <span className="text-sm text-red-400">{refineError}</span>}
+                  </div>
+
+                  {(formData.valueProp || formData.serviceTags.length > 0) && (
+                    <div className="mt-4 bg-slate-900/60 border border-blue-500/20 rounded-xl p-4 space-y-3">
+                      <p className="text-[11px] uppercase tracking-wide text-blue-400 font-semibold">
+                        How we&apos;ll describe you to partners
+                      </p>
+                      {formData.valueProp && (
+                        <input
+                          type="text"
+                          value={formData.valueProp}
+                          onChange={(e) => setFormData({ ...formData, valueProp: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-base focus:border-blue-500 outline-none"
+                        />
+                      )}
+                      {formData.serviceTags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {formData.serviceTags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 rounded-full text-sm"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    serviceTags: formData.serviceTags.filter((_, idx) => idx !== i),
+                                  })
+                                }
+                                className="text-blue-400/70 hover:text-white"
+                                aria-label={`Remove ${tag}`}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-500">
+                        Edit the summary or remove tags that don&apos;t fit.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -381,46 +543,107 @@ export default function OnboardingPage() {
                   <Users className="w-10 h-10 text-emerald-400" />
                 </div>
                 <h1 className="text-4xl font-black text-white mb-3">
-                  Who Do You Want to Connect With?
+                  Let&apos;s Find Your Referral Partners
                 </h1>
                 <p className="text-xl text-slate-400">
-                  We'll help you build relationships with these providers
+                  We can recommend the right partners for your specialty, or you can pick them yourself.
                 </p>
               </div>
 
-              <div className="grid gap-4">
-                {PARTNER_CATEGORIES.map(category => (
-                  <button
-                    key={category.id}
-                    onClick={() => togglePartnerInterest(category.id)}
-                    className={`flex items-center gap-4 p-5 rounded-2xl text-left transition-all ${
-                      formData.partnerInterests.includes(category.id)
-                        ? "bg-emerald-500/10 border-2 border-emerald-500 ring-2 ring-emerald-500/20"
-                        : "bg-slate-900 border-2 border-slate-800 hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="text-3xl">{category.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-bold text-lg ${
-                          formData.partnerInterests.includes(category.id) ? "text-emerald-400" : "text-white"
-                        }`}>
-                          {category.label}
-                        </h3>
-                        {formData.partnerInterests.includes(category.id) && (
-                          <Check className="w-5 h-5 text-emerald-400" />
-                        )}
+              {/* Upfront choice: let us do the thinking, or choose manually */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => setPartnerMode("auto")}
+                  className={`relative text-left p-5 rounded-2xl border-2 transition-all ${
+                    partnerMode === "auto"
+                      ? "bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/20"
+                      : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                  }`}
+                >
+                  <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                    Recommended
+                  </span>
+                  <Sparkles className={`w-7 h-7 mb-3 ${partnerMode === "auto" ? "text-emerald-400" : "text-slate-400"}`} />
+                  <h3 className="font-bold text-lg text-white mb-1">Recommend partners for me</h3>
+                  <p className="text-sm text-slate-400">
+                    We&apos;ll pick the complementary specialties most likely to exchange referrals with your practice.
+                  </p>
+                </button>
+                <button
+                  onClick={() => setPartnerMode("manual")}
+                  className={`text-left p-5 rounded-2xl border-2 transition-all ${
+                    partnerMode === "manual"
+                      ? "bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/20"
+                      : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                  }`}
+                >
+                  <SlidersHorizontal className={`w-7 h-7 mb-3 ${partnerMode === "manual" ? "text-blue-400" : "text-slate-400"}`} />
+                  <h3 className="font-bold text-lg text-white mb-1">I&apos;ll choose myself</h3>
+                  <p className="text-sm text-slate-400">
+                    Hand-pick the exact specialties you want referrals from.
+                  </p>
+                </button>
+              </div>
+
+              {partnerMode === "auto" ? (
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                  <p className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Based on {formData.specialty || "your specialty"}, we&apos;ll connect you with:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.partnerInterests.map(id => {
+                      const cat = PARTNER_CATEGORIES.find(c => c.id === id)
+                      if (!cat) return null
+                      return (
+                        <span
+                          key={id}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 rounded-full text-sm font-medium"
+                        >
+                          <span>{cat.icon}</span>
+                          {cat.label}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-4">
+                    Looking for a specific referral relationship? Choose &quot;I&apos;ll choose myself&quot; to fine-tune.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {PARTNER_CATEGORIES.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => togglePartnerInterest(category.id)}
+                      className={`flex items-center gap-4 p-5 rounded-2xl text-left transition-all ${
+                        formData.partnerInterests.includes(category.id)
+                          ? "bg-emerald-500/10 border-2 border-emerald-500 ring-2 ring-emerald-500/20"
+                          : "bg-slate-900 border-2 border-slate-800 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="text-3xl">{category.icon}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-bold text-lg ${
+                            formData.partnerInterests.includes(category.id) ? "text-emerald-400" : "text-white"
+                          }`}>
+                            {category.label}
+                          </h3>
+                          {formData.partnerInterests.includes(category.id) && (
+                            <Check className="w-5 h-5 text-emerald-400" />
+                          )}
+                        </div>
+                        <p className="text-slate-400 text-sm">{category.description}</p>
                       </div>
-                      <p className="text-slate-400 text-sm">{category.description}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {formData.partnerInterests.length > 0 && (
-                <p className="text-center text-sm text-slate-500">
-                  {formData.partnerInterests.length} selected
-                </p>
+                    </button>
+                  ))}
+                  {formData.partnerInterests.length > 0 && (
+                    <p className="text-center text-sm text-slate-500">
+                      {formData.partnerInterests.length} selected
+                    </p>
+                  )}
+                </div>
               )}
             </motion.div>
           )}

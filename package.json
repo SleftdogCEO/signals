@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.23",
+    "@anthropic-ai/sdk": "^0.98.0",
     "@heygen/streaming-avatar": "^2.0.16",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-collapsible": "^1.1.11",

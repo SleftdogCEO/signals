@@ -550,3 +550,35 @@ body {
                 linear-gradient(135deg, hsl(262 83% 58%), hsl(172 66% 50%)) border-box;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Dark-theme the Google Maps InfoWindow chrome so the network-map placards
+   match the app instead of rendering as a white box.
+   --------------------------------------------------------------------------- */
+.gm-style .gm-style-iw-c {
+  background: #0b1220 !important;            /* deep slate */
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+  padding: 0 !important;
+}
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  background: transparent !important;
+}
+/* The little pointer tail under the bubble. */
+.gm-style .gm-style-iw-tc::after {
+  background: #0b1220 !important;
+}
+/* Close button: nudge in and recolor the X for a dark background. */
+.gm-style .gm-ui-hover-effect {
+  top: 6px !important;
+  right: 6px !important;
+  opacity: 0.85 !important;
+}
+.gm-style .gm-ui-hover-effect > span {
+  background-color: #cbd5e1 !important;      /* slate-300 */
+}
+.gm-style .gm-style-iw-ch {
+  padding-top: 0 !important;
+}

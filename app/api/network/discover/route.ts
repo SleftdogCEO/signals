@@ -254,6 +254,7 @@ const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
 // Complementary referral partners by the user's own specialty (used when they
 // have not selected specific partner interests).
 const COMPLEMENTARY_SPECIALTIES: Record<string, string[]> = {
+  'Obesity Medicine': ['Endocrinology', 'Primary Care', 'Gastroenterology', 'Cardiology', 'Psychiatry', 'OB-GYN'],
   'Primary Care': ['Cardiology', 'Endocrinology', 'Psychiatry', 'Dermatology', 'Gastroenterology', 'Orthopedic Surgery'],
   'Cardiology': ['Primary Care', 'Endocrinology', 'Pulmonology'],
   'Pulmonology': ['Primary Care', 'Allergy & Immunology', 'Cardiology', 'ENT (Otolaryngology)'],
@@ -282,6 +283,7 @@ const US_STATE_ABBR: Record<string, string> = {
 // Map a free-text specialty to one of our canonical specialty keys.
 function canonicalizeSpecialty(raw: string): string {
   const s = (raw || '').toLowerCase()
+  if (s.includes('obesity') || s.includes('weight')) return 'Obesity Medicine'
   if (s.includes('primary') || s.includes('family') || s.includes('internal medicine') || s.includes('general practice')) return 'Primary Care'
   if (s.includes('cardio')) return 'Cardiology'
   if (s.includes('pulmonolog')) return 'Pulmonology'
@@ -420,63 +422,143 @@ function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: 
   return 2 * R * Math.asin(Math.sqrt(h))
 }
 
-// Query NPPES for providers in a location matching a taxonomy substring.
-async function fetchNppes(loc: SearchLocation, taxonomy: string, limit = 15): Promise<NppesProvider[]> {
-  const params = new URLSearchParams({ version: '2.1', taxonomy_description: taxonomy, limit: String(limit) })
-  // City+state first: NPPES postal_code matches mailing addresses too, which
-  // scatters results far from the search area.
-  if (loc.city && loc.state) { params.set('city', loc.city); params.set('state', loc.state) }
-  else if (loc.postal) params.set('postal_code', loc.postal)
-  else if (loc.state) params.set('state', loc.state)
-  else return []
+// Query NPPES for providers, with pagination. `loc.postal` may be a 3-digit
+// metro prefix wildcard ("336*") to sweep an entire metro ZIP region rather
+// than a single exact city (which misses CDP/neighborhood naming mismatches).
+// NPPES returns up to 200 results per page and up to 1,200 total via `skip`.
+async function fetchNppes(
+  loc: SearchLocation,
+  taxonomy: string,
+  opts: { limit?: number; maxPages?: number } = {}
+): Promise<NppesProvider[]> {
+  const limit = Math.min(opts.limit ?? 200, 200)
+  const maxPages = opts.maxPages ?? 1
+  const out: NppesProvider[] = []
 
-  try {
-    const res = await fetch(`https://npiregistry.cms.hhs.gov/api/?${params.toString()}`)
-    if (!res.ok) return []
-    const data = await res.json()
-    const out: NppesProvider[] = []
-    for (const r of data.results || []) {
-      const primary = (r.taxonomies || []).find((t: any) => t.primary) || (r.taxonomies || [])[0]
-      const specialty = classifyTaxonomy(primary?.desc || '')
-      if (!specialty) continue
-      const addr = (r.addresses || []).find((a: any) => a.address_purpose === 'LOCATION') || (r.addresses || [])[0]
-      if (!addr) continue
-      const b = r.basic || {}
-      const name = (b.organization_name || `${b.first_name || ''} ${b.last_name || ''}`).trim()
-      if (!name) continue
-      out.push({
-        npi: String(r.number),
-        practice_name: name,
-        taxonomy: primary?.desc || '',
-        specialty,
-        address: addr.address_1 || '',
-        city: addr.city || '',
-        state: addr.state || '',
-        postal_code: (addr.postal_code || '').slice(0, 5),
-        phone: addr.telephone_number || undefined,
-      })
+  for (let page = 0; page < maxPages; page++) {
+    const params = new URLSearchParams({
+      version: '2.1',
+      taxonomy_description: taxonomy,
+      limit: String(limit),
+      skip: String(page * limit),
+    })
+    // postal_code (incl. wildcard) sweeps the metro; radius filtering downstream
+    // drops the mailing-address scatter NPPES introduces.
+    if (loc.postal) params.set('postal_code', loc.postal)
+    else if (loc.city && loc.state) { params.set('city', loc.city); params.set('state', loc.state) }
+    else if (loc.state) params.set('state', loc.state)
+    else break
+
+    try {
+      const res = await fetch(`https://npiregistry.cms.hhs.gov/api/?${params.toString()}`)
+      if (!res.ok) break
+      const data = await res.json()
+      const results = data.results || []
+      for (const r of results) {
+        const primary = (r.taxonomies || []).find((t: any) => t.primary) || (r.taxonomies || [])[0]
+        const specialty = classifyTaxonomy(primary?.desc || '')
+        if (!specialty) continue
+        const addr = (r.addresses || []).find((a: any) => a.address_purpose === 'LOCATION') || (r.addresses || [])[0]
+        if (!addr) continue
+        const b = r.basic || {}
+        const name = (b.organization_name || `${b.first_name || ''} ${b.last_name || ''}`).trim()
+        if (!name) continue
+        out.push({
+          npi: String(r.number),
+          practice_name: name,
+          taxonomy: primary?.desc || '',
+          specialty,
+          address: addr.address_1 || '',
+          city: addr.city || '',
+          state: addr.state || '',
+          postal_code: (addr.postal_code || '').slice(0, 5),
+          phone: addr.telephone_number || undefined,
+        })
+      }
+      // Last page reached when NPPES returns fewer than requested.
+      if (results.length < limit) break
+    } catch (e) {
+      console.error('NPPES fetch error:', e)
+      break
     }
-    return out
-  } catch (e) {
-    console.error('NPPES fetch error:', e)
-    return []
   }
+  return out
 }
 
-// Discover partners via NPPES + free geocoding, cached in Supabase.
+// What each specialty TAKES IN — the kind of patients a practice of that
+// specialty receives referrals for. Both directions of a match are derived from
+// this single map, so the reasons are always correct regardless of who is
+// viewing whom:
+//   outbound (you -> them) = what the PARTNER takes in
+//   inbound  (them -> you) = what YOUR specialty takes in
+const RECEIVES: Record<string, string> = {
+  'Primary Care': 'patients needing a primary-care home and chronic-disease management',
+  'Obesity Medicine': 'overweight, obese, and metabolic-syndrome patients for medical weight management',
+  'Cardiology': 'patients with hypertension, arrhythmia, or chest pain',
+  'Pulmonology': 'patients with chronic cough, COPD, or suspected sleep apnea',
+  'Endocrinology': 'patients with complex diabetes, thyroid, or metabolic disorders',
+  'Gastroenterology': 'patients with GI symptoms, IBD, or due for a colonoscopy',
+  'Rheumatology': 'patients with autoimmune or inflammatory-arthritis symptoms',
+  'Neurology': 'patients with headache, seizures, or neuropathy',
+  'Psychiatry': 'patients needing depression, anxiety, or medication management',
+  'Dermatology': 'patients with suspicious lesions, chronic rashes, or skin-cancer screening needs',
+  'Ophthalmology': 'patients needing diabetic eye exams or vision-loss evaluation',
+  'Orthopedic Surgery': 'patients with fractures, joint pain, or surgical MSK needs',
+  'Pain Management': 'patients with chronic or post-surgical pain',
+  'Pediatrics': 'pediatric patients and the children of your patients',
+  'ENT (Otolaryngology)': 'patients with sinus, hearing, or throat complaints',
+  'Allergy & Immunology': 'patients with allergies, asthma, or immune workups',
+  'Urology': 'patients with urologic or men’s-health concerns',
+  'OB-GYN': 'women needing prenatal, gynecologic, or PCOS care',
+  'Sports Medicine': 'patients with sports injuries or MSK overuse',
+  'Plastic Surgery': 'patients needing reconstructive or cosmetic surgical evaluation',
+}
+
+// Build directionally-correct, mutual why-match reasons for a candidate partner.
+// "You refer ..." = what the partner takes in; "They refer ..." = what the
+// viewing practice's own specialty takes in.
+function mutualFitReasons(
+  userSpecialty: string,
+  partnerSpecialty: string,
+  distance: number | null
+): string[] {
+  const reasons: string[] = []
+  reasons.push(
+    distance != null
+      ? `${distance.toFixed(1)} miles from your practice`
+      : 'In your local area'
+  )
+  const partnerTakes =
+    RECEIVES[partnerSpecialty] || `patients who need ${partnerSpecialty.toLowerCase()} care`
+  reasons.push(`You refer ${partnerTakes}`)
+  const youTake = RECEIVES[userSpecialty]
+  if (youTake) reasons.push(`They refer ${youTake}`)
+  return reasons
+}
+
+// Geocode uncached providers this many at a time (parallel within a chunk).
+const GEOCODE_CHUNK = 25
+// Bound geocoding work per request; the Supabase cache fills across loads so
+// repeat visits progressively cover more of the metro.
+const MAX_GEOCODE_CANDIDATES = 240
+
+// Discover partners via NPPES + free geocoding, cached in Supabase. Sweeps the
+// whole metro by ZIP prefix, then keeps everything within `radiusMiles`.
 async function searchNppesPartners(
   loc: SearchLocation,
   desiredSpecialties: string[],
-  origin: { lat: number; lng: number } | null
+  origin: { lat: number; lng: number } | null,
+  userSpecialty: string,
+  radiusMiles = 25
 ): Promise<MatchResult[]> {
-  // 1. Pull candidate providers from NPPES for each desired specialty. Try the
-  //    city+state query first; if it returns nothing (e.g. NPPES doesn't list
-  //    that exact city name), retry by postal_code.
-  const gather = async (where: SearchLocation): Promise<Map<string, NppesProvider>> => {
+  // 1. Pull candidates from NPPES for each desired specialty. Prefer a 3-digit
+  //    ZIP-prefix sweep ("336*") so the whole metro is covered; fall back to
+  //    city/state, then full ZIP, then state.
+  const gather = async (where: SearchLocation, maxPages: number): Promise<Map<string, NppesProvider>> => {
     const map = new Map<string, NppesProvider>()
-    for (const specialty of desiredSpecialties.slice(0, 5)) {
+    for (const specialty of desiredSpecialties.slice(0, 6)) {
       for (const q of (SPECIALTY_TAXONOMY_QUERY[specialty] || [specialty])) {
-        const providers = await fetchNppes(where, q)
+        const providers = await fetchNppes(where, q, { limit: 200, maxPages })
         for (const p of providers) {
           if (p.specialty === specialty && !map.has(p.npi)) map.set(p.npi, p)
         }
@@ -485,14 +567,24 @@ async function searchNppesPartners(
     return map
   }
 
-  let byNpi = await gather(loc)
-  if (byNpi.size === 0 && loc.postal && loc.city) {
-    byNpi = await gather({ postal: loc.postal, state: loc.state })
-  }
-  const candidates = Array.from(byNpi.values()).slice(0, 40)
-  if (candidates.length === 0) return []
+  const zipPrefix = loc.postal && /^\d{5}$/.test(loc.postal) ? `${loc.postal.slice(0, 3)}*` : null
 
-  // 2. Resolve coordinates from the Supabase cache; geocode the misses.
+  let byNpi: Map<string, NppesProvider>
+  if (zipPrefix) byNpi = await gather({ postal: zipPrefix }, 2)
+  else if (loc.city && loc.state) byNpi = await gather({ city: loc.city, state: loc.state }, 2)
+  else if (loc.postal) byNpi = await gather({ postal: loc.postal }, 2)
+  else if (loc.state) byNpi = await gather({ state: loc.state }, 1)
+  else return []
+
+  // Last-ditch retry by city/state if the ZIP sweep came back empty.
+  if (byNpi.size === 0 && loc.city && loc.state) byNpi = await gather({ city: loc.city, state: loc.state }, 2)
+
+  let candidates = Array.from(byNpi.values())
+  if (candidates.length === 0) return []
+  candidates = candidates.slice(0, MAX_GEOCODE_CANDIDATES)
+
+  // 2. Resolve coordinates from the Supabase cache; geocode the misses in
+  //    bounded parallel chunks and write them back to the cache.
   const coordsByNpi = new Map<string, { lat: number; lng: number }>()
   const { data: cached } = await supabase
     .from('provider_geo_cache')
@@ -505,30 +597,33 @@ async function searchNppesPartners(
   }
 
   const toGeocode = candidates.filter(c => !coordsByNpi.has(c.npi))
-  const geocoded = await Promise.all(
-    toGeocode.map(async (c) => {
-      const coords = await geocodeCensus(`${c.address}, ${c.city}, ${c.state} ${c.postal_code}`)
-      return { c, coords }
-    })
-  )
   const rowsToUpsert: any[] = []
-  for (const { c, coords } of geocoded) {
-    if (coords) coordsByNpi.set(c.npi, coords)
-    rowsToUpsert.push({
-      npi: c.npi,
-      practice_name: c.practice_name,
-      specialty: c.specialty,
-      taxonomy: c.taxonomy,
-      address: c.address,
-      city: c.city,
-      state: c.state,
-      postal_code: c.postal_code,
-      phone: c.phone || null,
-      latitude: coords?.lat ?? null,
-      longitude: coords?.lng ?? null,
-      geocoded: !!coords,
-      updated_at: new Date().toISOString(),
-    })
+  for (let i = 0; i < toGeocode.length; i += GEOCODE_CHUNK) {
+    const chunk = toGeocode.slice(i, i + GEOCODE_CHUNK)
+    const geocoded = await Promise.all(
+      chunk.map(async (c) => {
+        const coords = await geocodeCensus(`${c.address}, ${c.city}, ${c.state} ${c.postal_code}`)
+        return { c, coords }
+      })
+    )
+    for (const { c, coords } of geocoded) {
+      if (coords) coordsByNpi.set(c.npi, coords)
+      rowsToUpsert.push({
+        npi: c.npi,
+        practice_name: c.practice_name,
+        specialty: c.specialty,
+        taxonomy: c.taxonomy,
+        address: c.address,
+        city: c.city,
+        state: c.state,
+        postal_code: c.postal_code,
+        phone: c.phone || null,
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
+        geocoded: !!coords,
+        updated_at: new Date().toISOString(),
+      })
+    }
   }
   if (rowsToUpsert.length > 0) {
     await supabase.from('provider_geo_cache').upsert(rowsToUpsert, { onConflict: 'npi' })
@@ -554,11 +649,7 @@ async function searchNppesPartners(
       specialty: c.specialty,
       location: [c.city, c.state].filter(Boolean).join(', '),
       match_score: Math.min(score, 98),
-      why_match: [
-        `Practicing ${c.specialty} in ${c.city || 'your area'}`,
-        distance != null ? `${distance.toFixed(1)} miles from you` : 'In your search area',
-        'Open to building referral relationships',
-      ],
+      why_match: mutualFitReasons(userSpecialty, c.specialty, distance),
       address: c.address ? `${c.address}, ${c.city}, ${c.state} ${c.postal_code}`.trim() : undefined,
       phone: c.phone,
       website: undefined,
@@ -567,15 +658,19 @@ async function searchNppesPartners(
     } as MatchResult & { _distance: number | null }
   })
 
-  // Drop NPPES mailing-address scatter: when we know the origin, keep only
-  // results within a reasonable radius. Relax if that leaves too few.
+  // Keep results within the requested radius; relax progressively so users in
+  // sparse areas still see partners.
   let finalResults = results
   if (origin) {
-    const near = results.filter((r: any) => r._distance != null && r._distance <= 75)
+    const near = results.filter((r: any) => r._distance != null && r._distance <= radiusMiles)
     if (near.length >= 3) finalResults = near
     else {
-      const anyCoords = results.filter((r: any) => r._distance != null)
-      finalResults = anyCoords.length > 0 ? anyCoords : results
+      const wider = results.filter((r: any) => r._distance != null && r._distance <= radiusMiles * 2)
+      if (wider.length >= 3) finalResults = wider
+      else {
+        const anyCoords = results.filter((r: any) => r._distance != null)
+        finalResults = anyCoords.length > 0 ? anyCoords : results
+      }
     }
   }
 
@@ -664,7 +759,9 @@ export async function GET(request: NextRequest) {
     if (searchTerms.length === 0) {
       const userSpecialty = (currentProvider.specialty || '').toLowerCase()
 
-      if (userSpecialty.includes('primary') || userSpecialty.includes('family') || userSpecialty.includes('internal medicine')) {
+      if (userSpecialty.includes('obesity') || userSpecialty.includes('weight')) {
+        searchTerms.push('endocrinologist', 'primary care doctor', 'gastroenterologist', 'cardiologist', 'OB-GYN')
+      } else if (userSpecialty.includes('primary') || userSpecialty.includes('family') || userSpecialty.includes('internal medicine')) {
         searchTerms.push('cardiologist', 'endocrinologist', 'psychiatrist', 'dermatologist', 'gastroenterologist', 'orthopedic surgeon')
       } else if (userSpecialty.includes('cardio')) {
         searchTerms.push('primary care doctor', 'endocrinologist', 'pulmonologist', 'family medicine clinic')
@@ -709,13 +806,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Determine which partner specialties to search for (canonical names).
+    // Always ANCHOR on the user's own specialty so recommendations stay tailored
+    // to their industry. The onboarding categories only narrow that set — they
+    // never pull in unrelated fields (e.g. a weight-loss practice should not be
+    // shown rheumatology just because a broad category was auto-selected).
     const userCanonical = canonicalizeSpecialty(currentProvider.specialty || '')
-    let desiredSpecialties: string[] = []
+    const specialtyComplementary =
+      COMPLEMENTARY_SPECIALTIES[userCanonical] || ['Primary Care', 'Cardiology', 'Psychiatry', 'Orthopedic Surgery']
+
+    const categorySpecialties: string[] = []
     for (const interest of userInterests) {
-      desiredSpecialties.push(...(CATEGORY_TO_SPECIALTIES[interest] || []))
+      categorySpecialties.push(...(CATEGORY_TO_SPECIALTIES[interest] || []))
     }
-    if (desiredSpecialties.length === 0) {
-      desiredSpecialties = COMPLEMENTARY_SPECIALTIES[userCanonical] || ['Primary Care', 'Cardiology', 'Psychiatry', 'Orthopedic Surgery']
+
+    let desiredSpecialties: string[]
+    if (categorySpecialties.length > 0) {
+      // Keep the overlap of "what suits your specialty" and "what you chose",
+      // preserving the clinically-ordered complementary list. Fall back to the
+      // chosen categories only when there is no overlap at all.
+      const overlap = specialtyComplementary.filter(s => categorySpecialties.includes(s))
+      desiredSpecialties = overlap.length > 0 ? overlap : categorySpecialties
+    } else {
+      desiredSpecialties = specialtyComplementary
     }
     // De-dupe and never recommend the user's own specialty (no competitors).
     desiredSpecialties = Array.from(new Set(desiredSpecialties)).filter(s => s !== userCanonical)
@@ -726,9 +838,9 @@ export async function GET(request: NextRequest) {
       const centerQuery = searchLoc.postal || [searchLoc.city, searchLoc.state].filter(Boolean).join(', ') || userLocation
       origin = centerQuery ? await geocodeSearchNominatim(centerQuery) : null
     }
-    // If we only have a ZIP (no city/state), backfill city/state from the
-    // origin so NPPES can search by city — far more precise than postal_code.
-    if (origin && (!searchLoc.city || !searchLoc.state)) {
+    // Backfill any missing city/state/ZIP from the origin so the ZIP-prefix
+    // metro sweep and the city fallback both have what they need.
+    if (origin && (!searchLoc.city || !searchLoc.state || !searchLoc.postal)) {
       const rev = await reverseGeocodeToLocation(origin.lat, origin.lng)
       searchLoc = {
         city: searchLoc.city || rev.city,
@@ -738,7 +850,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Primary source: NPPES (free, no key). Fallback: Serper, if configured.
-    let matches = await searchNppesPartners(searchLoc, desiredSpecialties, origin)
+    let matches = await searchNppesPartners(searchLoc, desiredSpecialties, origin, userCanonical, 25)
     if (matches.length === 0 && SERPER_API_KEY) {
       matches = await searchLocalPartners(userLocation, searchTerms)
       matches = matches.filter(m => canonicalizeSpecialty(m.specialty) !== userCanonical)
@@ -746,7 +858,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Limit results
-    matches = matches.slice(0, 12)
+    matches = matches.slice(0, 40)
 
     // If no access, hide contact info (but keep coordinates for map)
     if (!hasAccess) {
