@@ -353,14 +353,17 @@ function parseLocation(raw: string): SearchLocation {
 // to Google if available.
 async function reverseGeocodeToLocation(lat: number, lng: number): Promise<SearchLocation> {
   try {
+    // zoom=18 (full address detail) so we get the actual city/town. NOTE: never
+    // fall back to county — NPPES city search does not match county names, so a
+    // county would return 0 results. If no city is found we rely on postal/state.
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
       { headers: { 'User-Agent': 'SleftSignals/1.0 (referral-network)' } }
     )
     if (res.ok) {
       const data = await res.json()
       const a = data.address || {}
-      const city = a.city || a.town || a.village || a.county
+      const city = a.city || a.town || a.village || a.municipality || a.hamlet || undefined
       const state = a.state ? (US_STATE_ABBR[String(a.state).toLowerCase()] || '') : ''
       const postal = a.postcode ? String(a.postcode).slice(0, 5) : undefined
       if (city || state || postal) return { city, state, postal }
@@ -466,15 +469,25 @@ async function searchNppesPartners(
   desiredSpecialties: string[],
   origin: { lat: number; lng: number } | null
 ): Promise<MatchResult[]> {
-  // 1. Pull candidate providers from NPPES for each desired specialty.
-  const byNpi = new Map<string, NppesProvider>()
-  for (const specialty of desiredSpecialties.slice(0, 5)) {
-    for (const q of (SPECIALTY_TAXONOMY_QUERY[specialty] || [specialty])) {
-      const providers = await fetchNppes(loc, q)
-      for (const p of providers) {
-        if (p.specialty === specialty && !byNpi.has(p.npi)) byNpi.set(p.npi, p)
+  // 1. Pull candidate providers from NPPES for each desired specialty. Try the
+  //    city+state query first; if it returns nothing (e.g. NPPES doesn't list
+  //    that exact city name), retry by postal_code.
+  const gather = async (where: SearchLocation): Promise<Map<string, NppesProvider>> => {
+    const map = new Map<string, NppesProvider>()
+    for (const specialty of desiredSpecialties.slice(0, 5)) {
+      for (const q of (SPECIALTY_TAXONOMY_QUERY[specialty] || [specialty])) {
+        const providers = await fetchNppes(where, q)
+        for (const p of providers) {
+          if (p.specialty === specialty && !map.has(p.npi)) map.set(p.npi, p)
+        }
       }
     }
+    return map
+  }
+
+  let byNpi = await gather(loc)
+  if (byNpi.size === 0 && loc.postal && loc.city) {
+    byNpi = await gather({ postal: loc.postal, state: loc.state })
   }
   const candidates = Array.from(byNpi.values()).slice(0, 40)
   if (candidates.length === 0) return []
