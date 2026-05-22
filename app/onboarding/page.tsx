@@ -135,8 +135,6 @@ export default function OnboardingPage() {
   // Step 2 mode: 'auto' = we recommend partners from their specialty; 'manual'
   // = they hand-pick. Defaults to auto so we do the thinking for them.
   const [partnerMode, setPartnerMode] = useState<"auto" | "manual">("auto")
-  const [refining, setRefining] = useState(false)
-  const [refineError, setRefineError] = useState("")
 
   const [formData, setFormData] = useState<FormData>({
     practiceName: "",
@@ -150,39 +148,15 @@ export default function OnboardingPage() {
     email: ""
   })
 
-  // Send the free-text services through Claude to extract a value prop + tags,
-  // then let the user confirm/edit before continuing.
-  const refineServices = async () => {
-    if (!formData.servicesText.trim()) {
-      setRefineError("Describe your services first.")
-      return
-    }
-    setRefining(true)
-    setRefineError("")
-    try {
-      const res = await fetch("/api/network/profile/structure-services", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          services: formData.servicesText,
-          specialty: formData.specialty,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setRefineError(data.error || "Could not refine your services.")
-        return
-      }
-      setFormData((prev) => ({
-        ...prev,
-        valueProp: data.value_prop || "",
-        serviceTags: Array.isArray(data.service_tags) ? data.service_tags : [],
-      }))
-    } catch {
-      setRefineError("Could not reach the AI service. Try again.")
-    } finally {
-      setRefining(false)
-    }
+  // Turn the comma/line-separated services list into clean tags. No API — pure
+  // local string-splitting, so it is free and instant.
+  const generateTags = () => {
+    const fromText = formData.servicesText
+      .split(/[,\n;]+/)
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+    const merged = Array.from(new Set([...formData.serviceTags, ...fromText])).slice(0, 12)
+    setFormData((prev) => ({ ...prev, serviceTags: merged }))
   }
 
   useEffect(() => {
@@ -451,7 +425,7 @@ export default function OnboardingPage() {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     <Stethoscope className="w-4 h-4 inline mr-1" />
                     What services do you offer?{" "}
-                    <span className="text-slate-500 font-normal">(be specific — the more detail, the better we can match and market you to referral partners)</span>
+                    <span className="text-slate-500 font-normal">(comma-separated — the more specific, the better we can match and market you)</span>
                   </label>
                   <textarea
                     value={formData.servicesText}
@@ -460,70 +434,58 @@ export default function OnboardingPage() {
                     placeholder="e.g., Medically supervised weight loss, GLP-1 therapy (semaglutide, tirzepatide), metabolic testing, nutrition counseling"
                     className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-base placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
                   />
-                  <div className="mt-3 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={refineServices}
-                      disabled={refining || !formData.servicesText.trim()}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                        refining || !formData.servicesText.trim()
-                          ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:opacity-90"
-                      }`}
-                    >
-                      {refining ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      )}
-                      {refining ? "Refining..." : "Refine with AI"}
-                    </button>
-                    {refineError && <span className="text-sm text-red-400">{refineError}</span>}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={generateTags}
+                    disabled={!formData.servicesText.trim()}
+                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                      !formData.servicesText.trim()
+                        ? "bg-slate-800 text-slate-500 border-slate-800 cursor-not-allowed"
+                        : "bg-slate-800 text-white border-slate-700 hover:bg-slate-700"
+                    }`}
+                  >
+                    Turn into tags
+                  </button>
 
-                  {(formData.valueProp || formData.serviceTags.length > 0) && (
-                    <div className="mt-4 bg-slate-900/60 border border-blue-500/20 rounded-xl p-4 space-y-3">
-                      <p className="text-[11px] uppercase tracking-wide text-blue-400 font-semibold">
-                        How we&apos;ll describe you to partners
-                      </p>
-                      {formData.valueProp && (
-                        <input
-                          type="text"
-                          value={formData.valueProp}
-                          onChange={(e) => setFormData({ ...formData, valueProp: e.target.value })}
-                          className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-base focus:border-blue-500 outline-none"
-                        />
-                      )}
-                      {formData.serviceTags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.serviceTags.map((tag, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 rounded-full text-sm"
-                            >
-                              {tag}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFormData({
-                                    ...formData,
-                                    serviceTags: formData.serviceTags.filter((_, idx) => idx !== i),
-                                  })
-                                }
-                                className="text-blue-400/70 hover:text-white"
-                                aria-label={`Remove ${tag}`}
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-xs text-slate-500">
-                        Edit the summary or remove tags that don&apos;t fit.
-                      </p>
+                  {formData.serviceTags.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {formData.serviceTags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 rounded-full text-sm"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                serviceTags: formData.serviceTags.filter((_, idx) => idx !== i),
+                              })
+                            }
+                            className="text-blue-400/70 hover:text-white"
+                            aria-label={`Remove ${tag}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Your one-line value proposition{" "}
+                    <span className="text-slate-500 font-normal">(how referring doctors should describe you)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.valueProp}
+                    onChange={(e) => setFormData({ ...formData, valueProp: e.target.value })}
+                    placeholder="e.g., Medically supervised weight loss with GLP-1 therapy and metabolic testing"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-base placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  />
                 </div>
               </div>
             </motion.div>
