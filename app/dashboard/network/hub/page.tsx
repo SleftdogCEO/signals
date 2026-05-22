@@ -161,11 +161,13 @@ const TAB_ITEMS = [
 function HubNetworkMap({
   matches,
   centerCoordinates,
-  hasAccess
+  hasAccess,
+  userName
 }: {
   matches: PartnerMatch[]
   centerCoordinates: { lat: number; lng: number } | null
   hasAccess: boolean
+  userName: string
 }) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -174,6 +176,7 @@ function HubNetworkMap({
 
   const [selectedProvider, setSelectedProvider] = useState<PartnerMatch | null>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
+  const [showUserInfo, setShowUserInfo] = useState(true)
 
   const center = centerCoordinates || { lat: 39.8283, lng: -98.5795 }
   const matchesWithCoords = matches.filter((m) => m.coordinates)
@@ -186,6 +189,8 @@ function HubNetworkMap({
           bounds.extend({ lat: match.coordinates.lat, lng: match.coordinates.lng })
         }
       })
+      // Keep the user's own location in view too.
+      if (centerCoordinates) bounds.extend(centerCoordinates)
       map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 })
       const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
         const currentZoom = map.getZoom()
@@ -235,6 +240,30 @@ function HubNetworkMap({
           fullscreenControl: true
         }}
       >
+        {/* The user's own location ("you are here") */}
+        {centerCoordinates && (
+          <Marker
+            position={center}
+            zIndex={9999}
+            onClick={() => setShowUserInfo(true)}
+            icon={{
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 9,
+              fillColor: "#2563eb",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 4
+            }}
+          />
+        )}
+        {centerCoordinates && showUserInfo && (
+          <InfoWindow position={center} onCloseClick={() => setShowUserInfo(false)}>
+            <div style={{ padding: "2px 6px", fontWeight: 700, color: "#0f172a", fontSize: "14px" }}>
+              {userName} <span style={{ fontWeight: 500, color: "#2563eb" }}>(You)</span>
+            </div>
+          </InfoWindow>
+        )}
+
         {matchesWithCoords.map((match, index) => (
           <Marker
             key={match.id}
@@ -723,6 +752,24 @@ function NetworkHubContent() {
 
               {/* Partner Cards / Map */}
               <div id="network-results" />
+              {partnerMatches.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-black text-white">
+                      Practices near {user?.user_metadata?.full_name ? `Dr. ${user.user_metadata.full_name}` : 'you'}
+                    </h2>
+                    <p className="text-slate-400 mt-1">
+                      {partnerMatches.length} referral {partnerMatches.length === 1 ? 'partner' : 'partners'} in {searchLocation || provider?.location || 'your area'}
+                    </p>
+                  </div>
+                  {viewMode === "map" && (
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <span className="inline-block w-3 h-3 rounded-full bg-blue-600 ring-2 ring-white" />
+                      Your location
+                    </div>
+                  )}
+                </div>
+              )}
               {partnerMatches.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -738,6 +785,7 @@ function NetworkHubContent() {
                   matches={partnerMatches}
                   centerCoordinates={centerCoordinates}
                   hasAccess={hasAccess}
+                  userName={user?.user_metadata?.full_name ? `Dr. ${user.user_metadata.full_name}` : 'You'}
                 />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
