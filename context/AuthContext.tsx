@@ -44,17 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getUser()
         setUser(user)
         setLoading(false)
-
-        // Only redirect if NOT already on a dashboard page, onboarding, welcome, auth, or reset-password page
-        if (user && !pathname.startsWith("/dashboard") && !pathname.startsWith("/onboarding") && !pathname.startsWith("/welcome") && !pathname.startsWith("/auth") && !pathname.includes("/reset-password")) {
-          const redirectPath = sessionStorage.getItem("redirectAfterAuth")
-          if (redirectPath) {
-            sessionStorage.removeItem("redirectAfterAuth")
-            router.push(redirectPath)
-          } else {
-            router.push("/dashboard")
-          }
-        }
+        // Do NOT redirect here. This block runs on every navigation, so any
+        // redirect traps logged-in users and blocks public pages like /,
+        // /directory, and /blog. Post-login redirects are handled by the
+        // SIGNED_IN event below.
       } catch (error) {
         console.error("Auth error:", error)
         setLoading(false)
@@ -71,14 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
 
-      // Only redirect if NOT already on a dashboard page, onboarding, welcome, auth, or reset-password page
-      if (event === "SIGNED_IN" && session?.user && !pathname.startsWith("/dashboard") && !pathname.startsWith("/onboarding") && !pathname.startsWith("/welcome") && !pathname.startsWith("/auth") && !pathname.includes("/reset-password")) {
-        console.log("User signed in, redirecting to dashboard")
+      // Redirect only on an actual sign-in: return the user to wherever they
+      // were headed before being bounced to /auth, otherwise into the app. Never
+      // redirect while they're already browsing in-app or on a public page.
+      if (event === "SIGNED_IN" && session?.user) {
         const redirectPath = sessionStorage.getItem("redirectAfterAuth")
         if (redirectPath) {
           sessionStorage.removeItem("redirectAfterAuth")
           router.push(redirectPath)
-        } else {
+        } else if (pathname.startsWith("/auth")) {
           router.push("/dashboard")
         }
       }
