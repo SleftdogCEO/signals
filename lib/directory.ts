@@ -52,6 +52,8 @@ export interface DirectoryProvider {
   specialty: string
   location: string
   bio: string | null
+  value_prop: string | null
+  service_tags: string[]
   website: string | null
   patients_i_want: string[]
   patients_i_refer: string[]

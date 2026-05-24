@@ -157,6 +157,13 @@ export default function ProviderCard({
           ) : null}
         </div>
 
+        {/* Value proposition (one-line pitch) */}
+        {provider.value_prop ? (
+          <p className="mb-3 text-sm font-medium leading-snug text-cyan-300">
+            {provider.value_prop}
+          </p>
+        ) : null}
+
         {/* Bio */}
         <p className="mb-5 line-clamp-3 text-sm leading-relaxed text-slate-400">
           {provider.bio ||
@@ -164,6 +171,25 @@ export default function ProviderCard({
               ? "This practice hasn't joined Sleft Signals yet. Request an introduction and we'll reach out."
               : "No practice bio added yet.")}
         </p>
+
+        {/* Services offered */}
+        {provider.service_tags && provider.service_tags.length > 0 ? (
+          <div className="mb-5">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Services offered
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {provider.service_tags.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {/* Referral preferences */}
         <div className="mb-3">

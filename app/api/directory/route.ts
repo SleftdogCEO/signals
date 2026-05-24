@@ -11,7 +11,7 @@ const supabase = createClient(
 const PAGE_SIZE = 24
 
 const SELECT_COLUMNS =
-  "id,user_id,practice_name,specialty,location,bio,website,patients_i_want,patients_i_refer,is_seeded,is_verified,rating,review_count,created_at"
+  "id,user_id,practice_name,specialty,location,bio,value_prop,service_tags,website,patients_i_want,patients_i_refer,is_seeded,is_verified,rating,review_count,created_at"
 
 export async function GET(request: NextRequest) {
   try {
