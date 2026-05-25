@@ -754,6 +754,14 @@ export async function GET(request: NextRequest) {
       searchLoc = parseLocation(userLocation)
     } else {
       searchLoc = parseLocation(userLocation)
+      // Prefer the provider's stored (private) practice coordinates for exact
+      // centering and distance math. The public location label still backfills
+      // the city/state/ZIP used by the NPPES metro sweep below.
+      if (currentProvider.latitude != null && currentProvider.longitude != null) {
+        const lat = Number(currentProvider.latitude)
+        const lng = Number(currentProvider.longitude)
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) origin = { lat, lng }
+      }
     }
 
     // Build search terms based on user interests

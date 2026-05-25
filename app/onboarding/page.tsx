@@ -150,6 +150,7 @@ interface FormData {
   practiceName: string
   specialty: string
   location: string
+  address: string
   valueProp: string
   serviceTags: string[]
   partnerInterests: string[]
@@ -170,6 +171,7 @@ export default function OnboardingPage() {
     practiceName: "",
     specialty: "",
     location: "",
+    address: "",
     valueProp: "",
     serviceTags: [],
     partnerInterests: [],
@@ -222,7 +224,7 @@ export default function OnboardingPage() {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return formData.practiceName && formData.specialty && formData.location
+        return formData.practiceName && formData.specialty && formData.location && formData.address
       case 2:
         return formData.partnerInterests.length > 0
       case 3:
@@ -276,6 +278,22 @@ export default function OnboardingPage() {
     setIsSubmitting(true)
 
     try {
+      // Geocode the practice address to private coordinates for accurate map
+      // centering. Best-effort: if it fails, we still save and fall back to
+      // geocoding the public city label at discovery time.
+      let coords: { lat: number; lng: number } | null = null
+      if (formData.address.trim()) {
+        try {
+          const geoRes = await fetch(`/api/network/geocode?address=${encodeURIComponent(formData.address.trim())}`)
+          if (geoRes.ok) {
+            const geo = await geoRes.json()
+            coords = geo.coordinates || null
+          }
+        } catch {
+          /* keep coords null; discovery falls back to the city label */
+        }
+      }
+
       // Check if provider already exists
       const { data: existing } = await supabase
         .from("providers")
@@ -297,6 +315,8 @@ export default function OnboardingPage() {
             patients_i_want: formData.partnerInterests,
             patients_i_refer: formData.referInterests,
             email: formData.email,
+            // Only overwrite stored coordinates when this geocode succeeded.
+            ...(coords ? { latitude: coords.lat, longitude: coords.lng } : {}),
             network_opted_in: true,
             updated_at: new Date().toISOString()
           })
@@ -327,6 +347,7 @@ export default function OnboardingPage() {
           patients_i_want: formData.partnerInterests,
           patients_i_refer: formData.referInterests,
           email: formData.email,
+          ...(coords ? { latitude: coords.lat, longitude: coords.lng } : {}),
           network_opted_in: true,
           updated_at: new Date().toISOString()
         }
@@ -451,7 +472,25 @@ export default function OnboardingPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     <MapPin className="w-4 h-4 inline mr-1" />
-                    Location
+                    Practice address
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="e.g., 123 Main St, Austin, TX 78701"
+                    className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  />
+                  <p className="text-sm text-slate-500 mt-2">
+                    🔒 Private. Used only to place you on the partner map and measure
+                    distances. Never shown on your public profile.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    City &amp; state shown publicly
                   </label>
                   <input
                     type="text"
@@ -460,6 +499,10 @@ export default function OnboardingPage() {
                     placeholder="e.g., Austin, TX"
                     className="w-full px-5 py-4 bg-slate-900 border border-slate-800 rounded-xl text-white text-lg placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   />
+                  <p className="text-sm text-slate-500 mt-2">
+                    This is what other practices see on your directory listing — keep it
+                    to a city, not your street address.
+                  </p>
                 </div>
 
                 <div>
