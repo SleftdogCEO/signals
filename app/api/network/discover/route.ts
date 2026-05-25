@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { classifyAffiliation } from '@/lib/affiliation'
+import { classifyAffiliation, classifySystemFromOrgs } from '@/lib/affiliation'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,9 +38,82 @@ interface MatchResult {
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
-// A practice/org name appearing this many times across the candidate set (all of
-// one specialty) signals an institutional group rather than an independent.
-const LARGE_GROUP_THRESHOLD = 10
+// CMS "Doctors & Clinicians" National Downloadable File — maps an NPI to the
+// group(s) it bills under (the real employer) and that group's size. This is the
+// authoritative free signal for system employment that the NPPES practice name
+// hides. Distribution id from the CMS Provider Data Catalog.
+const CMS_NDF_DIST = '764c5eba-9595-5c63-9ed8-793ba776f562'
+const CMS_BATCH = 50
+// Only enrich the nearest candidates likely to be shown (bounds CMS work/latency).
+const CMS_ENRICH_CAP = 80
+
+// Enrich NPIs with their CMS billing-group names, cached in Supabase. Misses are
+// batch-fetched and cached — including "checked but not found" (cash/non-Medicare
+// providers), so we never re-query them.
+async function enrichCmsOrgs(
+  npis: string[]
+): Promise<Map<string, { orgNames: string[]; size: number }>> {
+  const out = new Map<string, { orgNames: string[]; size: number }>()
+  if (npis.length === 0) return out
+
+  const { data: cached } = await supabase
+    .from('provider_cms_cache')
+    .select('npi, org_names, num_org_mem')
+    .in('npi', npis)
+  const cachedSet = new Set<string>()
+  for (const row of cached || []) {
+    cachedSet.add(row.npi)
+    out.set(row.npi, { orgNames: row.org_names || [], size: row.num_org_mem || 0 })
+  }
+
+  const misses = npis.filter((n) => !cachedSet.has(n))
+  const rowsToUpsert: any[] = []
+  for (let i = 0; i < misses.length; i += CMS_BATCH) {
+    const chunk = misses.slice(i, i + CMS_BATCH)
+    const params = new URLSearchParams()
+    params.set('conditions[0][property]', 'npi')
+    params.set('conditions[0][operator]', 'in')
+    chunk.forEach((npi, idx) => params.set(`conditions[0][value][${idx}]`, npi))
+    params.set('limit', '500')
+
+    const byNpi = new Map<string, { orgNames: Set<string>; size: number }>()
+    try {
+      const res = await fetch(
+        `https://data.cms.gov/provider-data/api/1/datastore/query/${CMS_NDF_DIST}?${params.toString()}`
+      )
+      if (res.ok) {
+        const data = await res.json()
+        for (const r of data.results || []) {
+          const npi = String(r.npi)
+          const entry = byNpi.get(npi) || { orgNames: new Set<string>(), size: 0 }
+          if (r.facility_name) entry.orgNames.add(r.facility_name)
+          const n = parseInt(r.num_org_mem, 10)
+          if (!Number.isNaN(n) && n > entry.size) entry.size = n
+          byNpi.set(npi, entry)
+        }
+      }
+    } catch (e) {
+      console.error('CMS enrich error:', e)
+    }
+    for (const npi of chunk) {
+      const e = byNpi.get(npi)
+      const orgNames = e ? Array.from(e.orgNames) : []
+      const size = e ? e.size : 0
+      out.set(npi, { orgNames, size })
+      rowsToUpsert.push({
+        npi,
+        org_names: orgNames,
+        num_org_mem: size || null,
+        checked: true,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+  if (rowsToUpsert.length > 0) {
+    await supabase.from('provider_cms_cache').upsert(rowsToUpsert, { onConflict: 'npi' })
+  }
+  return out
+}
 
 // Geocode an address to coordinates using Google Maps
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -644,16 +717,8 @@ async function searchNppesPartners(
     await supabase.from('provider_geo_cache').upsert(rowsToUpsert, { onConflict: 'npi' })
   }
 
-  // Count how often each org name repeats across candidates; a name that floods
-  // the (single-specialty) set is an institutional group, not an independent.
-  const nameCounts = new Map<string, number>()
-  for (const c of candidates) {
-    const key = c.practice_name.trim().toLowerCase()
-    nameCounts.set(key, (nameCounts.get(key) || 0) + 1)
-  }
-
-  // 3. Build, score, and sort results (closest first when we have an origin).
-  let results = candidates.map((c) => {
+  // 3. Build and score results (closest first when we have an origin).
+  const results = candidates.map((c) => {
     const coords = coordsByNpi.get(c.npi) || null
     const distance = coords && origin ? haversineMiles(origin, coords) : null
 
@@ -666,10 +731,6 @@ async function searchNppesPartners(
     }
     if (c.phone) score += 3
 
-    // Independent = name isn't a known health system AND isn't a large group.
-    const bigGroup = (nameCounts.get(c.practice_name.trim().toLowerCase()) || 0) >= LARGE_GROUP_THRESHOLD
-    const isIndependent = classifyAffiliation(c.practice_name).isIndependent && !bigGroup
-
     return {
       id: c.npi,
       practice_name: c.practice_name,
@@ -681,16 +742,10 @@ async function searchNppesPartners(
       phone: c.phone,
       website: undefined,
       coordinates: coords || undefined,
-      is_independent: isIndependent,
+      is_independent: true, // refined by CMS enrichment below
       _distance: distance,
     } as MatchResult & { _distance: number | null }
   })
-
-  // Independent-only: health-system-employed providers refer inside their own
-  // system, so they aren't viable partners. Drop them — but relax if that would
-  // leave too few (sparse or system-dominated areas still get a usable map).
-  const independents = results.filter((r) => r.is_independent)
-  if (independents.length >= 3) results = independents
 
   // Keep results within the requested radius; relax progressively so users in
   // sparse areas still see partners.
@@ -714,6 +769,23 @@ async function searchNppesPartners(
     if (b._distance != null) return 1
     return b.match_score - a.match_score
   })
+
+  // 4. Independent-only via CMS billing group. Enrich the nearest candidates
+  //    with their real employer (the NPPES name hides employment), then drop
+  //    providers whose group is a known health SYSTEM. Large independent groups
+  //    are kept. Relax if filtering would leave too few.
+  const toEnrich = finalResults.slice(0, CMS_ENRICH_CAP)
+  const cms = await enrichCmsOrgs(toEnrich.map((r) => r.id))
+  for (const r of toEnrich) {
+    // A provider is non-independent if EITHER the NPPES practice name OR any CMS
+    // billing-group name resolves to a known system.
+    const nameSystem = !classifyAffiliation(r.practice_name).isIndependent
+    const cmsSystem = classifySystemFromOrgs(cms.get(r.id)?.orgNames || []).isSystem
+    r.is_independent = !(nameSystem || cmsSystem)
+  }
+  const independents = toEnrich.filter((r) => r.is_independent)
+  finalResults = independents.length >= 3 ? independents : toEnrich
+
   return finalResults.map(({ _distance, ...m }: any) => m)
 }
 

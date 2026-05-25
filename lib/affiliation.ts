@@ -15,8 +15,12 @@
 // terms and widen as we expand to new markets.
 
 export const HEALTH_SYSTEM_PATTERNS: { re: RegExp; system: string }[] = [
-  // Named Tampa Bay health systems
-  { re: /adventhealth|advent health/i, system: "AdventHealth" },
+  // Named Tampa Bay / Central FL health systems. NOTE: several only show their
+  // true owner in the CMS billing-group name, not the NPPES practice name —
+  // e.g. "Florida Hospital Physician Group" = AdventHealth, "OHI ..." = Orlando
+  // Health. Keep these BEFORE the generic /hospital/ rule so the label is right.
+  { re: /adventhealth|advent health|florida hospital/i, system: "AdventHealth" },
+  { re: /orlando health|\bohi\b/i, system: "Orlando Health" },
   { re: /baycare/i, system: "BayCare" },
   { re: /\bhca\b|hca florida|hca healthcare/i, system: "HCA Florida" },
   { re: /tampa general|\btgh\b|tgmg/i, system: "Tampa General" },
@@ -46,4 +50,17 @@ export function classifyAffiliation(name: string | null | undefined): Affiliatio
     if (re.test(n)) return { isIndependent: false, system }
   }
   return { isIndependent: true, system: null }
+}
+
+// Classify across all of a provider's billing-group names (from CMS). A provider
+// employed by a system under ANY of their groups is treated as system-owned.
+// Returns the first matched system for labeling.
+export function classifySystemFromOrgs(
+  orgNames: (string | null | undefined)[]
+): { isSystem: boolean; system: string | null } {
+  for (const name of orgNames) {
+    const a = classifyAffiliation(name)
+    if (!a.isIndependent) return { isSystem: true, system: a.system }
+  }
+  return { isSystem: false, system: null }
 }
