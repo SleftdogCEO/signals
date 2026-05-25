@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyAffiliation } from '@/lib/affiliation'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,9 +33,14 @@ interface MatchResult {
   rating?: number
   review_count?: number
   coordinates?: { lat: number; lng: number }
+  is_independent?: boolean
 }
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
+// A practice/org name appearing this many times across the candidate set (all of
+// one specialty) signals an institutional group rather than an independent.
+const LARGE_GROUP_THRESHOLD = 10
 
 // Geocode an address to coordinates using Google Maps
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -638,8 +644,16 @@ async function searchNppesPartners(
     await supabase.from('provider_geo_cache').upsert(rowsToUpsert, { onConflict: 'npi' })
   }
 
+  // Count how often each org name repeats across candidates; a name that floods
+  // the (single-specialty) set is an institutional group, not an independent.
+  const nameCounts = new Map<string, number>()
+  for (const c of candidates) {
+    const key = c.practice_name.trim().toLowerCase()
+    nameCounts.set(key, (nameCounts.get(key) || 0) + 1)
+  }
+
   // 3. Build, score, and sort results (closest first when we have an origin).
-  const results = candidates.map((c) => {
+  let results = candidates.map((c) => {
     const coords = coordsByNpi.get(c.npi) || null
     const distance = coords && origin ? haversineMiles(origin, coords) : null
 
@@ -652,6 +666,10 @@ async function searchNppesPartners(
     }
     if (c.phone) score += 3
 
+    // Independent = name isn't a known health system AND isn't a large group.
+    const bigGroup = (nameCounts.get(c.practice_name.trim().toLowerCase()) || 0) >= LARGE_GROUP_THRESHOLD
+    const isIndependent = classifyAffiliation(c.practice_name).isIndependent && !bigGroup
+
     return {
       id: c.npi,
       practice_name: c.practice_name,
@@ -663,9 +681,16 @@ async function searchNppesPartners(
       phone: c.phone,
       website: undefined,
       coordinates: coords || undefined,
+      is_independent: isIndependent,
       _distance: distance,
     } as MatchResult & { _distance: number | null }
   })
+
+  // Independent-only: health-system-employed providers refer inside their own
+  // system, so they aren't viable partners. Drop them — but relax if that would
+  // leave too few (sparse or system-dominated areas still get a usable map).
+  const independents = results.filter((r) => r.is_independent)
+  if (independents.length >= 3) results = independents
 
   // Keep results within the requested radius; relax progressively so users in
   // sparse areas still see partners.

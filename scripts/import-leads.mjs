@@ -48,6 +48,25 @@ async function fetchNppes(taxonomy) {
   }
 }
 
+// Health-system name patterns — keep in sync with lib/affiliation.ts. We skip
+// system-employed orgs because they refer inside their own system and aren't
+// viable independent-referral targets for concierge outreach.
+const SYSTEM_PATTERNS = [
+  /adventhealth|advent health/i,
+  /baycare/i,
+  /\bhca\b|hca florida|hca healthcare/i,
+  /tampa general|\btgh\b|tgmg/i,
+  /usf health|university of south florida/i,
+  /moffitt/i,
+  /morton plant|mease\b/i,
+  /st\.?\s*joseph'?s?\s*(hospital|health|care)/i,
+  /(james a\.? haley|veterans affairs|\bv\.?a\.?\s*(medical|clinic|hospital))/i,
+  /health system|healthcare system|health network/i,
+  /\bhospital\b/i,
+  /department of health|county health/i,
+]
+const isSystem = (name) => SYSTEM_PATTERNS.some((re) => re.test(name || ""))
+
 const sqlStr = (v) => (v == null || v === "" ? "null" : `'${String(v).replace(/'/g, "''")}'`)
 const sqlDate = (v) => {
   if (!v) return "null"
@@ -89,7 +108,7 @@ for (const [specialty, queries] of Object.entries(SPECIALTY_QUERIES)) {
 
 // Newest organization practices first.
 const rows = [...byNpi.values()]
-  .filter((r) => r.type === "Org")
+  .filter((r) => r.type === "Org" && !isSystem(r.practice_name))
   .sort((a, b) => b._ts - a._ts)
   .slice(0, LIMIT)
 

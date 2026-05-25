@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/context/AuthContext"
+import { classifyAffiliation } from "@/lib/affiliation"
 
 // Grant-only internal CRM. RLS also enforces this server-side; this is the
 // client-side gate so non-admins are bounced instead of seeing an empty board.
@@ -63,6 +64,7 @@ export default function OutreachPage() {
   const [search, setSearch] = useState("")
   const [specialtyFilter, setSpecialtyFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [independentOnly, setIndependentOnly] = useState(true)
   const [savingNpi, setSavingNpi] = useState<string | null>(null)
 
   useEffect(() => {
@@ -107,15 +109,22 @@ export default function OutreachPage() {
     return c
   }, [leads])
 
+  // How many leads are health-system-employed (not viable independent partners).
+  const systemCount = useMemo(
+    () => leads.filter((l) => !classifyAffiliation(l.practice_name).isIndependent).length,
+    [leads]
+  )
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return leads.filter((l) => {
+      if (independentOnly && !classifyAffiliation(l.practice_name).isIndependent) return false
       if (specialtyFilter !== "all" && l.specialty !== specialtyFilter) return false
       if (statusFilter !== "all" && l.status !== statusFilter) return false
       if (q && !(`${l.practice_name} ${l.city} ${l.specialty}`.toLowerCase().includes(q))) return false
       return true
     })
-  }, [leads, search, specialtyFilter, statusFilter])
+  }, [leads, search, specialtyFilter, statusFilter, independentOnly])
 
   if (authLoading || loading) {
     return (
@@ -183,13 +192,29 @@ export default function OutreachPage() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+          <button
+            onClick={() => setIndependentOnly((v) => !v)}
+            className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+              independentOnly
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+            }`}
+            title="Health-system-employed providers refer inside their own system — usually not worth a call"
+          >
+            {independentOnly ? "✓ Independent only" : "Show all"}
+            {systemCount > 0 && (
+              <span className="ml-2 text-xs text-slate-500">({systemCount} system-affiliated)</span>
+            )}
+          </button>
         </div>
 
         <p className="mb-4 text-sm text-slate-500">{filtered.length} shown</p>
 
         {/* Leads */}
         <div className="space-y-3">
-          {filtered.map((l) => (
+          {filtered.map((l) => {
+            const aff = classifyAffiliation(l.practice_name)
+            return (
             <div
               key={l.npi}
               className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
@@ -201,6 +226,11 @@ export default function OutreachPage() {
                     {isNew(l.enumeration_date) && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
                         <Sparkles className="w-3 h-3" /> New {l.enumeration_date?.slice(0, 7)}
+                      </span>
+                    )}
+                    {!aff.isIndependent && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
+                        {aff.system} · refers in-system
                       </span>
                     )}
                   </div>
@@ -277,7 +307,8 @@ export default function OutreachPage() {
                 />
               </div>
             </div>
-          ))}
+            )
+          })}
           {filtered.length === 0 && (
             <p className="text-center text-slate-500 py-12">No leads match your filters.</p>
           )}
