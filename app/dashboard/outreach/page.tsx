@@ -67,6 +67,22 @@ interface Lead {
   quality_reason: string | null
   llc_formation_date: string | null
   llc_checked_at: string | null
+  ao_first_name: string | null
+  ao_last_name: string | null
+  ao_credential: string | null
+  ao_years_practicing: number | null
+  practice_age_signal: string | null
+}
+
+// AO "years practicing" badge — derived from the authorized official's earliest
+// individual NPI date. Tells you whether a fresh-looking org NPI is a true
+// new-doc launch or a 20-year veteran restructuring their LLC.
+function aoBadge(years: number | null, signal: string | null) {
+  if (signal === "fresh") return { label: `Doc ${years ?? 0}yr · fresh`, cls: "bg-emerald-500/25 text-emerald-200 border-emerald-500/50" }
+  if (signal === "early") return { label: `Doc ${years}yr · early`, cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" }
+  if (signal === "established") return { label: `Doc ${years}yr`, cls: "bg-blue-500/15 text-blue-300 border-blue-500/30" }
+  if (signal === "veteran") return { label: `Doc ${years}yr · likely reorg`, cls: "bg-amber-500/15 text-amber-300 border-amber-500/30" }
+  return null
 }
 
 // Months between an ISO date and now. Returns null if input is null/invalid.
@@ -125,6 +141,7 @@ export default function OutreachPage() {
   // ICP filter: only show practices whose LLC is <18mo old (Grant's "new practices" ICP)
   const [newLlcOnly, setNewLlcOnly] = useState(false)
   const [newNpiOnly, setNewNpiOnly] = useState(false)
+  const [freshDocOnly, setFreshDocOnly] = useState(false)
   // Sort mode: 'cluster' = cardiometabolic first then newest NPI; 'llc_newest' = newest LLC first (untyped at end)
   const [sortMode, setSortMode] = useState<"cluster" | "llc_newest">("cluster")
   const [savingNpi, setSavingNpi] = useState<string | null>(null)
@@ -197,6 +214,12 @@ export default function OutreachPage() {
     return { vetted, newPractice }
   }, [leads])
 
+  // AO-derived "true new practice" count — fresh or early-career doc.
+  const freshDocCount = useMemo(
+    () => leads.filter((l) => l.quality === "good" && (l.practice_age_signal === "fresh" || l.practice_age_signal === "early")).length,
+    [leads]
+  )
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const matched = leads.filter((l) => {
@@ -213,6 +236,7 @@ export default function OutreachPage() {
         const m = monthsSince(l.enumeration_date)
         if (m === null || m >= 18) return false
       }
+      if (freshDocOnly && l.practice_age_signal !== "fresh" && l.practice_age_signal !== "early") return false
       return true
     })
 
@@ -233,7 +257,7 @@ export default function OutreachPage() {
       const db = b.enumeration_date ? Date.parse(b.enumeration_date) : 0
       return db - da
     })
-  }, [leads, search, specialtyFilter, statusFilter, qualityView, newLlcOnly, newNpiOnly, sortMode])
+  }, [leads, search, specialtyFilter, statusFilter, qualityView, newLlcOnly, newNpiOnly, freshDocOnly, sortMode])
 
   if (authLoading || loading) {
     return (
@@ -266,7 +290,7 @@ export default function OutreachPage() {
             {qualityCounts.callable} callable of {qualityCounts.all}
           </span>
           <span className="text-sm text-emerald-400">
-            {llcCounts.newPractice} new LLC (&lt;18mo) · {llcCounts.vetted}/{qualityCounts.callable} Sunbiz-vetted
+            {freshDocCount} fresh-doc ICP · {llcCounts.newPractice} new LLC · {llcCounts.vetted}/{qualityCounts.callable} Sunbiz-vetted
           </span>
         </div>
 
@@ -342,6 +366,17 @@ export default function OutreachPage() {
             {newNpiOnly ? "✓ New NPI only (<18mo)" : "+ New NPI only"}
           </button>
           <button
+            onClick={() => setFreshDocOnly((v) => !v)}
+            title="True ICP filter: only practices where the doc behind the NPI is <8 years into practice (fresh or early-career). Filters out 20-yr veterans doing LLC reorgs."
+            className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+              freshDocOnly
+                ? "bg-emerald-500/25 text-emerald-200 border-emerald-500/50"
+                : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+            }`}
+          >
+            {freshDocOnly ? "✓ Fresh doc only" : "+ Fresh doc only"} <span className="ml-1 text-xs opacity-70">{freshDocCount}</span>
+          </button>
+          <button
             onClick={() => setNewLlcOnly((v) => !v)}
             title="ICP filter: only practices whose LLC was filed in the last 18 months"
             className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
@@ -372,6 +407,7 @@ export default function OutreachPage() {
             const flagged = l.quality && l.quality !== "good"
             const llcMonths = monthsSince(l.llc_formation_date)
             const llcBadge = llcAgeLabel(llcMonths)
+            const aoB = aoBadge(l.ao_years_practicing, l.practice_age_signal)
             return (
             <div
               key={l.npi}
@@ -394,6 +430,14 @@ export default function OutreachPage() {
                         title={`Sunbiz filed ${l.llc_formation_date}`}
                       >
                         {llcBadge.label}
+                      </span>
+                    )}
+                    {aoB && (
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-semibold ${aoB.cls}`}
+                        title={`AO: ${l.ao_first_name || ""} ${l.ao_last_name || ""}${l.ao_credential ? ", " + l.ao_credential : ""}`}
+                      >
+                        {aoB.label}
                       </span>
                     )}
                     {flagged && (
