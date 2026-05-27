@@ -124,6 +124,7 @@ export default function OutreachPage() {
   const [qualityView, setQualityView] = useState<"callable" | "filtered" | "all">("callable")
   // ICP filter: only show practices whose LLC is <18mo old (Grant's "new practices" ICP)
   const [newLlcOnly, setNewLlcOnly] = useState(false)
+  const [newNpiOnly, setNewNpiOnly] = useState(false)
   // Sort mode: 'cluster' = cardiometabolic first then newest NPI; 'llc_newest' = newest LLC first (untyped at end)
   const [sortMode, setSortMode] = useState<"cluster" | "llc_newest">("cluster")
   const [savingNpi, setSavingNpi] = useState<string | null>(null)
@@ -208,6 +209,10 @@ export default function OutreachPage() {
         const m = monthsSince(l.llc_formation_date)
         if (m === null || m >= 18) return false
       }
+      if (newNpiOnly) {
+        const m = monthsSince(l.enumeration_date)
+        if (m === null || m >= 18) return false
+      }
       return true
     })
 
@@ -228,7 +233,7 @@ export default function OutreachPage() {
       const db = b.enumeration_date ? Date.parse(b.enumeration_date) : 0
       return db - da
     })
-  }, [leads, search, specialtyFilter, statusFilter, qualityView, newLlcOnly, sortMode])
+  }, [leads, search, specialtyFilter, statusFilter, qualityView, newLlcOnly, newNpiOnly, sortMode])
 
   if (authLoading || loading) {
     return (
@@ -325,6 +330,17 @@ export default function OutreachPage() {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => setNewNpiOnly((v) => !v)}
+            title="ICP filter: only practices whose NPI was enumerated in the last 18 months — cheap newness signal before Sunbiz vetting"
+            className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+              newNpiOnly
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+            }`}
+          >
+            {newNpiOnly ? "✓ New NPI only (<18mo)" : "+ New NPI only"}
+          </button>
           <button
             onClick={() => setNewLlcOnly((v) => !v)}
             title="ICP filter: only practices whose LLC was filed in the last 18 months"
