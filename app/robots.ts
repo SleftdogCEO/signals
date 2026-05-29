@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/auth/", "/dashboard/", "/onboarding/", "/brief/", "/snapshot/"],
+        disallow: ["/api/", "/auth", "/dashboard/", "/onboarding/", "/brief/", "/snapshot/"],
       },
     ],
     sitemap: "https://sleftsignals.com/sitemap.xml",

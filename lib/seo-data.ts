@@ -123,8 +123,8 @@ export const specialties: Specialty[] = [
     slug: "urologists",
     name: "Urologist",
     plural: "Urologists",
-    refersTo: ["Primary Care Physicians", "OB-GYNs"],
-    description: "Urologists depend on primary care referrals for prostate screening, kidney stones, BPH, and urinary issues. OB-GYNs are a critical bidirectional partner for pelvic floor disorders, incontinence, and recurrent UTIs in women. Building strong PCP and OB-GYN relationships across your service area covers the majority of urology patient acquisition.",
+    refersTo: ["Primary Care Physicians", "OB-GYNs", "Endocrinologists"],
+    description: "Urologists depend on primary care referrals for prostate screening, kidney stones, BPH, and urinary issues. OB-GYNs are a critical bidirectional partner for pelvic floor disorders, incontinence, and recurrent UTIs in women. Endocrinology is a natural partner for testosterone deficiency, diabetic erectile dysfunction, and metabolic stone disease. Building strong PCP and OB-GYN relationships across your service area covers the majority of urology patient acquisition.",
   },
   {
     slug: "ob-gyns",

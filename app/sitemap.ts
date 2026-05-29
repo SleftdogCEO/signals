@@ -49,16 +49,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/auth`,
+      url: `${baseUrl}/directory`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "daily",
       priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/welcome`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
     {
       url: `${baseUrl}/referral-lookup`,

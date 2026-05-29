@@ -5,13 +5,15 @@ import type { DirectoryProvider } from "@/lib/directory"
 import DirectoryBrowser from "@/components/directory/DirectoryBrowser"
 
 export const metadata: Metadata = {
-  title: "Physician Referral Directory | Sleft Signals",
+  title: "Physician Referral Directory",
   description:
     "Browse physician practices in the Sleft Signals network. See each practice's specialty, location, what they refer out, and the referrals they're looking for.",
+  alternates: { canonical: "/directory" },
 }
 
-// Always reflect the latest providers.
-export const dynamic = "force-dynamic"
+// Cache the directory for an hour so crawlers get a fast, static response while
+// new providers still surface within the hour (ISR instead of force-dynamic).
+export const revalidate = 3600
 
 const PAGE_SIZE = 24
 const SELECT_COLUMNS =

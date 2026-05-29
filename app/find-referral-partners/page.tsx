@@ -4,14 +4,12 @@ import { specialties, cities } from "@/lib/seo-data"
 import { ArrowRight, Zap, Stethoscope, MapPin } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Find Healthcare Referral Partners by Specialty & City (2026)",
-  description:
-    "Browse referral partner opportunities for 22 healthcare specialties across 35 cities. Free provider matching. No ads, no agencies -- just local referral relationships.",
+  title: "Find Physician Referral Partners by Specialty & City (2026)",
+  description: `Browse referral partner opportunities for ${specialties.length} physician specialties across ${cities.length} cities. Free provider matching. No ads, no agencies -- just local referral relationships.`,
   alternates: { canonical: "/find-referral-partners" },
   openGraph: {
-    title: "Find Healthcare Referral Partners - Sleft Signals",
-    description:
-      "Browse referral partner opportunities for 22 healthcare specialties across 35 cities.",
+    title: "Find Physician Referral Partners - Sleft Signals",
+    description: `Browse referral partner opportunities for ${specialties.length} physician specialties across ${cities.length} cities.`,
     url: "https://sleftsignals.com/find-referral-partners",
     type: "website",
   },
