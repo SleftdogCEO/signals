@@ -373,7 +373,7 @@ export default function HomePage() {
                 "@id": "https://sleftsignals.com/#organization",
                 name: "Sleft Signals",
                 url: "https://sleftsignals.com",
-                logo: "https://sleftsignals.com/logo.png",
+                logo: "https://sleftsignals.com/logo.svg",
                 description:
                   "Physician referral partner matching. Find physicians in complementary specialties who share your patient population, within a 5-10 mile radius of your practice.",
                 founder: {
@@ -392,14 +392,6 @@ export default function HomePage() {
                 description: "Healthcare Referral Partner Matching",
                 publisher: { "@id": "https://sleftsignals.com/#organization" },
                 inLanguage: "en-US",
-                potentialAction: {
-                  "@type": "SearchAction",
-                  target: {
-                    "@type": "EntryPoint",
-                    urlTemplate: "https://sleftsignals.com/find-referral-partners/{search_term_string}",
-                  },
-                  "query-input": "required name=search_term_string",
-                },
               },
               {
                 "@type": "Service",
