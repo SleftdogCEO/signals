@@ -72,6 +72,8 @@ const PARTNER_CATEGORIES = [
 // thinking for the user. Falls back to a broad, sensible set.
 function recommendedCategoriesFor(specialty: string): string[] {
   const s = (specialty || "").toLowerCase()
+  if (s.includes("dietit") || s.includes("dietic") || s.includes("nutrition"))
+    return ["internal_medicine_subspecialties", "primary_care", "womens_childrens"]
   if (s.includes("weight") || s.includes("obesity"))
     return ["internal_medicine_subspecialties", "womens_childrens", "primary_care"]
   if (s.includes("primary") || s.includes("family") || s.includes("internal medicine"))
@@ -112,6 +114,7 @@ const SPECIALTIES = [
   "OB-GYN",
   "Sports Medicine",
   "Plastic Surgery",
+  "Registered Dietitian",
   "Other physician specialty"
 ]
 
@@ -139,6 +142,7 @@ const OFFERINGS_BY_SPECIALTY: Record<string, string[]> = {
   "OB-GYN": ["prenatal care", "well-woman exams", "contraception", "menopause management", "PCOS care", "gynecologic surgery", "fertility evaluation"],
   "Sports Medicine": ["injury evaluation", "concussion management", "joint injections", "regenerative medicine", "sports physicals", "rehab planning"],
   "Plastic Surgery": ["reconstructive surgery", "cosmetic surgery", "breast reconstruction", "skin cancer reconstruction", "hand surgery", "injectables & fillers"],
+  "Registered Dietitian": ["medical nutrition therapy", "diabetes nutrition counseling", "weight management", "GLP-1 nutrition support", "meal planning", "bariatric nutrition", "GI & celiac nutrition", "renal nutrition", "sports nutrition", "prenatal nutrition"],
 }
 const DEFAULT_OFFERINGS = ["consultations", "diagnostics", "procedures", "chronic disease management", "preventive care", "follow-up care"]
 
@@ -369,6 +373,27 @@ export default function OnboardingPage() {
 
           if (error) throw error
         }
+      }
+
+      // Notify Grant that a provider completed their profile (qualified-lead
+      // signal with specialty/location/interests). Best-effort: never block the
+      // user's redirect on this.
+      try {
+        await fetch("/api/notify/onboarded", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            practiceName: formData.practiceName,
+            specialty: formData.specialty,
+            location: formData.location,
+            patientsIWant: formData.partnerInterests,
+            patientsIRefer: formData.referInterests,
+            serviceTags: formData.serviceTags,
+          }),
+        })
+      } catch {
+        /* best-effort notification; ignore failures */
       }
 
       // Redirect to welcome experience

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { sendSignupNotification } from "@/lib/email"
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
@@ -57,6 +58,16 @@ export async function POST(request: NextRequest) {
 
     // Create Airtable record
     const airtableResult = await createAirtableRecord(body)
+
+    // Sentinel: grant@sleftpayments.com must hear about EVERY signup. Fire the
+    // notification even if Airtable failed — we await it so the serverless
+    // function doesn't get killed before the request lands, but a failure here
+    // never blocks the registration response.
+    await sendSignupNotification({
+      email: body.email,
+      fullName: body.fullName,
+      authProvider: body.authProvider,
+    })
 
     if (airtableResult.success) {
       return NextResponse.json({

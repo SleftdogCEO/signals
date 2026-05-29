@@ -115,6 +115,93 @@ export async function sendIntroRequestNotification(params: {
   }
 }
 
+/**
+ * Notify Grant of EVERY new signup (email or Google) the moment the account is
+ * created. Fires from /api/auth/register, the single chokepoint both signup
+ * paths funnel through. Uses the sleftpayments lead-capture API so it works
+ * with no SMTP/Resend env on the sleftsignals side.
+ */
+export async function sendSignupNotification(params: {
+  email: string
+  fullName?: string
+  authProvider?: string
+}) {
+  try {
+    const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: params.email,
+        name: params.fullName || "",
+        businessName: params.fullName || "Sleft Signals Signup",
+        source: "sleftsignals.com",
+        conversationSummary: [
+          `New Sleft Signals Signup`,
+          `Name: ${params.fullName || "(not provided)"}`,
+          `Email: ${params.email}`,
+          `Auth: ${params.authProvider || "email"}`,
+          `Time: ${new Date().toLocaleString()}`,
+        ].join("\n"),
+      }),
+    })
+
+    if (!res.ok) {
+      console.error("Signup notification failed:", res.status, await res.text())
+    } else {
+      console.log("Signup notification sent via lead-capture API")
+    }
+  } catch (err) {
+    console.error("Failed to send signup notification:", err)
+  }
+}
+
+/**
+ * Notify Grant when a provider COMPLETES their onboarding profile. This is the
+ * qualified-lead signal: it carries specialty, location, what they want, and
+ * what they refer out — everything needed to score the lead and reach out.
+ * Fired server-side from /api/notify/onboarded to avoid a browser CORS call.
+ */
+export async function sendProviderOnboardedNotification(params: {
+  email: string
+  practiceName?: string
+  specialty?: string
+  location?: string
+  patientsIWant?: string[]
+  patientsIRefer?: string[]
+  serviceTags?: string[]
+}) {
+  try {
+    const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: params.email,
+        name: params.practiceName || "",
+        businessName: params.practiceName || "Sleft Signals Provider",
+        source: "sleftsignals.com",
+        conversationSummary: [
+          `Provider Completed Profile (qualified lead)`,
+          `Practice: ${params.practiceName || "(none)"}`,
+          `Specialty: ${params.specialty || "(none)"}`,
+          `Location: ${params.location || "(none)"}`,
+          `Services: ${(params.serviceTags || []).join(", ") || "(none)"}`,
+          `Wants patients from: ${(params.patientsIWant || []).join(", ") || "(none)"}`,
+          `Refers patients to: ${(params.patientsIRefer || []).join(", ") || "(none)"}`,
+          `Time: ${new Date().toLocaleString()}`,
+        ].join("\n"),
+      }),
+    })
+
+    if (!res.ok) {
+      console.error("Onboarded notification failed:", res.status, await res.text())
+    } else {
+      console.log("Provider onboarded notification sent via lead-capture API")
+    }
+  } catch (err) {
+    console.error("Failed to send onboarded notification:", err)
+  }
+}
+
 function buildSnapshotEmail(
   firstName: string,
   specialty: string,

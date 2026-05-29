@@ -1,19 +1,19 @@
-// Referral Adjacency Map - PHYSICIAN ONLY
-// Maps each of the 19 physician specialties in lib/seo-data.ts to the
-// specialties whose patients naturally flow to/from them, in priority order.
-// First entry = highest-volume referral source for that specialty.
+// Referral Adjacency Map
+// Maps each specialty in lib/seo-data.ts (plus allied providers like dietitians)
+// to the specialties whose patients naturally flow to/from them, in priority
+// order. First entry = highest-volume referral source for that specialty.
 // Keep keys aligned to the SPECIALTIES array in app/onboarding/page.tsx so that
 // formData.specialty submitted from onboarding produces a valid lookup.
 
 export const ADJACENCY_MAP: Record<string, string[]> = {
   // Primary care: hub of the physician network
-  "Primary Care": ["Cardiology", "Endocrinology", "Psychiatry", "Dermatology", "Gastroenterology", "Neurology", "Pulmonology", "Orthopedic Surgery"],
+  "Primary Care": ["Cardiology", "Endocrinology", "Psychiatry", "Dermatology", "Gastroenterology", "Neurology", "Pulmonology", "Orthopedic Surgery", "Registered Dietitian"],
 
   // Internal medicine subspecialties
   "Cardiology": ["Primary Care", "Endocrinology", "Pulmonology", "Sports Medicine"],
   "Pulmonology": ["Primary Care", "Allergy & Immunology", "Cardiology", "ENT (Otolaryngology)"],
-  "Endocrinology": ["Primary Care", "Cardiology", "Pediatrics", "OB-GYN"],
-  "Gastroenterology": ["Primary Care", "Pediatrics", "Rheumatology", "Allergy & Immunology"],
+  "Endocrinology": ["Primary Care", "Registered Dietitian", "Cardiology", "Pediatrics", "OB-GYN"],
+  "Gastroenterology": ["Primary Care", "Registered Dietitian", "Pediatrics", "Rheumatology", "Allergy & Immunology"],
   "Rheumatology": ["Primary Care", "Dermatology", "Pain Management", "Gastroenterology"],
   "Neurology": ["Primary Care", "Psychiatry", "Pediatrics", "Pain Management"],
 
@@ -36,6 +36,13 @@ export const ADJACENCY_MAP: Record<string, string[]> = {
   // Women's & children's
   "Pediatrics": ["Allergy & Immunology", "ENT (Otolaryngology)", "Psychiatry", "Endocrinology"],
   "OB-GYN": ["Primary Care", "Endocrinology", "Urology", "Psychiatry"],
+
+  // Allied / non-physician providers
+  // Registered Dietitians exchange patients with the metabolic & GI specialties:
+  // endocrinology (diabetes/thyroid), primary care, obesity medicine (GLP-1),
+  // gastroenterology (celiac/IBD/fatty liver), cardiology (cardiac diet), and
+  // OB-GYN (PCOS/gestational diabetes).
+  "Registered Dietitian": ["Endocrinology", "Primary Care", "Weight Loss / Obesity Medicine", "Gastroenterology", "Cardiology", "OB-GYN"],
 }
 
 // Get all unique specialties
