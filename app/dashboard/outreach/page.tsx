@@ -277,9 +277,14 @@ export default function OutreachPage() {
             </div>
             <h1 className="text-lg font-bold">Outreach</h1>
           </div>
-          <Link href="/dashboard/network/hub" className="text-sm text-slate-400 hover:text-white">
-            ← Back to network
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/outreach/worklist" className="text-sm font-semibold text-blue-300 hover:text-blue-200">
+              SDR Worklist →
+            </Link>
+            <Link href="/dashboard/network/hub" className="text-sm text-slate-400 hover:text-white">
+              ← Back to network
+            </Link>
+          </div>
         </div>
       </header>
 
