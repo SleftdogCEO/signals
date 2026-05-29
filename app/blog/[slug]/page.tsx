@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 import { notFound } from "next/navigation"
-import { getBlogPost, getAllBlogPosts } from "@/lib/blog-posts"
+import { getBlogPost, getAllBlogPosts, blogPosts } from "@/lib/blog-posts"
 import { specialties } from "@/lib/seo-data"
 import SiteNav from "@/components/SiteNav"
 import SiteFooter from "@/components/SiteFooter"
@@ -39,6 +40,11 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getBlogPost(slug)
   if (!post) notFound()
 
+  // Only the hand-written posts get a real physician byline + BlogPosting/Person
+  // schema. The programmatic posts stay unbylined Article so we never attach
+  // Dr. Denmark's name (and E-E-A-T weight) to templated content.
+  const isHandWritten = blogPosts.some((p) => p.slug === post.slug)
+
   return (
     <div className="min-h-screen text-white">
       {/* Nav */}
@@ -59,6 +65,22 @@ export default async function BlogPostPage({ params }: Props) {
             </h1>
             <p className="text-lg text-slate-400">{post.excerpt}</p>
           </div>
+
+          {isHandWritten && (
+            <div className="flex items-center gap-3 mb-10 pb-8 border-b border-slate-800">
+              <Image
+                src="/grant-headshot.png"
+                alt="Dr. Grant Denmark, DO"
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover object-top border border-white/10"
+              />
+              <div>
+                <p className="text-white font-semibold leading-tight">Dr. Grant Denmark, DO</p>
+                <p className="text-sm text-slate-500">Emergency Medicine Resident &middot; Founder, Sleft Signals</p>
+              </div>
+            </div>
+          )}
 
           <div
             className="prose-signals"
@@ -112,19 +134,34 @@ export default async function BlogPostPage({ params }: Props) {
           __html: JSON.stringify([
             {
               "@context": "https://schema.org",
-              "@type": "Article",
+              "@type": isHandWritten ? "BlogPosting" : "Article",
               headline: post.title,
               description: post.metaDescription,
               datePublished: post.date,
-              author: {
-                "@type": "Person",
-                name: "Grant Denmark",
-                url: "https://sleftsignals.com",
-              },
+              dateModified: post.date,
+              image: "https://sleftsignals.com/opengraph-image",
+              mainEntityOfPage: `https://sleftsignals.com/blog/${post.slug}`,
+              author: isHandWritten
+                ? {
+                    "@type": "Person",
+                    name: "Grant Denmark, DO",
+                    jobTitle: "Emergency Medicine Resident Physician",
+                    image: "https://sleftsignals.com/grant-headshot.png",
+                    url: "https://sleftsignals.com",
+                  }
+                : {
+                    "@type": "Organization",
+                    name: "Sleft Signals",
+                    url: "https://sleftsignals.com",
+                  },
               publisher: {
                 "@type": "Organization",
                 name: "Sleft Signals",
                 url: "https://sleftsignals.com",
+                logo: {
+                  "@type": "ImageObject",
+                  url: "https://sleftsignals.com/logo.svg",
+                },
               },
             },
             {

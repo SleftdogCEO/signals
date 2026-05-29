@@ -11,6 +11,95 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    title: "How to Get More Physician Referrals (Without a Physician Liaison)",
+    slug: "how-to-get-more-physician-referrals-without-a-liaison",
+    excerpt:
+      "Hospitals pay liaison teams six figures to walk in referrals. Independent practices do not have that budget, and they do not need it. Here is the exact playbook to build a referral network on your own.",
+    date: "2026-05-29",
+    readTime: "7 min read",
+    category: "Referral Strategy",
+    metaDescription:
+      "A step by step guide for independent practices to get more physician referrals without hiring a liaison or buying ads. Who to target, what to say, and how to track it.",
+    content: `## Your Schedule Has Gaps And You Do Not Know Why
+
+You are a good doctor. Your patients like you. But some weeks the schedule has holes, and you cannot figure out where the next patient is supposed to come from.
+
+Here is what is happening. The hospital system across town has a team of people whose entire job is to take physicians to lunch and ask for referrals. They are called physician liaisons. A single liaison costs a system $80,000 to $120,000 a year, and large systems run whole teams of them.
+
+You do not have that budget. The good news is you do not need it. The relationships a liaison builds are relationships you can build yourself, and yours will be stronger because they come from the doctor and not a sales rep.
+
+## What A Physician Liaison Actually Does
+
+Strip away the title and a liaison does three simple things:
+
+- They find the doctors nearby who treat the same patients you do
+- They introduce those doctors to the practice and keep the relationship warm
+- They track which relationships actually send patients, and double down on those
+
+None of it requires a salary. It requires knowing who to talk to and following up. You already do the hard part every day, which is taking good care of the patients who get sent to you.
+
+## The Real Cost Of The Alternatives
+
+Most practices that feel slow reach for ads. Here is how the three options compare.
+
+[TABLE]
+[HEADER]Approach|What It Costs|What You Get[/HEADER]
+[ROW]Digital ads|$2,000 to $5,000 a month|Cold leads who price shop and often no-show[/ROW]
+[ROW]Hire a liaison|$80,000 or more a year|Relationships owned by an employee who can leave[/ROW]
+[ROW]Build referrals yourself|A few hours a month|Warm patients who trust you before they arrive, and relationships you keep[/ROW]
+[/TABLE]
+
+Ads send strangers. Referrals send patients who were told by a doctor they trust that you are the right person to see. Those patients show up, follow the plan, and stay.
+
+## Step 1: Find The Doctors Who Already Treat Your Patients
+
+Every specialty has a short list of other specialties that naturally send it patients. A cardiologist gets patients from primary care. A pain specialist gets them from orthopedic surgeons. A psychiatrist gets them from pediatricians and primary care.
+
+You want the doctors in those specialties who are within about ten miles of your office. Close enough that a referral is convenient for the patient, which is what makes it stick.
+
+You can pull this list by hand from public records, or you can get it free in two minutes. Our [free referral lookup](/referral-lookup) shows you exactly which specialties refer to yours and why, and the [referral partner finder](/find-referral-partners) shows the providers near you.
+
+## Step 2: Make The Introduction Yourself
+
+A liaison walks in and says "let me tell you about Dr. So and So." When you do it yourself, you walk in and say "I am Dr. So and So." That is a completely different conversation, and it is far more powerful.
+
+Pick the five highest value practices from your list. For each one:
+
+- Stop by in person and introduce yourself to the front desk and, if they are free, the doctor
+- Leave a simple card that says what you treat and how fast you can see their patients
+- Follow up with a short handwritten note
+
+The single most important thing you can offer is access. The reason doctors stop referring is that their patients cannot get in. If you can promise a referred patient gets seen within a week, say so, and then keep that promise.
+
+## Step 3: Close The Loop Every Single Time
+
+This is the step that separates practices that grow from practices that plateau.
+
+When a doctor sends you a patient, send back a short note within 48 hours. Tell them what you found and what you did. This does two things. It tells the referring doctor their patient is in good hands, and it reminds them you exist the next time they have someone to send.
+
+Doctors keep referring to the people who make them look good to their own patients. A closed loop is how you do that.
+
+## Step 4: Track What Works
+
+You do not need software for this. A simple list works. Write down every practice you have a relationship with and how many patients they send each month. After 90 days you will see the pattern. A handful of relationships will drive most of your referrals.
+
+Spend your time on those. Thank them. Take them to lunch. The rest you keep warm with the occasional note.
+
+## You Can Start This Week
+
+You do not need a budget or a hire. You need a list of the right doctors nearby, a few introductions, and the discipline to close the loop.
+
+[TABLE]
+[HEADER]Week|What To Do[/HEADER]
+[ROW]Week 1|Build your list of complementary specialties within 10 miles[/ROW]
+[ROW]Week 2|Introduce yourself in person to your top 5 targets[/ROW]
+[ROW]Week 3|Set up your 48 hour loop closing note[/ROW]
+[ROW]Week 4|Start tracking who sends what, and double down[/ROW]
+[/TABLE]
+
+**See which doctors near you could be sending patients right now.** [Get your free referral map at Sleft Signals](/referral-lookup). It takes two minutes and does not require a signup.`,
+  },
+  {
     title: "How Practice Owners Can Build Their Own AI Automations (Without Paying An Agency)",
     slug: "practice-owner-ai-automations-claude-code",
     excerpt:
