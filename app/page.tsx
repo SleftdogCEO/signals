@@ -12,6 +12,8 @@ import {
 import { specialties } from "@/lib/seo-data"
 import TypingSpecialty from "@/components/TypingSpecialty"
 import HeroReferralCTA from "@/components/HeroReferralCTA"
+import SiteNav from "@/components/SiteNav"
+import SiteFooter from "@/components/SiteFooter"
 
 const features = [
   {
@@ -53,38 +55,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-white overflow-hidden">
       {/* Nav */}
-      <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
-        <Link href="/" className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-          Sleft Signals
-        </Link>
-
-        <div className="flex items-center gap-4">
-          <Link
-            href="/blog"
-            className="text-slate-400 hover:text-white transition-colors font-medium"
-          >
-            Blog
-          </Link>
-          <Link
-            href="/directory"
-            className="text-slate-400 hover:text-white transition-colors font-medium"
-          >
-            Directory
-          </Link>
-          <Link
-            href="/auth"
-            className="text-slate-400 hover:text-white transition-colors font-medium"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/auth?signup=true"
-            className="px-5 py-2.5 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            Get Started
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Hero - Centered */}
       <main className="relative z-20 px-6 lg:px-12 pt-20 lg:pt-28 pb-20">
@@ -389,12 +360,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-semibold text-white">Sleft Signals</span>
-          <span className="text-sm text-slate-500">Local referral intelligence for physician practices</span>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <script
         type="application/ld+json"

@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import type { DirectoryProvider } from "@/lib/directory"
 import DirectoryBrowser from "@/components/directory/DirectoryBrowser"
+import SiteNav from "@/components/SiteNav"
+import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
   title: "Physician Referral Directory",
@@ -57,28 +59,7 @@ export default async function DirectoryPage() {
   return (
     <div className="min-h-screen overflow-hidden text-white">
       {/* Nav */}
-      <nav className="relative z-40 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-12">
-        <Link
-          href="/"
-          className="text-3xl font-extrabold tracking-tight text-white md:text-4xl"
-        >
-          Sleft Signals
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/auth"
-            className="font-medium text-slate-400 transition-colors hover:text-white"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/auth?signup=true"
-            className="rounded-lg bg-white px-5 py-2.5 font-semibold text-slate-900 transition-colors hover:bg-slate-100"
-          >
-            Get Started
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Header */}
       <header className="relative z-20 mx-auto max-w-7xl px-6 pb-10 pt-10 lg:px-12">
@@ -101,6 +82,7 @@ export default async function DirectoryPage() {
           initialHasMore={hasMore}
         />
       </main>
+      <SiteFooter />
     </div>
   )
 }

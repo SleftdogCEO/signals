@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { specialties, cities } from "@/lib/seo-data"
 import { ArrowRight, Zap, Stethoscope, MapPin } from "lucide-react"
+import SiteNav from "@/components/SiteNav"
+import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
   title: "Find Physician Referral Partners by Specialty & City (2026)",
@@ -18,25 +20,7 @@ export const metadata: Metadata = {
 export default function FindReferralPartnersPage() {
   return (
     <div className="min-h-screen text-white">
-      <nav className="relative z-40 flex items-center justify-between px-6 lg:px-12 py-6 max-w-7xl mx-auto">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-white">Sleft Signals</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/blog" className="text-slate-400 hover:text-white transition-colors font-medium">
-            Blog
-          </Link>
-          <Link
-            href="/auth?signup=true"
-            className="px-5 py-2.5 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            Get Started
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <main className="relative z-20 px-6 lg:px-12 pt-12 pb-20">
         <div className="max-w-5xl mx-auto">
@@ -123,17 +107,7 @@ export default function FindReferralPartnersPage() {
         </div>
       </main>
 
-      <footer className="relative z-10 px-6 py-12 border-t border-slate-800 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-white">Sleft Signals</span>
-          </div>
-          <span className="text-sm text-slate-500">Local referral intelligence for healthcare practices</span>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <script
         type="application/ld+json"

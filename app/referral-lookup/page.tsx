@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import ReferralLookupClient from "@/components/ReferralLookupClient"
+import SiteNav from "@/components/SiteNav"
+import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
   title: "Who Refers Patients to Your Specialty? Free Referral Lookup",
@@ -16,5 +18,11 @@ export const metadata: Metadata = {
 }
 
 export default function ReferralLookupPage() {
-  return <ReferralLookupClient />
+  return (
+    <div className="min-h-screen text-white overflow-hidden">
+      <SiteNav />
+      <ReferralLookupClient />
+      <SiteFooter />
+    </div>
+  )
 }
