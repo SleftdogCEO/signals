@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { specialties, cities, getSpecialty } from "@/lib/seo-data"
+import { buildReverseReferralMap, buildOutboundReferrals, potentialColors } from "@/lib/referral-logic"
 import { ArrowRight, Zap, MapPin, Users, CheckCircle, Stethoscope } from "lucide-react"
 
 interface Props {
@@ -39,6 +40,8 @@ export default async function SpecialtyPage({ params }: Props) {
   if (!spec) notFound()
 
   const otherSpecialties = specialties.filter((s) => s.slug !== slug)
+  const inbound = buildReverseReferralMap(spec)
+  const outbound = buildOutboundReferrals(spec)
 
   return (
     <div className="min-h-screen text-white">
@@ -82,26 +85,86 @@ export default async function SpecialtyPage({ params }: Props) {
             </p>
           </div>
 
-          {/* Who refers to you */}
+          {/* Who refers TO this specialty (inbound) -- the clinical referral map */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12 mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Who Refers Patients to {spec.plural}?
             </h2>
+            <p className="text-slate-400 mb-8 max-w-3xl">
+              These specialties see patients who need {spec.name.toLowerCase()} care every day. Build relationships with the ones near your practice and the referrals follow. Here is exactly who refers, and the clinical reasons they do.
+            </p>
+            {inbound.length > 0 ? (
+              <div className="space-y-4">
+                {inbound.map((partner) => (
+                  <div
+                    key={partner.specialtyName}
+                    className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5"
+                  >
+                    <div className="flex items-center gap-3 sm:w-72 flex-shrink-0">
+                      <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold leading-tight">{partner.specialtyName}</p>
+                        <span
+                          className={`inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${potentialColors[partner.referralPotential]}`}
+                        >
+                          {partner.referralPotential === "High"
+                            ? "High-volume source"
+                            : partner.referralPotential === "Medium"
+                              ? "Moderate source"
+                              : "Occasional source"}
+                          {partner.direction === "bidirectional" ? " · two-way" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-300 leading-relaxed flex-1">{partner.reason}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {spec.refersTo.map((partner) => (
+                  <div
+                    key={partner}
+                    className="flex items-center gap-4 bg-slate-800/50 border border-slate-700 rounded-xl p-5"
+                  >
+                    <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ArrowRight className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold">{partner}</p>
+                      <p className="text-sm text-slate-400">Key referral partner for {spec.plural.toLowerCase()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Who this specialty refers OUT to (outbound) */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 md:p-12 mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Who {spec.plural} Refer Patients To
+            </h2>
+            <p className="text-slate-400 mb-8 max-w-3xl">
+              Referrals compound when they flow both ways. These are the specialties {spec.plural.toLowerCase()} most often send patients to, which makes them natural two-way partners.
+            </p>
             <div className="grid sm:grid-cols-2 gap-4">
-              {spec.refersTo.map((partner) => (
+              {outbound.map((partner) => (
                 <div
-                  key={partner}
-                  className="flex items-center gap-4 bg-slate-800/50 border border-slate-700 rounded-xl p-5"
+                  key={partner.specialtyName}
+                  className="bg-slate-800/40 border border-slate-700 rounded-xl p-5"
                 >
-                  <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <ArrowRight className="w-5 h-5 text-emerald-400" />
+                  <div className="flex items-center justify-between mb-2 gap-3">
+                    <p className="text-white font-semibold">{partner.specialtyName}</p>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${potentialColors[partner.referralPotential]}`}
+                    >
+                      {partner.referralPotential}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-white font-semibold">{partner}</p>
-                    <p className="text-sm text-slate-400">
-                      Refers patients to {spec.plural.toLowerCase()}
-                    </p>
-                  </div>
+                  <p className="text-sm text-slate-400 leading-relaxed">{partner.reason}</p>
                 </div>
               ))}
             </div>
