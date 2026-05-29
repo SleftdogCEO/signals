@@ -1,5 +1,13 @@
 # Sleft Signals SDR Pipeline
 
+## ICP (validated 2026-05-29, 5-lens analysis)
+Target **reachable, owner-run independent practices that monetize patient VOLUME**: cash-pay
+GLP-1/weight-loss, DPC/concierge PCPs, physician-owned med spas, plus referral-starved
+independent endo/GI/OB-GYN and multi-location therapy/psych groups. Live website + reachable
+channel required; owning-doc tenure >=3yr; 1-5 providers; <=25mi Tampa. **Do NOT target by
+"newest" - new org NPIs skew unreachable, web-less, and cash-fragile.** Exclude hospital-employed,
+billing-only LLCs, telehealth-only. Practice MODEL is the strongest signal, not age.
+
 Turns raw NPPES practices into a ranked, contactable outreach list. Four modules:
 
 ```
@@ -30,10 +38,13 @@ best_channel, enrichment_notes, lead_score, lead_tier, enriched_at`.
 `/tmp/sdr_enriched.json` (enrichment output), joins on `npi`, scores 0-100, and writes
 `/tmp/sdr_update.sql`.
 
-Scoring: reachability (40) + web presence (18) + specialty referral value (20) +
-decision-maker known (10) + clean-independent base (12). Hard penalty for billing-entity,
-hospital-employed, or telehealth-only (these break the independent + geo model).
-Tiers: A >= 72, B 55-71, C 38-54, D < 38.
+Scoring (ICP-weighted): practice model (30, heaviest: cash-pay/GLP-1 > concierge/DPC >
+med-spa > integrative > insurance) + reachability (30) + ad/booking signal (10) + specialty
+referral value (12) + web presence (8) + decision-maker known (5). Hard -30 penalty +
+auto-D for billing-entity, hospital-employed, or telehealth-only. Tiers: A >= 72, B 55-71,
+C 38-54, D < 38. Sets practice_model, ad_signal, score_reasons, disqualified_reason for CRM
+transparency. (n.b. practice model is detected from enrichment notes; capture it explicitly
+in enrich for new batches.)
 
 `best_channel` = the best automatable contact route: form (no captcha) > email > captcha-form
 > linkedin > phone (always-available fallback).

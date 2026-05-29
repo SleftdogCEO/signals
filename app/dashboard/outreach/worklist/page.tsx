@@ -51,6 +51,10 @@ interface Lead {
   enrichment_notes: string | null
   lead_score: number | null
   lead_tier: string | null
+  practice_model: string | null
+  score_reasons: string | null
+  disqualified_reason: string | null
+  cohort: string | null
   outreach_draft: string | null
   outreach_email_subject: string | null
   outreach_email_body: string | null
@@ -65,7 +69,8 @@ export default function WorklistPage() {
   const { user, loading: authLoading } = useAuth()
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
-  const [tierFilter, setTierFilter] = useState<string>("A")
+  // Default to the A/B validation view: cohort A (reachable cash-pay) first.
+  const [filter, setFilter] = useState<string>("A_reachable")
   const [copiedNpi, setCopiedNpi] = useState<string | null>(null)
   // Local edits to drafts, keyed by npi, so Grant can tweak before sending.
   const [edits, setEdits] = useState<Record<string, string>>({})
@@ -80,25 +85,34 @@ export default function WorklistPage() {
       const { data } = await supabase
         .from("outreach_leads")
         .select(
-          "npi,practice_name,specialty,city,state,phone,phone_verified,status,website,email,contact_form_url,contact_form_captcha,linkedin_url,best_channel,enrichment_notes,lead_score,lead_tier,outreach_draft,outreach_email_subject,outreach_email_body"
+          "npi,practice_name,specialty,city,state,phone,phone_verified,status,website,email,contact_form_url,contact_form_captcha,linkedin_url,best_channel,enrichment_notes,lead_score,lead_tier,practice_model,score_reasons,disqualified_reason,cohort,outreach_draft,outreach_email_subject,outreach_email_body"
         )
-        .not("enriched_at", "is", null)
+        .or("enriched_at.not.is.null,cohort.not.is.null")
         .order("lead_score", { ascending: false, nullsFirst: false })
       setLeads((data as Lead[]) || [])
       setLoading(false)
     })()
   }, [user])
 
-  const filtered = useMemo(
-    () => (tierFilter === "all" ? leads : leads.filter((l) => l.lead_tier === tierFilter)),
-    [leads, tierFilter]
-  )
+  const filtered = useMemo(() => {
+    if (filter === "all") return leads
+    if (filter === "A_reachable") return leads.filter((l) => l.cohort === "A_reachable")
+    if (filter === "B_newer") return leads.filter((l) => l.cohort === "B_newer")
+    if (filter === "tierA") return leads.filter((l) => l.lead_tier === "A")
+    if (filter === "tierB") return leads.filter((l) => l.lead_tier === "B")
+    return leads
+  }, [leads, filter])
 
-  const tierCounts = useMemo(() => {
-    const c: Record<string, number> = {}
-    for (const l of leads) c[l.lead_tier || "?"] = (c[l.lead_tier || "?"] || 0) + 1
-    return c
-  }, [leads])
+  const counts = useMemo(
+    () => ({
+      A_reachable: leads.filter((l) => l.cohort === "A_reachable").length,
+      B_newer: leads.filter((l) => l.cohort === "B_newer").length,
+      tierA: leads.filter((l) => l.lead_tier === "A").length,
+      tierB: leads.filter((l) => l.lead_tier === "B").length,
+      all: leads.length,
+    }),
+    [leads]
+  )
 
   const draftFor = (l: Lead) => edits[l.npi] ?? l.outreach_draft ?? ""
 
@@ -144,15 +158,21 @@ export default function WorklistPage() {
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {(["A", "B", "C", "D", "all"] as const).map((t) => (
+          {[
+            { k: "A_reachable", label: `A/B · Reachable cash-pay (${counts.A_reachable})` },
+            { k: "B_newer", label: `A/B · Newer owner-ops (${counts.B_newer})` },
+            { k: "tierA", label: `Tier A (${counts.tierA})` },
+            { k: "tierB", label: `Tier B (${counts.tierB})` },
+            { k: "all", label: `All (${counts.all})` },
+          ].map((f) => (
             <button
-              key={t}
-              onClick={() => setTierFilter(t)}
+              key={f.k}
+              onClick={() => setFilter(f.k)}
               className={`px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
-                tierFilter === t ? "bg-blue-500/20 border-blue-500/50 text-blue-200" : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white"
+                filter === f.k ? "bg-blue-500/20 border-blue-500/50 text-blue-200" : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white"
               }`}
             >
-              {t === "all" ? `All (${leads.length})` : `${t} (${tierCounts[t] || 0})`}
+              {f.label}
             </button>
           ))}
         </div>
@@ -166,9 +186,16 @@ export default function WorklistPage() {
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className={`px-2 py-0.5 rounded-md border text-xs font-bold ${TIER_CLS[l.lead_tier || "D"]}`}>
-                        {l.lead_tier} · {l.lead_score}
-                      </span>
+                      {l.lead_tier && (
+                        <span className={`px-2 py-0.5 rounded-md border text-xs font-bold ${TIER_CLS[l.lead_tier]}`}>
+                          {l.lead_tier} · {l.lead_score}
+                        </span>
+                      )}
+                      {l.cohort === "B_newer" && (
+                        <span className="px-2 py-0.5 rounded-md border text-xs font-bold bg-purple-500/15 text-purple-300 border-purple-500/40">
+                          newer owner-op
+                        </span>
+                      )}
                       <span className="text-base font-bold">{l.practice_name}</span>
                       <span className={`px-2 py-0.5 rounded-md border text-xs ${STATUS_CLS[l.status] || STATUS_CLS.to_contact}`}>
                         {l.status}
@@ -178,6 +205,17 @@ export default function WorklistPage() {
                       {l.specialty} · {l.city}, {l.state} · best via{" "}
                       <span className="text-slate-200 font-medium">{l.best_channel}</span>
                     </div>
+                    {l.practice_model && (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {l.practice_model.split(",").map((m) => (
+                          <span key={m} className="px-2 py-0.5 rounded-md text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+                            {m.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {l.score_reasons && <p className="text-xs text-slate-500 mt-1.5">Why: {l.score_reasons}</p>}
+                    {l.disqualified_reason && <p className="text-xs text-red-400/80 mt-1">Excluded: {l.disqualified_reason}</p>}
                   </div>
                   <div className="flex items-center gap-3 text-slate-400">
                     {l.website && (

@@ -6,16 +6,27 @@
  * (no local service-role key needed). New leads insert with status
  * 'to_contact'; existing leads are left untouched, preserving your work.
  *
- * Defaults to the newest organization practices (real "newly opened" targets).
+ * SOURCING IS BROAD ON PURPOSE. NPPES only exposes coarse fields (name, taxonomy,
+ * address, phone, dates), so this step does NOT try to identify the ICP. It pulls
+ * a broad org candidate set; the real ICP gating happens downstream in the
+ * enrich + score steps (see scripts/SDR.md), which require a live website and a
+ * cash-pay / DPC / concierge / GLP-1 / med-spa model and reachability. We do NOT
+ * sort newest-first by default: the validated ICP found that newest org NPIs skew
+ * to unreachable, web-less, cash-fragile practices. Use --new only to source the
+ * "newer owner-op" experiment cohort (then verify doc tenure via ao-enrich.mjs).
  *
- * Run:  node scripts/import-leads.mjs            (Tampa, top 150 orgs)
+ * Run:  node scripts/import-leads.mjs              (Tampa, broad candidate set)
  *       node scripts/import-leads.mjs Orlando 200
+ *       node scripts/import-leads.mjs Tampa 150 --new   (newest-first, experiment cohort)
  */
 
 import { writeFileSync } from "node:fs"
 
-const CITY = process.argv[2] || "Tampa"
-const LIMIT = Number(process.argv[3] || 150)
+const args = process.argv.slice(2)
+const NEW_MODE = args.includes("--new")
+const positional = args.filter((a) => !a.startsWith("--"))
+const CITY = positional[0] || "Tampa"
+const LIMIT = Number(positional[1] || 150)
 const STATE = "FL"
 const PER_QUERY = 200
 
@@ -48,7 +59,7 @@ async function fetchNppes(taxonomy) {
   }
 }
 
-// Health-system name patterns — keep in sync with lib/affiliation.ts. We skip
+// Health-system name patterns (keep in sync with lib/affiliation.ts). We skip
 // system-employed orgs because they refer inside their own system and aren't
 // viable independent-referral targets for concierge outreach.
 const SYSTEM_PATTERNS = [
@@ -106,10 +117,14 @@ for (const [specialty, queries] of Object.entries(SPECIALTY_QUERIES)) {
   }
 }
 
-// Newest organization practices first.
+// Org practices, hospital-system names dropped. Default: broad candidate set
+// (sorted by name for stable output) so the enrich+score step can find the ICP.
+// --new: newest-first, only for sourcing the "newer owner-op" experiment cohort.
 const rows = [...byNpi.values()]
   .filter((r) => r.type === "Org" && !isSystem(r.practice_name))
-  .sort((a, b) => b._ts - a._ts)
+  .sort((a, b) =>
+    NEW_MODE ? b._ts - a._ts : (a.practice_name || "").localeCompare(b.practice_name || "")
+  )
   .slice(0, LIMIT)
 
 const values = rows
