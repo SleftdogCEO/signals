@@ -158,7 +158,7 @@ export async function sendSignupNotification(params: {
 /**
  * Notify Grant when a provider COMPLETES their onboarding profile. This is the
  * qualified-lead signal: it carries specialty, location, what they want, and
- * what they refer out — everything needed to score the lead and reach out.
+ * what they refer out: everything needed to score the lead and reach out.
  * Fired server-side from /api/notify/onboarded to avoid a browser CORS call.
  */
 export async function sendProviderOnboardedNotification(params: {
@@ -249,7 +249,7 @@ function buildSnapshotEmail(
     </table>
 
     <p style="margin:0 0 16px;font-size:15px;color:#94a3b8;line-height:1.7;">
-      Your top referral specialty is <strong style="color:#f1f5f9;">${topSpecialty}</strong> — these providers see patients who need your services and are most likely to refer.
+      Your top referral specialty is <strong style="color:#f1f5f9;">${topSpecialty}</strong>. These providers see patients who need your services and are most likely to refer.
     </p>
 
     <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.7;">
