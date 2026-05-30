@@ -473,7 +473,7 @@ function NetworkPageContent() {
                   className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-xl text-lg"
                 >
                   <Zap className="w-5 h-5" />
-                  Join the Network - Free
+                  Become a Founding Member
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>

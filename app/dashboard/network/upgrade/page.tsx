@@ -163,9 +163,9 @@ function UpgradeContent() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-4 leading-[1.1]"
           >
-            Connect With
+            Become a
             <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Your Perfect Partners
+              Founding Member
             </span>
           </motion.h1>
           <motion.p
@@ -174,8 +174,8 @@ function UpgradeContent() {
             transition={{ delay: 0.1 }}
             className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto"
           >
-            Partner matching, community insights, and AI-powered intelligence.
-            Get started at no cost.
+            Be one of the first independent Tampa practices in the network. Founding members
+            join free and lock in early pricing as it grows.
           </motion.p>
         </div>
 
@@ -192,7 +192,7 @@ function UpgradeContent() {
           <div className="relative bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
             {/* Badge */}
             <div className="bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-2.5 text-center">
-              <span className="text-sm font-bold text-white tracking-wide">GET STARTED</span>
+              <span className="text-sm font-bold text-white tracking-wide">FOUNDING MEMBER</span>
             </div>
 
             <div className="p-8">
@@ -201,7 +201,8 @@ function UpgradeContent() {
                 <div className="flex items-baseline justify-center gap-2">
                   <span className="text-5xl font-black text-white">Free</span>
                 </div>
-                <p className="text-slate-500 mt-2">No credit card required</p>
+                <p className="text-slate-400 mt-2">for founding members, no credit card</p>
+                <p className="text-slate-500 text-sm mt-1">Early members lock in founding pricing as the network grows.</p>
               </div>
 
               {/* Features */}
@@ -228,7 +229,7 @@ function UpgradeContent() {
                 className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold text-lg rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/25"
               >
                 <Zap className="w-5 h-5" />
-                Get Started Now
+                Become a Founding Member
               </Link>
 
               {/* Trust badges */}
@@ -239,7 +240,7 @@ function UpgradeContent() {
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                   <Check className="w-4 h-4" />
-                  Get started free
+                  Founding member
                 </div>
               </div>
             </div>
@@ -295,13 +296,15 @@ function UpgradeContent() {
               <h3 className="font-bold text-white mb-2">What features are included?</h3>
               <p className="text-slate-400 text-sm">
                 Partner matching, community discussions, AI-curated insights specific to your specialty,
-                and product reviews from real practices. Get started at no cost.
+                and product reviews from real practices. Free for founding members.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-white mb-2">Do I need a credit card to sign up?</h3>
+              <h3 className="font-bold text-white mb-2">Is it really free, and what happens later?</h3>
               <p className="text-slate-400 text-sm">
-                No. You can create an account and start exploring partner matches without entering any payment information.
+                Yes. Founding members join free while we build the Tampa network, with no credit card required.
+                As the network grows and starts sending you patients, there will be a membership, and founding
+                members lock in the early rate.
               </p>
             </div>
           </div>

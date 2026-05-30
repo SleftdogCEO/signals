@@ -13,17 +13,20 @@ export const stripe = process.env.STRIPE_SECRET_KEY
 
 export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || ''
 
+// Founding-member phase: free to join while the Tampa network is built; the real
+// price is being validated with early members, not hardcoded. The live Stripe
+// charge (when used) is driven by STRIPE_PRICE_ID above, not this display config.
 export const PLANS = {
-  warmIntros: {
-    name: 'Warm Introductions',
-    price: 120,
+  founding: {
+    name: 'Founding Member',
+    price: 0,
     interval: 'month' as const,
     features: [
+      'Hand-brokered warm introductions to nearby practices',
       'We reach out to partners on your behalf',
-      'Meetings scheduled for you',
-      'Pre-qualified, mutual-fit partners',
-      'Relationship facilitation support',
-      'Access to community & insights',
+      'Two-way, mutual-fit referral matches',
+      'Founding rate locked in as the network grows',
+      'Community and local market insights',
     ],
   },
 }

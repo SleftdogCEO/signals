@@ -121,9 +121,9 @@ When they reply yes to an intro, Grant brokers a real three-way email connecting
 
 The ask comes only after at least one brokered intro lands, ideally after a real patient has moved between the two practices. Never lead with it.
 
-> The map and that first introduction are on me. What I am building is the ongoing version of this. Sleft Signals keeps your referral map live, shows you new independent practices near you as they open, and makes the warm introductions for you so you are not chasing them down. It is $120 a month, and you can stop any time. Want me to turn yours on?
+> The map and that first introduction are on me. What I am building is the ongoing version of this. Sleft Signals keeps your referral map live, shows you new independent practices near you as they open, and makes the warm introductions for you so you are not chasing them down. As a founding member you get in free while I build it, and you lock in the founding rate as it grows. Want me to turn yours on?
 
-- Price: $120/month (the Stripe source of truth in `lib/stripe.ts`). This is the concierge upsell Grant pitches by hand after value is proven, not a self-serve button price. The self-serve "Join the Network" CTA now reads "Free" to match its destination (the upgrade page says "Free, no credit card required"), so providers join free and Grant converts them to the $120/month plan personally once an intro has landed. The old hardcoded "$50/month" on that button was a stale bug and has been removed.
+- Price (updated 2026-05-29, pricing analysis): the old $120/month was killed as underpriced (3-5x low) and was framing the product as a directory. The product is now positioned as **founding-member, free to join** while the Tampa network is built; the self-serve CTA reads "Become a Founding Member." Do NOT quote a monthly number in early pitches. Instead, make each practice name their own value ("what do you pay to acquire a patient now? what would a reliable patient be worth?") and ask for a small felt commitment (a refundable ~$500 founding deposit or a card on file) to lock a founding rate. Value supports $300-600/month or $150-250 per delivered referral once proven; ratchet the price up behind real proof (a delivered patient, a testimonial), grandfathering founders for 12 months. See the pricing memory note for the full ladder.
 - The ask is small and concrete: keep the thing that already worked, running. He is not selling software, he is selling more of the introduction that just produced value.
 - Founder framing for the first handful: "You would be one of the first practices in Tampa on this. I am working directly with each one right now." Early-adopter scarcity from a real solo founder is true and it converts.
 
@@ -159,7 +159,7 @@ Run `/api/network/discover` for specialty "Registered Dietitian", location Tampa
 2. She picks the GLP-1 clinic or the endo group. Grant brokers a real three-way intro. She now has a referral source she did not have, from a friend who is a physician. Value proven, no money mentioned.
 3. Because she is the proof case, Grant also asks the discovery questions from the concierge playbook on that same call: who actually sends her patients today, where does she wish more came from, what lane is most painful. Her answers help discover the niche the whole Tampa GTM is still missing. An RD's pain map points straight at endocrinology and obesity medicine, which is a credible niche candidate ("where Tampa metabolic patients get their nutrition care").
 4. The force multiplier: each practice on her map is also a future Referral Map. When Grant brokers her intro to the endo group, he can turn around and build the endo group their own map, with her on it as an inbound partner. One RD becomes the seed of a connected local cluster, brokered by hand, exactly what the concierge phase is supposed to produce.
-5. Only after a real referral moves between her and a partner does Grant make the $120/month ask, framed as keeping the thing that just worked running. She is a friend, so she is also the safest first conversation to practice the upsell on and the most honest source of feedback on the price.
+5. Only after a real referral moves between her and a partner does Grant make the founding-member ask (see pricing note above), framed as keeping the thing that just worked running. She is a friend, so she is also the safest first conversation to practice the upsell on and the most honest source of feedback on the price.
 
 ### Why she is the right first domino
 
@@ -176,4 +176,4 @@ She converts on warmth and proof, not on a sales pitch. She validates that the e
 5. Drop into a clean one-page PDF, Dr. Grant Denmark in the footer.
 6. Send personalized, one at a time, from grant@sleftpayments.com with real address and opt-out.
 7. Broker the first requested intro by hand. Log it in the CRM.
-8. Only after an intro produces value, make the $120/month ask.
+8. Only after an intro produces value, make the founding-member ask (see pricing note above).
