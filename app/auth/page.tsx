@@ -101,7 +101,7 @@ export default function AuthPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full">
               <Shield className="w-4 h-4 text-blue-400" />
-              <span className="text-sm text-blue-400 font-semibold">Join the healthcare referral network</span>
+              <span className="text-sm text-blue-400 font-semibold">Founding members join free</span>
             </div>
           </motion.div>
 
@@ -119,7 +119,7 @@ export default function AuthPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-md mx-auto">
-              Connect with healthcare providers who need your patients - and have patients for you.
+              Sign up free and instantly see the independent practices near you who could be sending you patients.
             </p>
           </motion.div>
 
@@ -181,7 +181,7 @@ export default function AuthPage() {
 
               {/* Trust badge */}
               <p className="text-center text-sm text-slate-500 mt-6 font-medium">
-                Free to get started. No credit card required.
+                Free for founding members. See your referral partners the moment you join.
               </p>
             </motion.div>
           </div>

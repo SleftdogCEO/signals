@@ -804,10 +804,27 @@ function NetworkHubContent() {
                   <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Handshake className="w-10 h-10 text-slate-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Searching for Partners</h3>
-                  <p className="text-slate-400 max-w-md mx-auto">
-                    We're finding healthcare practices in your area. This may take a moment.
+                  <h3 className="text-xl font-bold text-white mb-2">Let&apos;s find the practices near you</h3>
+                  <p className="text-slate-400 max-w-md mx-auto mb-6">
+                    We could not pin your location automatically. Tap below and we&apos;ll show the independent practices nearby whose patients you should be getting.
                   </p>
+                  <button
+                    onClick={handleExploreNetwork}
+                    disabled={geoLoading}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/25 disabled:opacity-60"
+                  >
+                    {geoLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Finding practices near you...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="w-4 h-4" />
+                        Find practices near me
+                      </>
+                    )}
+                  </button>
                 </div>
               ) : viewMode === "map" ? (
                 <HubNetworkMap
@@ -858,7 +875,7 @@ function NetworkHubContent() {
                         </p>
                       )}
 
-                      {/* Why match — mutual referral fit */}
+                      {/* Why match: mutual referral fit */}
                       <div className="bg-slate-800/50 rounded-xl p-3 mb-4 space-y-1.5">
                         <p className="text-[11px] uppercase tracking-wide text-emerald-400 font-semibold">
                           Why you&apos;re a mutual fit
