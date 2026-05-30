@@ -128,6 +128,12 @@ const nextConfig: NextConfig = {
     const retiredBlogPosts = [
       "cross-referral-playbook-dentists-orthodontists",
       "pt-practice-found-14-referring-physicians",
+      // Retired allied-health posts (off the physician-referral pivot, 2026-05-29)
+      "dental-referral-strategies-general-orthodontists-oral",
+      "referral-network-building-physical-therapists",
+      "referral-patterns-chiropractors-beyond-pcp",
+      "referral-partnerships-medical-dental-practices",
+      "referral-network-building-med-spas-aesthetic",
     ]
     const blogRedirects = retiredBlogPosts.map((slug) => ({
       source: `/blog/${slug}`,
