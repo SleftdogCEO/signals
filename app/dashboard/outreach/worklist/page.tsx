@@ -72,6 +72,8 @@ export default function WorklistPage() {
   // Default to the A/B validation view: cohort A (reachable cash-pay) first.
   const [filter, setFilter] = useState<string>("A_reachable")
   const [copiedNpi, setCopiedNpi] = useState<string | null>(null)
+  // Npi currently being saved to Supabase, so the button can show a spinner.
+  const [savingNpi, setSavingNpi] = useState<string | null>(null)
   // Local edits to drafts, keyed by npi, so Grant can tweak before sending.
   const [edits, setEdits] = useState<Record<string, string>>({})
 
@@ -125,8 +127,20 @@ export default function WorklistPage() {
   }
 
   async function setStatus(npi: string, status: string) {
+    const prevStatus = leads.find((l) => l.npi === npi)?.status
     setLeads((ls) => ls.map((l) => (l.npi === npi ? { ...l, status } : l)))
-    await supabase.from("outreach_leads").update({ status }).eq("npi", npi)
+    setSavingNpi(npi)
+    const { error } = await supabase
+      .from("outreach_leads")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("npi", npi)
+    setSavingNpi(null)
+    if (error) {
+      // Roll back the optimistic flip and surface the failure instead of
+      // leaving the UI showing a state the database never accepted.
+      setLeads((ls) => ls.map((l) => (l.npi === npi ? { ...l, status: prevStatus ?? l.status } : l)))
+      alert(`Couldn't save status: ${error.message}`)
+    }
   }
 
   async function saveDraft(l: Lead) {
@@ -279,10 +293,22 @@ export default function WorklistPage() {
                   </button>
                   <div className="flex-1" />
                   <button
-                    onClick={() => setStatus(l.npi, "contacted")}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 rounded-lg text-sm font-semibold hover:bg-emerald-500/25"
+                    onClick={() => setStatus(l.npi, l.status === "contacted" ? "to_contact" : "contacted")}
+                    disabled={savingNpi === l.npi}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 ${
+                      l.status === "contacted"
+                        ? "bg-emerald-500/30 border border-emerald-400 text-emerald-100 hover:bg-emerald-500/40"
+                        : "bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25"
+                    }`}
                   >
-                    <Send className="w-4 h-4" /> Mark contacted
+                    {savingNpi === l.npi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : l.status === "contacted" ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    {l.status === "contacted" ? "Contacted" : "Mark contacted"}
                   </button>
                 </div>
               </div>
