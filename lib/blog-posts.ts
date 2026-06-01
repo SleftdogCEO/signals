@@ -11,6 +11,52 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    title: "Medicine Doesn't Teach You How to Get Patients. Here's What I Learned.",
+    slug: "why-i-built-a-referral-network-for-independent-practices",
+    excerpt:
+      "I am a physician building an AI referral network for independent practices. Here is the honest reason why, what I learned watching marketers sell doctors the wrong thing, and why I keep coming back to referrals.",
+    date: "2026-06-01",
+    readTime: "4 min read",
+    category: "Practice Growth",
+    metaDescription:
+      "A physician's honest take on why getting patients is so hard for independent practices, why the marketer playbook fails doctors, and why referrals still win.",
+    content: `I am building a referral network for independent practices, and I want to be honest about why.
+
+It started as a question I could not let go of. Could I use AI and what I have taught myself about software to actually help practices grow? Not in a pitch deck. In real life.
+
+First, a disclosure, because it matters. I do not sell any of the tech that other people pitch to doctors. The only tools I build are my own. I am a physician, not a marketer with an ad account.
+
+## Nobody Teaches Doctors How to Get Patients
+
+We are trained to focus on the nitty-gritty of medicine, and we should be. Patient care, billing, overhead, the actual practice of it. That is the job. But it is no wonder so few of us are going into private practice anymore. Not a single one of my classmates who graduated this year told me they want to open their own clinic. Not one.
+
+I come at this from a slightly different angle. I started my first company in my third year of medical school, and I have spent the last two years working with small businesses. The thing I kept running into, over and over, was how hard it is to get clients. For a practice, clients are patients. That problem is the entire reason Sleft Signals exists. I always wanted to be a connector.
+
+## The Marketers Are Selling Doctors the Wrong Thing
+
+There was a stretch where I watched hundreds of social media ads aimed at private practice doctors, every one of them promising to fill your pipeline. Watching them, I knew a doctor with the same training I have was never going to get real long-term value out of most of it. I got tired of hearing people who know how to run an ad account talk about how they were going to get doctors patients.
+
+Here is the part nobody wants to say out loud. It is hard. It has always been hard. That is exactly why building a practice on word-of-mouth referrals can take a career. There is no software that changes the fact that trust takes time.
+
+And the ground is shifting under independent practices. Private equity runs a growing share of hospitals. Independent practices keep shrinking, and as they do, their ability to bring in new patients shrinks with them. Meanwhile the technology that could help is getting harder to understand for owners who did not grow up with it. I understand the position they are in. That gap is what I am trying to close.
+
+## Why I Keep Coming Back to Referrals
+
+I did not want to build another service that says "I will get you X patients or your money back." I wanted to matchmake providers with providers. A referred patient shows up already trusting you, because a doctor they trust sent them. That is the most durable growth there is, and it is the one thing the ad buyers cannot manufacture. I wrote more about [why referrals beat ads for a private practice](/blog/private-practice-marketing-referrals-vs-ads-2026) if you want the longer argument.
+
+To my knowledge, nobody has really built this the way it should be built. So instead of telling doctors to go to more meetups and hand out more business cards, I decided to make the service. Find the providers near you who treat the same patients you do, and connect with them.
+
+## What I Am Actually Building
+
+There is a flood of AI coming into healthcare right now, and medicine tends to run about ten years behind. I would rather independent doctors not get left behind again. So Sleft Signals is built for one thing first: helping independent providers connect to the referral partners near them and get ahead in a market that keeps getting harder.
+
+Honestly, I built this out of my own desire to connect with other doctors. To give physicians a real platform to find each other, feel less isolated, and feel more empowered to compete on their own terms instead of selling to the system across the street. If you want the practical version, I also wrote a step by step on [how to build a referral network without a liaison](/blog/how-to-get-more-physician-referrals-without-a-liaison).
+
+If you run an independent practice, this is the part I can help with today.
+
+**See which doctors near you could be sending patients right now.** [Try the free referral lookup](/referral-lookup). It takes two minutes and does not require a signup.`,
+  },
+  {
     title: "How to Get More Physician Referrals (Without a Physician Liaison)",
     slug: "how-to-get-more-physician-referrals-without-a-liaison",
     excerpt:
