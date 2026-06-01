@@ -58,6 +58,19 @@ interface Lead {
   outreach_draft: string | null
   outreach_email_subject: string | null
   outreach_email_body: string | null
+  outreach_map: ReferralMapSummary | null
+}
+
+// The persisted Referral Map (subset we render here). Built by
+// /api/network/referral-map and stored per lead; the draft leads with its gap.
+interface ReferralMapSummary {
+  independent_count?: number
+  radius_miles?: number
+  gap?: {
+    sentence?: string
+    partner?: { specialty?: string; distance_miles?: number | null }
+  } | null
+  inbound?: { specialty?: string; distance_miles?: number | null }[]
 }
 
 function gmailComposeUrl(to: string, subject: string, body: string) {
@@ -87,7 +100,7 @@ export default function WorklistPage() {
       const { data } = await supabase
         .from("outreach_leads")
         .select(
-          "npi,practice_name,specialty,city,state,phone,phone_verified,status,website,email,contact_form_url,contact_form_captcha,linkedin_url,best_channel,enrichment_notes,lead_score,lead_tier,practice_model,score_reasons,disqualified_reason,cohort,outreach_draft,outreach_email_subject,outreach_email_body"
+          "npi,practice_name,specialty,city,state,phone,phone_verified,status,website,email,contact_form_url,contact_form_captcha,linkedin_url,best_channel,enrichment_notes,lead_score,lead_tier,practice_model,score_reasons,disqualified_reason,cohort,outreach_draft,outreach_email_subject,outreach_email_body,outreach_map"
         )
         .or("enriched_at.not.is.null,cohort.not.is.null")
         .order("lead_score", { ascending: false, nullsFirst: false })
@@ -193,7 +206,7 @@ export default function WorklistPage() {
 
         <div className="space-y-4">
           {filtered.map((l) => {
-            const subject = l.outreach_email_subject || `A referral map I built for ${l.practice_name}`
+            const subject = l.outreach_email_subject || `a referral map I built for ${l.practice_name}`
             const body = l.outreach_email_body || draftFor(l)
             return (
               <div key={l.npi} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -248,6 +261,29 @@ export default function WorklistPage() {
 
                 {l.enrichment_notes && (
                   <p className="text-xs text-slate-500 mt-2 leading-relaxed">{l.enrichment_notes}</p>
+                )}
+
+                {l.outreach_map && (l.outreach_map.gap || l.outreach_map.independent_count != null) && (
+                  <div className="mt-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 px-3 py-2.5">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                      <span>Referral map</span>
+                      {l.outreach_map.independent_count != null && (
+                        <span className="font-normal text-cyan-200/70">
+                          {l.outreach_map.independent_count} independent partners within{" "}
+                          {l.outreach_map.radius_miles ?? 25} mi
+                        </span>
+                      )}
+                    </div>
+                    {l.outreach_map.gap?.sentence && (
+                      <p className="mt-1 text-sm text-slate-200 leading-relaxed">
+                        <span className="text-cyan-300/80 font-medium">Gap: </span>
+                        {l.outreach_map.gap.sentence}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      The draft leads with this. Verify the named partner before sending.
+                    </p>
+                  </div>
                 )}
 
                 <textarea
