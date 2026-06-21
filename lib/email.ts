@@ -202,6 +202,49 @@ export async function sendProviderOnboardedNotification(params: {
   }
 }
 
+/**
+ * Notify Grant of every brief-feedback submission (including churn/negative
+ * signals). Uses the sleftpayments lead-capture API so it needs no SMTP/Resend
+ * env on the sleftsignals side, matching the other notifiers.
+ */
+export async function sendFeedbackNotification(params: {
+  briefId?: string
+  userId?: string
+  businessName?: string
+  likes: string
+  dislikes: string
+}) {
+  try {
+    const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "grant@sleftpayments.com",
+        name: params.businessName || "",
+        businessName: params.businessName || "Sleft Signals Feedback",
+        source: "sleftsignals.com",
+        conversationSummary: [
+          `Brief Feedback Submitted`,
+          `Practice: ${params.businessName || "(none)"}`,
+          `Brief ID: ${params.briefId || "(none)"}`,
+          `User ID: ${params.userId || "(none)"}`,
+          `Liked: ${params.likes}`,
+          `Could be better (churn/negative signal): ${params.dislikes}`,
+          `Time: ${new Date().toLocaleString()}`,
+        ].join("\n"),
+      }),
+    })
+
+    if (!res.ok) {
+      console.error("Feedback notification failed:", res.status, await res.text())
+    } else {
+      console.log("Feedback notification sent via lead-capture API")
+    }
+  } catch (err) {
+    console.error("Failed to send feedback notification:", err)
+  }
+}
+
 function buildSnapshotEmail(
   firstName: string,
   specialty: string,

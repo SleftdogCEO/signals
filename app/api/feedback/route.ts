@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { sendFeedbackNotification } from "@/lib/email"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +20,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Sentinel policy: notify grant@ on every feedback capture, independent of
+    // the DB write, so the signal is never lost even if persistence fails.
+    await sendFeedbackNotification({ briefId, userId, businessName, likes, dislikes })
+
     // Store feedback in Supabase
     const { data, error } = await supabase
       .from("feedback")
@@ -34,17 +39,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
+      // grant@ was already notified above, so the feedback is captured even if
+      // the row didn't persist. Log loudly for follow-up.
       console.error("Supabase error storing feedback:", error)
-      // If the table doesn't exist, log but don't fail
-      // The feedback is valuable - we can still log it
-      console.log("Feedback received (table may not exist):", {
-        briefId,
-        businessName,
-        likes,
-        dislikes,
-        timestamp
-      })
-      return NextResponse.json({ success: true, message: "Feedback logged" })
+      return NextResponse.json({ success: true, message: "Feedback recorded" })
     }
 
     return NextResponse.json({ success: true, feedbackId: data?.id })
