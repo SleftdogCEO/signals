@@ -15,6 +15,15 @@ export async function sendViralOutreach(
   referringSpecialty: string,
   referringLocation: string
 ) {
+  // DISABLED by default: never auto-email guessed info@{domain} addresses of
+  // third-party practices. Unsolicited cold mail to unverified/guessed
+  // addresses from grant@sleftpayments.com is a deliverability, reputation,
+  // and consent risk. Hard-gated behind an explicit opt-in flag so adding
+  // RESEND_API_KEY (for legitimate prospect emails) does NOT silently re-arm it.
+  if (process.env.VIRAL_OUTREACH_ENABLED !== "true") {
+    return
+  }
+
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     console.log("RESEND_API_KEY not set, skipping viral outreach")
