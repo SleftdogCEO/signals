@@ -126,6 +126,36 @@ export async function sendSignupNotification(params: {
   fullName?: string
   authProvider?: string
 }) {
+  const summary = [
+    `New Sleft Signals Signup`,
+    `Name: ${params.fullName || "(not provided)"}`,
+    `Email: ${params.email}`,
+    `Auth: ${params.authProvider || "email"}`,
+    `Time: ${new Date().toLocaleString()}`,
+  ].join("\n")
+
+  // PRIMARY alert: a direct Resend email to Grant. Simple and reliable, with no
+  // dependency on Airtable or the cross-site lead-capture hop. sleftpayments.com
+  // is a verified Resend sender, so this sends from the real address.
+  const apiKey = process.env.RESEND_API_KEY
+  if (apiKey) {
+    try {
+      const resend = new Resend(apiKey)
+      await resend.emails.send({
+        from: "Sleft Signals <grant@sleftpayments.com>",
+        to: "grant@sleftpayments.com",
+        subject: `New signup: ${params.fullName || params.email}`,
+        text: summary,
+      })
+      console.log("Signup alert emailed to grant@sleftpayments.com")
+    } catch (err) {
+      console.error("Failed to send signup alert email:", err)
+    }
+  } else {
+    console.log("RESEND_API_KEY not set, skipping direct signup alert email")
+  }
+
+  // SECONDARY (best-effort backup): the shared lead-capture pipeline.
   try {
     const res = await fetch("https://www.sleftpayments.com/api/lead-capture", {
       method: "POST",
@@ -135,23 +165,14 @@ export async function sendSignupNotification(params: {
         name: params.fullName || "",
         businessName: params.fullName || "Sleft Signals Signup",
         source: "sleftsignals.com",
-        conversationSummary: [
-          `New Sleft Signals Signup`,
-          `Name: ${params.fullName || "(not provided)"}`,
-          `Email: ${params.email}`,
-          `Auth: ${params.authProvider || "email"}`,
-          `Time: ${new Date().toLocaleString()}`,
-        ].join("\n"),
+        conversationSummary: summary,
       }),
     })
-
     if (!res.ok) {
-      console.error("Signup notification failed:", res.status, await res.text())
-    } else {
-      console.log("Signup notification sent via lead-capture API")
+      console.error("Signup lead-capture backup failed:", res.status)
     }
   } catch (err) {
-    console.error("Failed to send signup notification:", err)
+    console.error("Signup lead-capture backup error:", err)
   }
 }
 
