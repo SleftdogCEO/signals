@@ -90,6 +90,14 @@ export default function SiteFooter() {
 
         <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-sm text-slate-500">© Sleft Signals. Local referral intelligence for physician practices.</span>
+          <a
+            href="https://sleftai.com"
+            target="_blank"
+            rel="noopener"
+            className="text-sm text-slate-500 hover:text-white transition-colors"
+          >
+            Built by SleftAI
+          </a>
         </div>
       </div>
     </footer>
