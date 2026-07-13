@@ -1032,7 +1032,7 @@ At the end of each month, pull up your tracker and answer these questions:
 1. **Who sent me the most referrals?** Thank them. Send a note, make a call, drop off lunch.
 2. **Who did I send the most referrals to?** Are they reciprocating? If not, have a conversation.
 3. **What is my closed-loop rate?** If it is below 80%, you are losing future referrals from the same sources.
-4. **What is my conversion rate?** If referred patients are not scheduling or completing treatment, the problem is in your intake process, not the referral source.
+4. **What is my conversion rate?** If referred patients are not scheduling or completing treatment, the problem is in your intake process, not the referral source. Nationally, [more than half of referrals are never completed](/blog/why-56-percent-referrals-never-completed), so a low number here is common and fixable.
 
 ### Quarterly Review (30 minutes)
 
@@ -1047,7 +1047,7 @@ Every quarter, look at the bigger picture:
 
 - **Tracking only referrals received, not sent.** Both directions matter for maintaining balanced relationships.
 - **Not recording the provider name.** "Got a referral from a dentist" is not actionable. You need the specific provider's name to build the relationship.
-- **Forgetting to track closed loops.** The single most impactful thing you can do to increase referrals is send a follow-up note to the referring provider about the patient outcome.
+- **Forgetting to track closed loops.** The single most impactful thing you can do to increase referrals is send a follow-up note to the referring provider about the patient outcome. If you fix only one habit on this list, make it [closed-loop referral tracking](/blog/closed-loop-referrals-number-one-factor), the number one factor in referral growth.
 - **Making it too complicated.** A simple spreadsheet beats a complex CRM that nobody uses. Start basic and add complexity only when you need it.
 
 ## Upgrading From a Spreadsheet
@@ -1495,7 +1495,7 @@ Someone in your practice needs to own the closed-loop process. This is usually a
 
 ### Step 4: Track Your Closed-Loop Rate
 
-Add a column to your referral tracker: "Closed-loop communication sent? Y/N." Your target should be 90%+. Review this metric monthly.
+Add a column to your [referral tracker](/blog/building-referral-tracker-spreadsheet-free-template): "Closed-loop communication sent? Y/N." Your target should be 90%+. Review this metric monthly.
 
 ## What to Include in a Closed-Loop Communication
 

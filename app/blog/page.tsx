@@ -6,9 +6,9 @@ import SiteNav from "@/components/SiteNav"
 import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
-  title: "Healthcare Referral Blog - Practice Growth Strategies (2026)",
+  title: "Physician Referral Strategies for Practice Growth",
   description:
-    "Data-driven referral strategies for healthcare providers. NPI analysis, CMS referral data, local market intelligence. Grow your practice without ads.",
+    "Practical guides on physician referrals, closed-loop tracking, and finding referral partners near you. Grow your independent practice without ad spend.",
   alternates: { canonical: "/blog" },
   openGraph: {
     title: "Healthcare Referral Blog - Sleft Signals",
